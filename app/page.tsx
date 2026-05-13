@@ -150,8 +150,9 @@ export default function Home() {
           </div>
         </div>
       </section>
-{/* ─────────── CATHOLIC PATH ─────────── */}
-<section className="py-16 px-6 bg-gradient-to-b from-white to-btf-gold-pale/40">
+
+      {/* ─────────── CATHOLIC PATH ─────────── */}
+      <section className="py-16 px-6 bg-gradient-to-b from-white to-btf-gold-pale/40">
         <div className="max-w-4xl mx-auto">
           <p className="text-center text-[11px] tracking-[0.25em] text-btf-gold uppercase font-medium mb-3">
             The Faith-Based Pathway
@@ -197,6 +198,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* ─────────── WHAT THIS IS / WHAT THIS ISN'T ─────────── */}
       <section className="py-16 px-6 bg-btf-off-white">
         <div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-10">
@@ -223,7 +225,7 @@ export default function Home() {
 
       {/* ─────────── FOOTER ─────────── */}
       <footer className="py-10 px-6 bg-btf-sky-deep text-white/65 text-center text-xs">
-      <nav className="mb-5 flex justify-center gap-6 text-[10px] uppercase tracking-[0.25em] font-medium">
+        <nav className="mb-5 flex justify-center gap-6 text-[10px] uppercase tracking-[0.25em] font-medium">
           <a href="/about" className="text-white/70 hover:text-white transition-colors">About</a>
         </nav>
         <p className="font-serif italic text-base text-white/85 mb-2">

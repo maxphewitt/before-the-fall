@@ -22,11 +22,11 @@ export const metadata: Metadata = {
   title: "Before the Fall",
   description:
     "Built for the moment before the fall. A faith-rooted, anonymous prevention platform for people standing in the moment before harm.",
-  metadataBase: new URL("https://beforethefall.org"),
+  metadataBase: new URL("https://beforethefall.app"),
   openGraph: {
     title: "Before the Fall",
     description: "Built for the moment before the fall.",
-    url: "https://beforethefall.org",
+    url: "https://beforethefall.app",
     siteName: "Before the Fall",
     type: "website",
   },
