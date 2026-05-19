@@ -1,10 +1,33 @@
-export default function Home() {
+import Link from "next/link";
+import { getCurrentUserId } from "./lib/session";
+export default async function Home() {
+  const userId = await getCurrentUserId();
+  const signedIn = userId !== null;
   return (
     <main className="min-h-screen">
       {/* ─────────── HERO ─────────── */}
       <section className="relative bg-gradient-to-b from-btf-sky-deep via-btf-sky to-btf-sky-light text-white py-20 px-6 overflow-hidden">
         {/* Golden glow */}
         <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-btf-gold/20 blur-3xl pointer-events-none" aria-hidden />
+
+        {/* Top-of-page header — journal entry (signed in) or sign in (signed out). */}
+        <div className="absolute top-0 right-0 left-0 px-6 py-5 z-10 flex justify-end items-center">
+          {signedIn ? (
+            <Link
+              href="/journal"
+              className="text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border border-white/25 backdrop-blur-sm text-[10px] sm:text-xs tracking-[0.25em] uppercase font-medium px-4 py-2 rounded-full transition-colors"
+            >
+              Your journal →
+            </Link>
+          ) : (
+            <Link
+              href="/return"
+              className="text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border border-white/25 backdrop-blur-sm text-[10px] sm:text-xs tracking-[0.25em] uppercase font-medium px-4 py-2 rounded-full transition-colors"
+            >
+              I already have a code →
+            </Link>
+          )}
+        </div>
 
         <div className="relative max-w-3xl mx-auto text-center">
           {/* Cross */}
@@ -40,12 +63,12 @@ export default function Home() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-            <button className="flex-1 bg-gradient-to-br from-btf-gold to-btf-gold-light text-btf-sky-deep font-medium px-8 py-4 rounded-full shadow-lg shadow-btf-gold/30 hover:-translate-y-0.5 transition-transform">
-              Get help now
-            </button>
-            <button className="flex-1 bg-white/10 border border-white/30 text-white/90 font-light px-6 py-4 rounded-full backdrop-blur-sm hover:bg-white/20 transition-colors">
-              Worried about someone you love?
-            </button>
+          <Link href="/onboard" className="flex-1 flex items-center justify-center bg-gradient-to-br from-btf-gold to-btf-gold-light text-btf-sky-deep font-medium px-8 py-4 rounded-full shadow-lg shadow-btf-gold/30 hover:-translate-y-0.5 transition-transform">
+          Get help now
+         </Link>
+         <Link href="/onboard" className="flex-1 flex items-center justify-center bg-white/10 border border-white/30 text-white/90 font-light px-6 py-4 rounded-full backdrop-blur-sm hover:bg-white/20 transition-colors">
+         Worried about someone you love?
+         </Link>
           </div>
 
           {/* Identity / disclosure footer */}
@@ -81,8 +104,11 @@ export default function Home() {
           </h2>
 
           <div className="grid md:grid-cols-2 gap-5">
-            {/* Tier 1 ACTIVE */}
-            <div className="rounded-2xl p-6 bg-btf-sky-pale/40 border-2 border-btf-sky/30">
+            {/* Tier 1 ACTIVE — clickable entry point to /tools */}
+            <Link
+              href="/tools"
+              className="group rounded-2xl p-6 bg-btf-sky-pale/40 border-2 border-btf-sky/30 hover:border-btf-sky hover:shadow-lg hover:-translate-y-0.5 transition-all flex flex-col"
+            >
               <div className="flex items-start gap-4 mb-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-btf-sky-light to-btf-sky flex items-center justify-center text-xl flex-shrink-0 text-white">
                   ✦
@@ -92,10 +118,13 @@ export default function Home() {
                   <h3 className="font-serif text-xl text-btf-sky-deep mt-1">Self-help</h3>
                 </div>
               </div>
-              <p className="text-sm text-btf-text-mid font-light leading-relaxed">
+              <p className="text-sm text-btf-text-mid font-light leading-relaxed flex-1">
                 Anonymous tools you can use right now. Urge control, grounding, journaling, optional Catholic prayer and Rosary. Used by you, for you, on your own.
               </p>
-            </div>
+              <p className="text-[10px] uppercase tracking-[0.25em] text-btf-sky font-semibold mt-4 group-hover:translate-x-1 transition-transform">
+                Open the tools →
+              </p>
+            </Link>
 
             {/* Tier 2 */}
             <div className="rounded-2xl p-6 bg-white border border-btf-text-light/20 relative">
