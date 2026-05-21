@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* Before the Fall brand palette — sourced from Brand Identity v2 + the Claude.ai HTML demo */
+  /* Before the Fall — Brand Identity v2 (locked 2026-05-19). See vault: 07 - Content/Brand Identity System. */
   --color-btf-sky: #1a6fa8;
   --color-btf-sky-deep: #0d4f7c;
   --color-btf-sky-light: #3d8fc4;
@@ -9,7 +9,8 @@
   --color-btf-gold: #c9a84c;
   --color-btf-gold-light: #e8cc7a;
   --color-btf-gold-pale: #fdf6e3;
-  --color-btf-off-white: #f7f9fc;
+  --color-btf-off-white: #f4f8fc;
+  --color-btf-deep-night: #0a1a2a;
   --color-btf-text-dark: #1a2a3a;
   --color-btf-text-mid: #4a6070;
   --color-btf-text-light: #8aa0b0;
@@ -17,6 +18,7 @@
   /* Custom fonts — wired to next/font/google in layout.tsx */
   --font-serif: var(--font-cormorant);
   --font-sans: var(--font-dmsans);
+  --font-cinzel: var(--font-cinzel-google);
 }
 
 @layer base {

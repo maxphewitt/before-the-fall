@@ -50,8 +50,17 @@ export default function About() {
 
         <section className="bg-white rounded-2xl p-6 sm:p-8 border border-btf-sky-pale">
           <h2 className="font-serif text-2xl text-btf-sky-deep mb-3 font-light">Our compliance</h2>
+          <p className="text-btf-text-mid font-light leading-relaxed mb-4">
+            Before the Fall serves people standing in the moment before harm across six kinds of struggle: pornography or sexual compulsion (including any disclosed risk to a minor), substance use, self-harm or suicidal ideation, relationship abuse on either side of it, depression or anxiety, and the wide range of distress that doesn&rsquo;t fit a clean category. The platform&rsquo;s response is calibrated to what&rsquo;s disclosed.
+          </p>
+          <p className="text-btf-text-mid font-light leading-relaxed mb-4">
+            When a disclosure suggests imminent self-harm or suicide, the platform routes the user to the 988 Suicide &amp; Crisis Lifeline and, where indicated, dispatches trained crisis support. When a disclosure involves a specific threat to another person, the matter is escalated to local law enforcement. When disclosures involve sexual content involving minors or risk of harm to a child, a CyberTipline report is filed with the National Center for Missing &amp; Exploited Children, and the relevant authorities are contacted under our duty to report suspected child abuse (Texas Family Code &sect;261.101).
+          </p>
+          <p className="text-btf-text-mid font-light leading-relaxed mb-4">
+            When a disclosure involves domestic violence &mdash; whether the user is in danger or causing harm &mdash; the National Domestic Violence Hotline is engaged, along with local protective services where a child is involved. Substance crisis is routed to SAMHSA&rsquo;s National Helpline. Depression and anxiety disclosures are met first with the platform&rsquo;s clinical Tier 1 tools, with the 988 pathway available the moment a disclosure crosses into self-harm.
+          </p>
           <p className="text-btf-text-mid font-light leading-relaxed">
-            Before the Fall operates in alignment with NCMEC reporting standards and state and federal mandatory reporting laws. Disclosed active abuse, imminent self-harm, threats to specific persons, and content covered by the CyberTipline are escalated to the appropriate authorities under our documented protocols. We take child safety with absolute seriousness.
+            These responses are documented in our Mandatory Reporting Escalation Protocol, reviewed by counsel and updated as Texas law evolves. We take child safety with absolute seriousness, and our compliance posture reflects that.
           </p>
         </section>
       </div>

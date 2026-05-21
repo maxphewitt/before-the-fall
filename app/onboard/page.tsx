@@ -539,6 +539,9 @@ function PrivacyDisclosure({
             Your IP address, hashed (one-way scrambled), and your timestamps &mdash; so we can respond to lawful subpoenas, dispatch a 988 response if your content suggests imminent self-harm, or report content covered by the National Center for Missing &amp; Exploited Children.
           </li>
           <li>
+            Your journal entries, encrypted at rest. We automatically scan saved entries for words that signal imminent harm &mdash; to yourself or to another person. Only the category of signal is recorded, never the words themselves. A trained reviewer is alerted so we can offer support or contact the appropriate authority if you&rsquo;ve disclosed something that puts you or someone else in danger.
+          </li>
+          <li>
             We do not sell, trade, or share your data with advertisers, ever.
           </li>
         </ul>

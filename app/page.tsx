@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { getCurrentUserId } from "./lib/session";
+import { shouldShowCatholicPath } from "./lib/profile";
+import { signOutUser } from "./actions/userSession";
 export default async function Home() {
   const userId = await getCurrentUserId();
   const signedIn = userId !== null;
+  const showCatholicPath = await shouldShowCatholicPath();
   return (
     <main className="min-h-screen">
       {/* ─────────── HERO ─────────── */}
@@ -11,14 +14,24 @@ export default async function Home() {
         <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-btf-gold/20 blur-3xl pointer-events-none" aria-hidden />
 
         {/* Top-of-page header — journal entry (signed in) or sign in (signed out). */}
-        <div className="absolute top-0 right-0 left-0 px-6 py-5 z-10 flex justify-end items-center">
+        <div className="absolute top-0 right-0 left-0 px-6 py-5 z-10 flex justify-end items-center gap-3">
           {signedIn ? (
-            <Link
-              href="/journal"
-              className="text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border border-white/25 backdrop-blur-sm text-[10px] sm:text-xs tracking-[0.25em] uppercase font-medium px-4 py-2 rounded-full transition-colors"
-            >
-              Your journal →
-            </Link>
+            <>
+              <form action={signOutUser}>
+                <button
+                  type="submit"
+                  className="text-white/70 hover:text-white text-[10px] sm:text-xs tracking-[0.25em] uppercase font-medium transition-colors"
+                >
+                  Sign out
+                </button>
+              </form>
+              <Link
+                href="/journal"
+                className="text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border border-white/25 backdrop-blur-sm text-[10px] sm:text-xs tracking-[0.25em] uppercase font-medium px-4 py-2 rounded-full transition-colors"
+              >
+                Your journal →
+              </Link>
+            </>
           ) : (
             <Link
               href="/return"
@@ -181,6 +194,7 @@ export default async function Home() {
       </section>
 
       {/* ─────────── CATHOLIC PATH ─────────── */}
+      {showCatholicPath && (
       <section className="py-16 px-6 bg-gradient-to-b from-white to-btf-gold-pale/40">
         <div className="max-w-4xl mx-auto">
           <p className="text-center text-[11px] tracking-[0.25em] text-btf-gold uppercase font-medium mb-3">
@@ -193,7 +207,10 @@ export default async function Home() {
             A parallel daily walk in scripture and Catholic teaching, alongside whichever tier you&rsquo;re in. Opt in any time.
           </p>
 
-          <div className="rounded-2xl p-8 md:p-10 bg-white border-2 border-btf-gold/40 shadow-sm">
+          <Link
+            href="/catholic-path"
+            className="group block rounded-2xl p-8 md:p-10 bg-white border-2 border-btf-gold/40 shadow-sm hover:border-btf-gold hover:shadow-lg hover:-translate-y-0.5 transition-all"
+          >
             <div className="flex items-center gap-4 mb-8 justify-center">
               <div className="w-10 h-10 relative" aria-hidden>
                 <div className="absolute left-1/2 top-0 -translate-x-1/2 w-1.5 h-10 bg-btf-gold rounded-sm" />
@@ -224,9 +241,14 @@ export default async function Home() {
                 <span><span className="font-medium text-btf-sky-deep">Rosary &amp; prayer library</span> &mdash; guided walkthroughs of all four mysteries, plus the prayers Catholics have leaned on for centuries in moments like this.</span>
               </li>
             </ul>
-          </div>
+
+            <p className="text-center text-[10px] uppercase tracking-[0.25em] text-btf-gold font-semibold mt-8 group-hover:translate-x-1 transition-transform">
+              Open Catholic Path →
+            </p>
+          </Link>
         </div>
       </section>
+      )}
 
       {/* ─────────── WHAT THIS IS / WHAT THIS ISN'T ─────────── */}
       <section className="py-16 px-6 bg-btf-off-white">

@@ -7,6 +7,8 @@ import {
   encryptJournalText,
   decryptJournalText,
 } from "../lib/journalCrypto";
+import { scanForTriggers } from "../lib/triggerScan";
+import { appendAuditEvent } from "../lib/auditLog";
 
 /**
  * Journal CRUD — all guarded by the session cookie, all enforce ownership
@@ -68,11 +70,68 @@ export async function createEntry(
       return { success: false, error: GENERIC };
     }
 
+    // Best-effort safety scan AFTER successful insert. Never blocks the
+    // user's save; never raises out of this function. Logs the scan result
+    // to incidents + audit log, but the plaintext stays inside the
+    // encrypted entry. See [[Task #14 Dev Note]].
+    await runSafetyScan(supabase, trimmed, userId, data.id);
+
     revalidatePath("/journal");
     return { success: true, data: { id: data.id } };
   } catch (err) {
     console.error("createEntry exception:", err);
     return { success: false, error: GENERIC };
+  }
+}
+
+/**
+ * Internal: scan a just-saved entry's plaintext, and if any triggers
+ * fire, open an incident + append an audit event. All failures are
+ * swallowed — this must never affect the user-facing save.
+ *
+ * Plaintext never leaves this function. Only category labels, severity,
+ * and counts are persisted.
+ */
+async function runSafetyScan(
+  supabase: ReturnType<typeof supabaseServer>,
+  plaintext: string,
+  userId: string,
+  entryId: string
+): Promise<void> {
+  try {
+    const scan = scanForTriggers(plaintext);
+    if (!scan.hit) return;
+
+    const { data: incident, error: incidentError } = await supabase
+      .from("incidents")
+      .insert({
+        user_id: userId,
+        entry_id: entryId,
+        trigger_categories: scan.categories,
+        severity: scan.severity,
+        match_count: scan.matchCount,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (incidentError || !incident) {
+      console.error("runSafetyScan incident insert error:", incidentError);
+      return;
+    }
+
+    await appendAuditEvent({
+      eventType: "incident_created",
+      incidentId: incident.id as string,
+      payload: {
+        categories: scan.categories,
+        severity: scan.severity,
+        match_count: scan.matchCount,
+        source: "journal_save",
+      },
+    });
+  } catch (err) {
+    console.error("runSafetyScan exception:", err);
   }
 }
 
@@ -215,6 +274,12 @@ export async function updateEntry(
       console.error("updateEntry DB error:", error);
       return { success: false, error: GENERIC };
     }
+
+    // Same best-effort safety scan on edits. We open a NEW incident if
+    // the updated text contains triggers — we don't reuse or close
+    // pre-existing incidents for this entry, on purpose: the audit
+    // log gets a clean record per scan.
+    await runSafetyScan(supabase, trimmed, userId, id);
 
     revalidatePath("/journal");
     revalidatePath(`/journal/${id}`);
