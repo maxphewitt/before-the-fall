@@ -43,7 +43,7 @@ const MODULES: Module[] = [
     title: "Rosary",
     description:
       "Walkthroughs of all four mysteries — Joyful, Sorrowful, Glorious, Luminous — with the prayers, the scripture, and the rhythm. Pray along, or use it as a script.",
-    status: "pending-content",
+    status: "available",
     href: "/catholic-path/rosary",
   },
   {

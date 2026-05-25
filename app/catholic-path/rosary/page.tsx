@@ -8,7 +8,13 @@ import { MYSTERIES, todaysMysterySlug, getMysteryBySlug } from "../../lib/rosary
  * pairing; the other three are below as quieter tiles. DRAFT v1 banner
  * at the bottom — content is public-domain prayer text + factual scripture
  * summaries; framing copy pending Father Murphy review.
+ *
+ * Rendered dynamically so the day-of-week reflects the actual request time
+ * instead of the build-time snapshot (which would freeze the rosary on
+ * whatever day Vercel last built the page).
  */
+export const dynamic = "force-dynamic";
+
 export default function RosaryLanding() {
   const todaySlug = todaysMysterySlug();
   const today = getMysteryBySlug(todaySlug)!;

@@ -257,7 +257,7 @@ export default async function Home() {
             <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-medium mb-4">What this is</p>
             <ul className="space-y-3 text-btf-text-mid font-light text-sm leading-relaxed">
               <li>Pseudonymous &mdash; we don&rsquo;t ask for your name.</li>
-              <li>Free, always. We are a 501(c)(3) nonprofit.</li>
+              <li>Free, always. We are a Texas-based nonprofit initiative.</li>
               <li>Catholic faith content is opt-in. The rest works for anyone.</li>
               <li>Every clinical exercise is sourced from peer-reviewed literature.</li>
             </ul>
@@ -283,7 +283,7 @@ export default async function Home() {
           &ldquo;Reaching the lost before they become unreachable.&rdquo;
         </p>
         <p className="mt-3">
-          &copy; 2026 Before the Fall Foundation. A Texas 501(c)(3) nonprofit (determination pending).
+          &copy; 2026 Before the Fall. A Texas-based nonprofit initiative.
         </p>
         <p className="mt-2 text-white/55">
           In crisis? Call or text <span className="text-btf-gold-light">988</span>.
