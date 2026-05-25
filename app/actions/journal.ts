@@ -9,6 +9,14 @@ import {
 } from "../lib/journalCrypto";
 import { scanForTriggers } from "../lib/triggerScan";
 import { appendAuditEvent } from "../lib/auditLog";
+import {
+  JOURNAL_TYPES,
+  type JournalType,
+  type JournalEntry,
+  type JournalActionResult,
+  type ToolSessionStep,
+  type ToolSessionPayload,
+} from "../lib/journalTypes";
 
 /**
  * Journal CRUD — all guarded by the session cookie, all enforce ownership
@@ -19,65 +27,14 @@ import { appendAuditEvent } from "../lib/auditLog";
  * picks up the change on next render.
  */
 
-export type JournalType =
-  | "daily"
-  | "reflection"
-  | "activity"
-  | "note"
-  | "intention";
-
-export const JOURNAL_TYPES: readonly JournalType[] = [
-  "daily",
-  "reflection",
-  "activity",
-  "note",
-  "intention",
-] as const;
-
-/**
- * Structured payload for `activity` entries created via the Self-Help
- * Tool Walker. Stored as JSON inside the encrypted body so it is not
- * persisted in plaintext anywhere, but is machine-readable when
- * decrypted server-side (for the future AI companion's progression
- * tracking).
- *
- * Plain-text `daily`, `reflection`, `note`, and `intention` entries
- * keep the text as-is in the encrypted body (no JSON wrapping) so the
- * existing UX of "just write something" is preserved.
- */
-export type ToolSessionStep = {
-  heading: string;
-  prompt: string;
-  userAnswer: string;
-};
-
-export type ToolSessionPayload = {
-  kind: "tool_session";
-  version: "v1";
-  toolSlug: string;
-  toolName: string;
-  completedAt: string;
-  steps: ToolSessionStep[];
-  summary?: string;
-};
-
-export type JournalEntry = {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  journalType: JournalType;
-  text: string;
-  toolSession?: ToolSessionPayload;
-};
-
-export type JournalActionResult<T = void> =
-  | (T extends void ? { success: true } : { success: true; data: T })
-  | { success: false; error: string };
-
 /**
  * Internal: parse a decrypted body. If it's a tool-session JSON envelope,
  * return both the structured payload and a human-readable rollup string;
  * otherwise treat as plain text.
+ *
+ * Types and constants for this module live in ../lib/journalTypes.ts —
+ * Next.js Server Actions modules can only export async functions, so
+ * the shared types stay outside this file.
  */
 function parseDecryptedBody(plaintext: string): {
   text: string;

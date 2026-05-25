@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  updateEntry,
-  softDeleteEntry,
-  type JournalEntry,
-  type ToolSessionPayload,
-} from "../../actions/journal";
+import { updateEntry, softDeleteEntry } from "../../actions/journal";
+import type {
+  JournalEntry,
+  ToolSessionPayload,
+} from "../../lib/journalTypes";
 
 /**
  * Client subcomponent that owns the per-entry interaction state.

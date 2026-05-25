@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { createEntry, type JournalType } from "../../actions/journal";
+import { createEntry } from "../../actions/journal";
+import type { JournalType } from "../../lib/journalTypes";
 
 /**
  * /journal/new — write a new entry.

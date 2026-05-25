@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserId } from "../lib/session";
-import { listEntries, type JournalEntry, type JournalType } from "../actions/journal";
+import { listEntries } from "../actions/journal";
+import type { JournalEntry, JournalType } from "../lib/journalTypes";
 
 /**
  * /journal — the user's entries, grouped by type and (for Activity)
