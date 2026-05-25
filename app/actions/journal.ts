@@ -19,16 +19,94 @@ import { appendAuditEvent } from "../lib/auditLog";
  * picks up the change on next render.
  */
 
+export type JournalType =
+  | "daily"
+  | "reflection"
+  | "activity"
+  | "note"
+  | "intention";
+
+export const JOURNAL_TYPES: readonly JournalType[] = [
+  "daily",
+  "reflection",
+  "activity",
+  "note",
+  "intention",
+] as const;
+
+/**
+ * Structured payload for `activity` entries created via the Self-Help
+ * Tool Walker. Stored as JSON inside the encrypted body so it is not
+ * persisted in plaintext anywhere, but is machine-readable when
+ * decrypted server-side (for the future AI companion's progression
+ * tracking).
+ *
+ * Plain-text `daily`, `reflection`, `note`, and `intention` entries
+ * keep the text as-is in the encrypted body (no JSON wrapping) so the
+ * existing UX of "just write something" is preserved.
+ */
+export type ToolSessionStep = {
+  heading: string;
+  prompt: string;
+  userAnswer: string;
+};
+
+export type ToolSessionPayload = {
+  kind: "tool_session";
+  version: "v1";
+  toolSlug: string;
+  toolName: string;
+  completedAt: string;
+  steps: ToolSessionStep[];
+  summary?: string;
+};
+
 export type JournalEntry = {
   id: string;
   createdAt: string;
   updatedAt: string;
+  journalType: JournalType;
   text: string;
+  toolSession?: ToolSessionPayload;
 };
 
 export type JournalActionResult<T = void> =
   | (T extends void ? { success: true } : { success: true; data: T })
   | { success: false; error: string };
+
+/**
+ * Internal: parse a decrypted body. If it's a tool-session JSON envelope,
+ * return both the structured payload and a human-readable rollup string;
+ * otherwise treat as plain text.
+ */
+function parseDecryptedBody(plaintext: string): {
+  text: string;
+  toolSession?: ToolSessionPayload;
+} {
+  // Cheap probe before JSON.parse — tool-session payloads always start
+  // with a {"kind":"tool_session" prefix.
+  const looksLikeToolSession =
+    plaintext.startsWith("{") && plaintext.includes('"kind":"tool_session"');
+  if (!looksLikeToolSession) return { text: plaintext };
+  try {
+    const parsed = JSON.parse(plaintext) as ToolSessionPayload;
+    if (parsed && parsed.kind === "tool_session") {
+      const rollup = [
+        `${parsed.toolName} — completed ${new Date(parsed.completedAt).toLocaleString()}`,
+        ...parsed.steps.map(
+          (s) => `${s.heading}: ${s.userAnswer || "(skipped)"}`
+        ),
+        parsed.summary ? `\nReflection: ${parsed.summary}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+      return { text: rollup, toolSession: parsed };
+    }
+  } catch {
+    // Fall through to plain-text path.
+  }
+  return { text: plaintext };
+}
 
 // Single user-facing message for unauthenticated callers. Routes that
 // have already redirected on a null cookie shouldn't normally hit this,
@@ -39,13 +117,23 @@ const GENERIC = "Something went wrong saving your entry. Please try again.";
 
 /**
  * Create a new entry. Encrypts the text and inserts a row.
+ *
+ * `journalType` defaults to 'daily'. `'activity'` entries created from
+ * the UI should use createToolSession() instead — direct freeform
+ * 'activity' entries are not exposed in the type picker because
+ * activity is reserved for structured tool-session records.
  */
 export async function createEntry(
-  text: string
+  text: string,
+  journalType: JournalType = "daily"
 ): Promise<JournalActionResult<{ id: string }>> {
   try {
     const userId = await getCurrentUserId();
     if (!userId) return { success: false, error: NOT_SIGNED_IN };
+
+    if (!JOURNAL_TYPES.includes(journalType)) {
+      return { success: false, error: "Invalid journal type." };
+    }
 
     const trimmed = (text ?? "").trim();
     if (trimmed.length === 0) {
@@ -58,6 +146,7 @@ export async function createEntry(
       .from("journal_entries")
       .insert({
         user_id: userId,
+        journal_type: journalType,
         ciphertext: payload.ciphertext,
         iv: payload.iv,
         auth_tag: payload.authTag,
@@ -151,7 +240,7 @@ export async function listEntries(): Promise<
     const supabase = supabaseServer();
     const { data, error } = await supabase
       .from("journal_entries")
-      .select("id, ciphertext, iv, auth_tag, created_at, updated_at")
+      .select("id, journal_type, ciphertext, iv, auth_tag, created_at, updated_at")
       .eq("user_id", userId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
@@ -161,16 +250,22 @@ export async function listEntries(): Promise<
       return { success: false, error: GENERIC };
     }
 
-    const entries: JournalEntry[] = (data ?? []).map((row) => ({
-      id: row.id as string,
-      createdAt: row.created_at as string,
-      updatedAt: row.updated_at as string,
-      text: decryptJournalText({
+    const entries: JournalEntry[] = (data ?? []).map((row) => {
+      const plaintext = decryptJournalText({
         ciphertext: row.ciphertext as string,
         iv: row.iv as string,
         authTag: row.auth_tag as string,
-      }),
-    }));
+      });
+      const parsed = parseDecryptedBody(plaintext);
+      return {
+        id: row.id as string,
+        createdAt: row.created_at as string,
+        updatedAt: row.updated_at as string,
+        journalType: (row.journal_type as JournalType) ?? "daily",
+        text: parsed.text,
+        toolSession: parsed.toolSession,
+      };
+    });
 
     return { success: true, data: entries };
   } catch (err) {
@@ -193,7 +288,9 @@ export async function getEntry(
     const supabase = supabaseServer();
     const { data, error } = await supabase
       .from("journal_entries")
-      .select("id, user_id, ciphertext, iv, auth_tag, created_at, updated_at, deleted_at")
+      .select(
+        "id, user_id, journal_type, ciphertext, iv, auth_tag, created_at, updated_at, deleted_at"
+      )
       .eq("id", id)
       .maybeSingle();
 
@@ -206,17 +303,22 @@ export async function getEntry(
       return { success: false, error: NOT_FOUND };
     }
 
+    const plaintext = decryptJournalText({
+      ciphertext: data.ciphertext as string,
+      iv: data.iv as string,
+      authTag: data.auth_tag as string,
+    });
+    const parsed = parseDecryptedBody(plaintext);
+
     return {
       success: true,
       data: {
         id: data.id as string,
         createdAt: data.created_at as string,
         updatedAt: data.updated_at as string,
-        text: decryptJournalText({
-          ciphertext: data.ciphertext as string,
-          iv: data.iv as string,
-          authTag: data.auth_tag as string,
-        }),
+        journalType: (data.journal_type as JournalType) ?? "daily",
+        text: parsed.text,
+        toolSession: parsed.toolSession,
       },
     };
   } catch (err) {
@@ -248,7 +350,7 @@ export async function updateEntry(
     // exists for another user.
     const { data: existing, error: lookupError } = await supabase
       .from("journal_entries")
-      .select("id, user_id, deleted_at")
+      .select("id, user_id, journal_type, deleted_at")
       .eq("id", id)
       .maybeSingle();
 
@@ -258,6 +360,17 @@ export async function updateEntry(
     }
     if (!existing || existing.user_id !== userId || existing.deleted_at !== null) {
       return { success: false, error: NOT_FOUND };
+    }
+
+    // Activity entries (tool-session records) are read-only after save.
+    // Allowing edits would distort the record a future AI companion relies
+    // on to track progression. UI should never present an edit affordance
+    // for these; this server check is defense-in-depth.
+    if (existing.journal_type === "activity") {
+      return {
+        success: false,
+        error: "This activity record is read-only.",
+      };
     }
 
     const payload = encryptJournalText(trimmed);
@@ -332,6 +445,97 @@ export async function softDeleteEntry(
     return { success: true };
   } catch (err) {
     console.error("softDeleteEntry exception:", err);
+    return { success: false, error: GENERIC };
+  }
+}
+
+/**
+ * Persist a completed tool-session walkthrough as an Activity journal
+ * entry. Builds a structured JSON payload (steps + user answers + metadata),
+ * encrypts it identically to a free-text entry, and stores it with
+ * journal_type='activity'. The payload format is documented in
+ * ToolSessionPayload and is intentionally machine-readable so a future
+ * AI companion can decrypt + parse to track progression across sessions.
+ *
+ * Activity entries are read-only after save (see updateEntry guard).
+ */
+export async function createToolSession(input: {
+  toolSlug: string;
+  toolName: string;
+  steps: ToolSessionStep[];
+  summary?: string;
+}): Promise<JournalActionResult<{ id: string }>> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return { success: false, error: NOT_SIGNED_IN };
+
+    if (!input.toolSlug || !input.toolName || !Array.isArray(input.steps)) {
+      return { success: false, error: "Invalid tool session." };
+    }
+    if (input.steps.length === 0) {
+      return { success: false, error: "Tool session had no steps." };
+    }
+
+    // Normalize answers — empty answers become empty strings, not undefined.
+    const normalizedSteps: ToolSessionStep[] = input.steps.map((s) => ({
+      heading: String(s.heading ?? "").slice(0, 200),
+      prompt: String(s.prompt ?? "").slice(0, 1000),
+      userAnswer: String(s.userAnswer ?? "").trim(),
+    }));
+
+    // We require at least one non-empty answer so we don't fill the
+    // journal with completion-without-engagement rows. If you wanted to
+    // log mere completions, lift this.
+    const anyAnswer = normalizedSteps.some((s) => s.userAnswer.length > 0);
+    if (!anyAnswer) {
+      return {
+        success: false,
+        error: "Add a note to at least one step before saving.",
+      };
+    }
+
+    const payload: ToolSessionPayload = {
+      kind: "tool_session",
+      version: "v1",
+      toolSlug: input.toolSlug,
+      toolName: input.toolName,
+      completedAt: new Date().toISOString(),
+      steps: normalizedSteps,
+      summary: input.summary?.trim() || undefined,
+    };
+
+    const encrypted = encryptJournalText(JSON.stringify(payload));
+    const supabase = supabaseServer();
+    const { data, error } = await supabase
+      .from("journal_entries")
+      .insert({
+        user_id: userId,
+        journal_type: "activity",
+        ciphertext: encrypted.ciphertext,
+        iv: encrypted.iv,
+        auth_tag: encrypted.authTag,
+      })
+      .select("id")
+      .single();
+
+    if (error || !data) {
+      console.error("createToolSession DB error:", error);
+      return { success: false, error: GENERIC };
+    }
+
+    // Run the same best-effort trigger scan as on a manual entry. We
+    // pass the rolled-up text (step answers concatenated) so phrases
+    // spanning multiple step answers are scanned together.
+    const scanText = normalizedSteps
+      .map((s) => `${s.heading}: ${s.userAnswer}`)
+      .concat(payload.summary ? [`Summary: ${payload.summary}`] : [])
+      .join("\n");
+    await runSafetyScan(supabase, scanText, userId, data.id as string);
+
+    revalidatePath("/journal");
+    return { success: true, data: { id: data.id as string } };
+  } catch (err) {
+    console.error("createToolSession exception:", err);
     return { success: false, error: GENERIC };
   }
 }

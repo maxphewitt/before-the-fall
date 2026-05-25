@@ -1,20 +1,49 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { createEntry } from "../../actions/journal";
+import { createEntry, type JournalType } from "../../actions/journal";
 
 /**
  * /journal/new — write a new entry.
  *
- * Client component because we hold the draft text in state until submit.
- * The listing page is gated; if a logged-out user somehow lands here,
- * the action will reject and surface the "you're not signed in" message.
+ * Client component because we hold the draft text + chosen type in
+ * state until submit. The listing page is gated; if a logged-out user
+ * somehow lands here, the action will reject and surface the "you're
+ * not signed in" message.
+ *
+ * 'activity' is intentionally NOT in the type picker. Activity entries
+ * are created by the Self-Help Tool Walker so they always have a
+ * structured payload. A freeform "I went for a walk today" belongs
+ * under Daily or Note.
  */
+
+type PickableType = Exclude<JournalType, "activity">;
+
+const TYPE_OPTIONS: { value: PickableType; label: string; blurb: string }[] = [
+  { value: "daily", label: "Daily", blurb: "Day-to-day writing." },
+  { value: "reflection", label: "Reflection", blurb: "Longer thinking, after the fact." },
+  { value: "note", label: "Note", blurb: "Quick capture." },
+  { value: "intention", label: "Intention", blurb: "What you're carrying to God this week." },
+];
+
 export default function NewEntryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // ?type=intention lets the Catholic Path → Prayer Intentions tile
+  // deep-link straight into an intention entry without forcing the
+  // user to pick the type by hand. Falls back to daily.
+  const initialType = (() => {
+    const q = searchParams.get("type");
+    return TYPE_OPTIONS.some((t) => t.value === q)
+      ? (q as PickableType)
+      : "daily";
+  })();
+
   const [text, setText] = useState("");
+  const [journalType, setJournalType] = useState<PickableType>(initialType);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +53,7 @@ export default function NewEntryPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await createEntry(text);
+      const res = await createEntry(text, journalType);
       if (res.success) {
         router.push("/journal");
         router.refresh();
@@ -60,6 +89,36 @@ export default function NewEntryPage() {
         </p>
 
         <form onSubmit={onSubmit}>
+          <fieldset className="mb-6" disabled={submitting}>
+            <legend className="text-[11px] tracking-[0.25em] uppercase text-btf-text-light font-semibold mb-3">
+              Type
+            </legend>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {TYPE_OPTIONS.map((opt) => {
+                const active = journalType === opt.value;
+                return (
+                  <button
+                    type="button"
+                    key={opt.value}
+                    onClick={() => setJournalType(opt.value)}
+                    aria-pressed={active}
+                    className={
+                      "rounded-xl border-2 px-3 py-3 text-left text-sm transition-all " +
+                      (active
+                        ? "border-btf-sky bg-btf-sky-pale/40 text-btf-sky-deep shadow-sm"
+                        : "border-btf-sky-pale/60 bg-white text-btf-text-mid hover:border-btf-sky-light")
+                    }
+                  >
+                    <span className="block font-medium mb-0.5">{opt.label}</span>
+                    <span className="block text-[11px] font-light text-btf-text-light leading-snug">
+                      {opt.blurb}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}

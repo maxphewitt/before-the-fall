@@ -6,17 +6,23 @@ import {
   updateEntry,
   softDeleteEntry,
   type JournalEntry,
+  type ToolSessionPayload,
 } from "../../actions/journal";
 
 /**
- * Client subcomponent that owns the per-entry interaction state:
- * view ↔ edit modes, save handler, delete confirmation.
- * The parent server component already authenticated the user and
- * decrypted the entry; this component never touches plaintext that
- * the parent didn't already vouch for.
+ * Client subcomponent that owns the per-entry interaction state.
+ *
+ * Behavior splits on journal_type:
+ *   - 'activity' (tool-session records): read-only. Renders the
+ *     structured step layout from the decrypted JSON payload. Edit
+ *     affordance hidden; delete still available because the user owns
+ *     their data.
+ *   - everything else: existing view ↔ edit ↔ delete flow.
  */
 export default function EntryEditor({ entry }: { entry: JournalEntry }) {
   const router = useRouter();
+  const isActivity = entry.journalType === "activity";
+
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(entry.text);
   const [submitting, setSubmitting] = useState(false);
@@ -73,22 +79,26 @@ export default function EntryEditor({ entry }: { entry: JournalEntry }) {
     }
   }
 
+  const typeLabel = TYPE_LABEL[entry.journalType] ?? "Entry";
+
   return (
     <div>
       <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3">
-        {editing ? "Editing entry" : "Entry"}
+        {editing ? "Editing entry" : typeLabel}
       </p>
       <p className="text-xs text-btf-text-light font-light mb-1">
         Written {createdAt}
       </p>
-      {wasEdited && (
+      {wasEdited && !isActivity && (
         <p className="text-xs text-btf-text-light/80 font-light mb-1">
           Last edited {updatedAt}
         </p>
       )}
 
       <div className="mt-6">
-        {editing ? (
+        {isActivity && entry.toolSession ? (
+          <ToolSessionView session={entry.toolSession} />
+        ) : editing ? (
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -117,7 +127,17 @@ export default function EntryEditor({ entry }: { entry: JournalEntry }) {
       )}
 
       <div className="mt-6 flex flex-col sm:flex-row gap-3">
-        {editing ? (
+        {isActivity ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="flex-1 bg-white border-2 border-btf-text-light/30 text-btf-text-mid font-medium px-8 py-3.5 rounded-full hover:bg-btf-off-white transition-colors"
+            >
+              Delete
+            </button>
+          </>
+        ) : editing ? (
           <>
             <button
               type="button"
@@ -197,6 +217,65 @@ export default function EntryEditor({ entry }: { entry: JournalEntry }) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  daily: "Daily journal",
+  reflection: "Reflection",
+  activity: "Activity",
+  note: "Note",
+  intention: "Intention",
+};
+
+function ToolSessionView({ session }: { session: ToolSessionPayload }) {
+  return (
+    <div className="rounded-2xl bg-white border-2 border-btf-gold-pale shadow-sm overflow-hidden">
+      <div className="bg-btf-gold-pale/50 px-5 py-4 border-b border-btf-gold-pale">
+        <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold font-semibold mb-1">
+          Self-help session · read-only
+        </p>
+        <p className="font-serif text-xl text-btf-sky-deep font-light">
+          {session.toolName}
+        </p>
+      </div>
+
+      <ol className="divide-y divide-btf-sky-pale/50">
+        {session.steps.map((step, i) => (
+          <li key={i} className="px-5 py-4">
+            <p className="text-[10px] tracking-[0.2em] uppercase text-btf-text-light font-semibold mb-1">
+              Step {i + 1}
+            </p>
+            <p className="text-sm font-medium text-btf-sky-deep mb-1">
+              {step.heading}
+            </p>
+            {step.prompt && (
+              <p className="text-xs text-btf-text-light font-light leading-relaxed mb-2">
+                {step.prompt}
+              </p>
+            )}
+            <p className="text-sm text-btf-text-dark font-light leading-relaxed whitespace-pre-line">
+              {step.userAnswer || (
+                <span className="italic text-btf-text-light">
+                  (no note recorded)
+                </span>
+              )}
+            </p>
+          </li>
+        ))}
+      </ol>
+
+      {session.summary && (
+        <div className="bg-btf-sky-pale/30 px-5 py-4 border-t border-btf-sky-pale/60">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky-deep font-semibold mb-1">
+            Reflection
+          </p>
+          <p className="text-sm text-btf-text-dark font-light leading-relaxed whitespace-pre-line">
+            {session.summary}
+          </p>
         </div>
       )}
     </div>

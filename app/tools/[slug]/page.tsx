@@ -94,6 +94,19 @@ export default async function ExercisePage({
           )}
         </section>
 
+        {/* Start walker CTA */}
+        <div className="mb-5">
+          <Link
+            href={`/tools/${ex.slug}/start`}
+            className="block w-full text-center bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-8 py-4 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform"
+          >
+            Start walking through it →
+          </Link>
+          <p className="text-xs text-btf-text-light font-light text-center mt-2">
+            We&rsquo;ll guide you step by step and save your notes to your journal.
+          </p>
+        </div>
+
         {/* Mechanism */}
         <section className="rounded-2xl bg-white border border-btf-sky-pale p-6 mb-5">
           <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky font-semibold mb-2">
