@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createUser, type ProfileData } from "../actions/createUser";
+import { lookupLovedOneIntake } from "../actions/lovedOne";
 
 // ============================================
 // Value mappings — UI labels are human; stored values are normalized
@@ -95,7 +96,16 @@ const TOTAL_QUESTIONS = 7; // for the progress bar
 // ============================================
 
 export default function OnboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <OnboardFlow />
+    </Suspense>
+  );
+}
+
+function OnboardFlow() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<ProfileData>({
     framing: "",
@@ -110,20 +120,69 @@ export default function OnboardPage() {
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Loved-one referral state.
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralApplied, setReferralApplied] = useState(false);
+  const referralLookupAttempted = useRef(false);
+
+  // If ?code= is present, look it up server-side and pre-fill the
+  // populations/duration/faith_role fields. Stays best-effort — if the
+  // code is invalid or expired we silently fall through to a normal
+  // onboarding.
+  useEffect(() => {
+    const raw = searchParams.get("code");
+    if (!raw || referralLookupAttempted.current) return;
+    referralLookupAttempted.current = true;
+    (async () => {
+      try {
+        const res = await lookupLovedOneIntake(raw);
+        if (!res.success) return;
+        const answers = res.data;
+        // CSO faith_context → onboard faith_role mapping.
+        const faithRole = (() => {
+          switch (answers.faithContext) {
+            case "catholic_active":
+            case "catholic_lapsed":
+              return "growing_closer";
+            case "other_faith":
+              return "open";
+            case "secular":
+              return "secular";
+            default:
+              return "";
+          }
+        })();
+        setProfile((p) => ({
+          ...p,
+          populations: answers.populations.length > 0 ? answers.populations : p.populations,
+          duration: answers.duration || p.duration,
+          faith_role: faithRole || p.faith_role,
+        }));
+        setReferralCode(raw);
+        setReferralApplied(true);
+      } catch (err) {
+        console.warn("Referral code lookup failed:", err);
+      }
+    })();
+  }, [searchParams]);
 
   function advance() {
     setStep((s) => s + 1);
   }
 
   function setFraming(value: string) {
-    const isLovedOne = value === "loved_one";
+    // "Someone I love is in trouble" → route to the dedicated CSO flow
+    // instead of continuing here. The CSO is not the user.
+    if (value === "loved_one") {
+      router.push("/loved-one");
+      return;
+    }
     setProfile((p) => ({
       ...p,
       framing: value,
-      here_for: isLovedOne ? "loved_one" : "self",
+      here_for: "self",
     }));
-    // If loved_one, next step is the banner (step 2). Otherwise skip to Q2 (step 3).
-    setStep(isLovedOne ? 2 : 3);
+    setStep(3);
   }
 
   function togglePopulation(value: string) {
@@ -142,7 +201,10 @@ export default function OnboardPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await createUser(profile);
+      const res = await createUser(
+        profile,
+        referralCode ? { lovedOneCode: referralCode } : undefined
+      );
       if (res.success) {
         setRecoveryCode(res.recoveryCode);
         setStep(10);
@@ -182,6 +244,21 @@ export default function OnboardPage() {
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
       <div className="max-w-2xl mx-auto">
+        {/* Referral pre-fill banner — only shown when a valid ?code= was applied. */}
+        {referralApplied && step > 0 && step < 10 && (
+          <div
+            role="status"
+            className="rounded-2xl bg-btf-gold-pale/60 border border-btf-gold/40 px-5 py-4 mb-6"
+          >
+            <p className="text-[10px] tracking-[0.25em] uppercase text-btf-sky-deep font-semibold mb-1">
+              Someone who cares about you helped set this up
+            </p>
+            <p className="text-sm text-btf-text-mid font-light leading-relaxed">
+              A few of these answers are pre-filled based on what they shared. They can&rsquo;t see your answers, only the platform can &mdash; and you can change anything below.
+            </p>
+          </div>
+        )}
+
         {/* Progress bar (hidden on welcome and final reveal) */}
         {step > 0 && step < 10 && (
           <div className="h-1 bg-btf-sky-pale rounded-full mb-10 overflow-hidden">

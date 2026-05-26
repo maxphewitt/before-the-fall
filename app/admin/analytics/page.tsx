@@ -33,6 +33,11 @@ type Metrics = {
   populationBreakdown: { population: string; users: number }[];
   habitCompletionBreakdown: { habit_slug: string; total: number }[];
   perDayLast30: { date: string; activeUsers: number; completions: number }[];
+  // Loved-one (CSO) referral metrics.
+  csoCodesGenerated: number;
+  csoCodesRedeemed: number;
+  csoRedemptionRate: number;
+  csoMedianTimeToRedemptionDays: number | null;
 };
 
 async function fetchMetrics(): Promise<Metrics> {
@@ -158,6 +163,41 @@ async function fetchMetrics(): Promise<Metrics> {
     });
   }
 
+  // Loved-one (CSO) referral metrics — codes generated, redeemed,
+  // redemption rate, and median time-to-redemption in days. Closed-beta
+  // scale is small enough that fetching the rows and computing in JS
+  // is fine.
+  const { count: csoCodesGenerated } = await supabase
+    .from("loved_one_intake")
+    .select("id", { count: "exact", head: true });
+
+  const { data: csoRedeemedRows } = await supabase
+    .from("loved_one_intake")
+    .select("created_at, redeemed_at")
+    .not("redeemed_at", "is", null);
+
+  const csoCodesRedeemed = (csoRedeemedRows ?? []).length;
+  const csoRedemptionRate =
+    csoCodesGenerated && csoCodesGenerated > 0
+      ? csoCodesRedeemed / csoCodesGenerated
+      : 0;
+
+  let csoMedianTimeToRedemptionDays: number | null = null;
+  if (csoCodesRedeemed > 0) {
+    const deltas = (csoRedeemedRows ?? [])
+      .map((r) => {
+        const createdAt = new Date(r.created_at as string).getTime();
+        const redeemedAt = new Date(r.redeemed_at as string).getTime();
+        return (redeemedAt - createdAt) / (1000 * 60 * 60 * 24);
+      })
+      .sort((a, b) => a - b);
+    const mid = Math.floor(deltas.length / 2);
+    csoMedianTimeToRedemptionDays =
+      deltas.length % 2 === 0
+        ? (deltas[mid - 1] + deltas[mid]) / 2
+        : deltas[mid];
+  }
+
   return {
     totalUsers: totalUsers ?? 0,
     dau,
@@ -172,6 +212,10 @@ async function fetchMetrics(): Promise<Metrics> {
     populationBreakdown,
     habitCompletionBreakdown,
     perDayLast30,
+    csoCodesGenerated: csoCodesGenerated ?? 0,
+    csoCodesRedeemed,
+    csoRedemptionRate,
+    csoMedianTimeToRedemptionDays,
   };
 }
 
@@ -225,6 +269,36 @@ export default async function AnalyticsPage() {
           <Stat label="Incidents · pending" value={m.pendingIncidents} accent />
           <Stat label="Incidents · total" value={m.totalIncidents} />
         </div>
+
+        {/* Loved-one (CSO) referral metrics */}
+        <section className="mb-10">
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold font-semibold mb-3">
+            Loved-one referral codes
+          </p>
+          <p className="text-xs text-btf-text-mid font-light leading-relaxed mb-4">
+            Concerned Significant Other (CSO) engagement metrics. CRAFT
+            literature predicts 60–70% redemption in mature programs;
+            below that is normal during beta while word-of-mouth ramps.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Stat label="Codes generated" value={m.csoCodesGenerated} />
+            <Stat label="Codes redeemed" value={m.csoCodesRedeemed} />
+            <Stat
+              label="Redemption rate"
+              value={Math.round(m.csoRedemptionRate * 100)}
+              suffix="%"
+            />
+            <Stat
+              label="Median time to redeem"
+              value={
+                m.csoMedianTimeToRedemptionDays !== null
+                  ? Math.round(m.csoMedianTimeToRedemptionDays * 10) / 10
+                  : 0
+              }
+              suffix={m.csoMedianTimeToRedemptionDays !== null ? " d" : ""}
+            />
+          </div>
+        </section>
 
         {/* Population breakdown */}
         <section className="mb-10">
@@ -327,10 +401,12 @@ function Stat({
   label,
   value,
   accent,
+  suffix,
 }: {
   label: string;
   value: number;
   accent?: boolean;
+  suffix?: string;
 }) {
   return (
     <div
@@ -346,6 +422,7 @@ function Stat({
       </p>
       <p className="font-serif text-3xl text-btf-sky-deep font-light tabular-nums">
         {value}
+        {suffix ?? ""}
       </p>
     </div>
   );

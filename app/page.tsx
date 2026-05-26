@@ -85,7 +85,7 @@ export default async function Home() {
           <Link href="/onboard" className="flex-1 flex items-center justify-center bg-gradient-to-br from-btf-gold to-btf-gold-light text-btf-sky-deep font-medium px-8 py-4 rounded-full shadow-lg shadow-btf-gold/30 hover:-translate-y-0.5 transition-transform">
           Get help now
          </Link>
-         <Link href="/onboard" className="flex-1 flex items-center justify-center bg-white/10 border border-white/30 text-white/90 font-light px-6 py-4 rounded-full backdrop-blur-sm hover:bg-white/20 transition-colors">
+         <Link href="/loved-one" className="flex-1 flex items-center justify-center bg-white/10 border border-white/30 text-white/90 font-light px-6 py-4 rounded-full backdrop-blur-sm hover:bg-white/20 transition-colors">
          Worried about someone you love?
          </Link>
           </div>

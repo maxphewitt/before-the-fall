@@ -6,6 +6,7 @@ import { setSessionCookie } from "../lib/session";
 import { getSafetyMetadata } from "../lib/safetyMetadata";
 import { mapOnboardingPopulation, type PopulationSlug } from "../lib/habits";
 import { seedDefaultHabitsForUser } from "./habits";
+import { redeemLovedOneIntake } from "./lovedOne";
 
 export type ProfileData = {
   framing: string;
@@ -34,7 +35,10 @@ export type CreateUserResult =
  * Returns the PLAINTEXT recovery code to the client one time only.
  * After this call, the platform has no way to reproduce the code.
  */
-export async function createUser(profile: ProfileData): Promise<CreateUserResult> {
+export async function createUser(
+  profile: ProfileData,
+  options?: { lovedOneCode?: string }
+): Promise<CreateUserResult> {
   try {
     const recoveryCode = generateRecoveryCode();
     const hash = hashRecoveryCode(recoveryCode);
@@ -109,6 +113,19 @@ export async function createUser(profile: ProfileData): Promise<CreateUserResult
       });
     } catch (err) {
       console.error("seedDefaultHabitsForUser failed (non-fatal):", err);
+    }
+
+    // 6) Redeem the loved-one referral code if one was provided.
+    // Best-effort; if it fails the user still gets their account.
+    if (options?.lovedOneCode) {
+      try {
+        await redeemLovedOneIntake({
+          rawCode: options.lovedOneCode,
+          userId: userData.id,
+        });
+      } catch (err) {
+        console.error("redeemLovedOneIntake failed (non-fatal):", err);
+      }
     }
 
     return { success: true, recoveryCode, userId: userData.id };
