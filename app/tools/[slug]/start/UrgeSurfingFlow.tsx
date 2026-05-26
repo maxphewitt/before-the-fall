@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   Shell,
   PrimaryButton,
   GhostButton,
   IntensitySlider,
-  ChoiceGrid,
   CRISIS_NEXT_STEP,
   useAutoSave,
 } from "./_shared";
@@ -177,7 +177,7 @@ export default function UrgeSurfingFlow() {
 
       <div className="space-y-3 mt-10">
         {finalRating >= 6 && (
-          <a
+          <Link
             href="/tools/tipp/start"
             className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
           >
@@ -185,9 +185,9 @@ export default function UrgeSurfingFlow() {
             <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
               If it&rsquo;s still loud, TIPP works on the body when thinking-based tools aren&rsquo;t enough.
             </p>
-          </a>
+          </Link>
         )}
-        <a
+        <Link
           href="/tools/box-breathing/start"
           className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
         >
@@ -195,7 +195,7 @@ export default function UrgeSurfingFlow() {
           <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
             A minute or two of paced breath to settle the rest of the way.
           </p>
-        </a>
+        </Link>
         <a
           href={CRISIS_NEXT_STEP.href}
           className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
@@ -205,7 +205,7 @@ export default function UrgeSurfingFlow() {
             {CRISIS_NEXT_STEP.description}
           </p>
         </a>
-        <a
+        <Link
           href="/tools"
           className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
         >
@@ -213,7 +213,7 @@ export default function UrgeSurfingFlow() {
           <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
             See the other Tier 1 exercises.
           </p>
-        </a>
+        </Link>
       </div>
     </Shell>
   );
@@ -234,38 +234,33 @@ function WaveSession({
   onComplete: () => void;
   onEndEarly: () => void;
 }) {
-  const startedAt = useRef<number>(Date.now());
+  const startedAtRef = useRef<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
-  const [promptOpen, setPromptOpen] = useState(false);
-  const [promptForSecond, setPromptForSecond] = useState<number | null>(null);
-  const [tempRating, setTempRating] = useState<number>(initialIntensity);
 
+  // Initialize the start time after mount so we don't call Date.now()
+  // during render (which fails react-hooks/purity in React 19).
   useEffect(() => {
+    startedAtRef.current = Date.now();
     const id = setInterval(() => {
-      const e = Math.floor((Date.now() - startedAt.current) / 1000);
+      if (startedAtRef.current === null) return;
+      const e = Math.floor((Date.now() - startedAtRef.current) / 1000);
       setElapsed(e);
     }, 250);
     return () => clearInterval(id);
   }, []);
 
-  // Open the re-rate prompt when we cross each checkpoint that hasn't
-  // been answered yet.
-  useEffect(() => {
-    if (promptOpen) return;
-    const next = CHECKPOINTS.find(
+  // Derived during render — no setState in effect, no useEffect that
+  // mirrors state. `promptForSecond` is just "first checkpoint reached
+  // that the user hasn't answered yet" computed from elapsed + ratings.
+  const promptForSecond =
+    CHECKPOINTS.find(
       (cp) => elapsed >= cp && !ratings.some((r) => r.atSecond === cp)
-    );
-    if (next !== undefined) {
-      setPromptForSecond(next);
-      setTempRating(
-        ratings[ratings.length - 1]?.value ?? initialIntensity
-      );
-      setPromptOpen(true);
-    }
-  }, [elapsed, ratings, promptOpen, initialIntensity]);
+    ) ?? null;
+  const promptOpen = promptForSecond !== null;
 
   // Complete the session once we hit total seconds AND the final
-  // checkpoint has been answered.
+  // checkpoint has been answered. Side-effect lives in an effect; no
+  // setState here, only the parent's onComplete callback.
   useEffect(() => {
     if (
       elapsed >= SESSION_SECONDS &&
@@ -276,11 +271,9 @@ function WaveSession({
     }
   }, [elapsed, ratings, promptOpen, onComplete]);
 
-  function submitRating() {
+  function submitRating(value: number) {
     if (promptForSecond === null) return;
-    onRating({ atSecond: promptForSecond, value: tempRating });
-    setPromptOpen(false);
-    setPromptForSecond(null);
+    onRating({ atSecond: promptForSecond, value });
   }
 
   const tNorm = Math.min(1, elapsed / SESSION_SECONDS);
@@ -316,39 +309,73 @@ function WaveSession({
 
       {/* Re-rate prompt — modal-style sheet */}
       {promptOpen && promptForSecond !== null && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="rerate-title"
-          className="fixed inset-0 z-50 bg-btf-sky-deep/90 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
-        >
-          <div className="bg-btf-sky-deep border border-white/15 rounded-3xl max-w-md w-full p-6 shadow-2xl">
-            <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2 text-center">
-              {formatMinSec(promptForSecond)} in
-            </p>
-            <h2
-              id="rerate-title"
-              className="font-serif text-2xl text-white font-light mb-6 text-center"
-            >
-              Where is it now?
-            </h2>
-            <IntensitySlider
-              value={tempRating}
-              onChange={setTempRating}
-              min={1}
-              max={10}
-              leftLabel="1 · barely there"
-              rightLabel="10 · about to act"
-            />
-            <div className="mt-8">
-              <PrimaryButton onClick={submitRating}>
-                Keep going →
-              </PrimaryButton>
-            </div>
-          </div>
-        </div>
+        <RerateDialog
+          key={promptForSecond}
+          atSecond={promptForSecond}
+          initialValue={
+            ratings[ratings.length - 1]?.value ?? initialIntensity
+          }
+          onSubmit={(value) => submitRating(value)}
+        />
       )}
     </Shell>
+  );
+}
+
+/* ─── Re-rate dialog ──────────────────────────────────────────── */
+
+/**
+ * Modal sheet that opens at each checkpoint to ask "where is the urge
+ * now?". Owns its own slider state so we can derive `promptOpen` in the
+ * parent without mirroring slider value through React state in the
+ * parent (which would trip the new react-hooks/set-state-in-effect rule).
+ *
+ * Remounted whenever `promptForSecond` changes (via React `key={}`),
+ * which is how the slider resets to the prior rating between
+ * checkpoints.
+ */
+function RerateDialog({
+  atSecond,
+  initialValue,
+  onSubmit,
+}: {
+  atSecond: number;
+  initialValue: number;
+  onSubmit: (value: number) => void;
+}) {
+  const [value, setValue] = useState<number>(initialValue);
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="rerate-title"
+      className="fixed inset-0 z-50 bg-btf-sky-deep/90 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+    >
+      <div className="bg-btf-sky-deep border border-white/15 rounded-3xl max-w-md w-full p-6 shadow-2xl">
+        <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2 text-center">
+          {formatMinSec(atSecond)} in
+        </p>
+        <h2
+          id="rerate-title"
+          className="font-serif text-2xl text-white font-light mb-6 text-center"
+        >
+          Where is it now?
+        </h2>
+        <IntensitySlider
+          value={value}
+          onChange={setValue}
+          min={1}
+          max={10}
+          leftLabel="1 · barely there"
+          rightLabel="10 · about to act"
+        />
+        <div className="mt-8">
+          <PrimaryButton onClick={() => onSubmit(value)}>
+            Keep going →
+          </PrimaryButton>
+        </div>
+      </div>
+    </div>
   );
 }
 

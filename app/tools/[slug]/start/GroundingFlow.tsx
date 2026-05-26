@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Shell,
   PrimaryButton,
-  ClosingScreen,
   CRISIS_NEXT_STEP,
   useAutoSave,
   type NextStep,
@@ -72,7 +71,6 @@ const SENSES: SenseStep[] = [
 ];
 
 export default function GroundingFlow() {
-  const router = useRouter();
   const [stepIdx, setStepIdx] = useState(0); // 0..4 = senses; 5 = closing
   const [answers, setAnswers] = useState<string[]>(SENSES.map(() => ""));
 
@@ -218,21 +216,31 @@ export default function GroundingFlow() {
 function NextStepsList({ steps }: { steps: NextStep[] }) {
   return (
     <div className="space-y-3">
-      {steps.map((step) => (
-        <a
-          key={step.label}
-          href={step.href}
-          className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-        >
-          <p className="font-medium text-white">{step.label}</p>
-          {step.description && (
-            <p
-              className="text-xs text-white/65 font-light mt-1 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: step.description }}
-            />
-          )}
-        </a>
-      ))}
+      {steps.map((step) => {
+        const isInternal = step.href.startsWith("/");
+        const className =
+          "block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all";
+        const content = (
+          <>
+            <p className="font-medium text-white">{step.label}</p>
+            {step.description && (
+              <p
+                className="text-xs text-white/65 font-light mt-1 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: step.description }}
+              />
+            )}
+          </>
+        );
+        return isInternal ? (
+          <Link key={step.label} href={step.href} className={className}>
+            {content}
+          </Link>
+        ) : (
+          <a key={step.label} href={step.href} className={className}>
+            {content}
+          </a>
+        );
+      })}
     </div>
   );
 }

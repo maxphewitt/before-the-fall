@@ -211,6 +211,9 @@ export function Timer({
     return () => clearInterval(id);
   }, []);
 
+  // Fire onComplete once when the countdown reaches zero. Ref guards
+  // against React strict-mode double-invocation. Lives in an effect
+  // because React 19 forbids reading refs during render.
   useEffect(() => {
     if (remaining <= 0 && !fired.current) {
       fired.current = true;
@@ -294,22 +297,26 @@ export function BreathingCircle({
 }) {
   const PHASES = ["Inhale", "Hold", "Exhale", "Hold"] as const;
   const [tick, setTick] = useState(0); // total seconds elapsed
-  const [done, setDone] = useState(false);
+  const fired = useRef(false);
   const cycleSeconds = secondsPerPhase * 4;
   const totalSeconds = cycleSeconds * rounds;
 
   useEffect(() => {
-    if (done) return;
     const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
-  }, [done]);
+  }, []);
 
+  // Fire onComplete once when the round count is hit. We don't track
+  // "done" as state — the parent unmounts this component on the next
+  // step, which cleans up the interval. A ref guard prevents firing
+  // twice if React strict-mode double-invokes. Lives in an effect
+  // because React 19 forbids reading refs during render.
   useEffect(() => {
-    if (tick >= totalSeconds && !done) {
-      setDone(true);
+    if (tick >= totalSeconds && !fired.current) {
+      fired.current = true;
       onComplete();
     }
-  }, [tick, totalSeconds, done, onComplete]);
+  }, [tick, totalSeconds, onComplete]);
 
   const inCycleSecond = tick % cycleSeconds;
   const phaseIdx = Math.floor(inCycleSecond / secondsPerPhase);

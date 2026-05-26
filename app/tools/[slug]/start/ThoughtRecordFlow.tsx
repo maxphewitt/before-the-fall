@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Shell,
   PrimaryButton,
-  GhostButton,
   IntensitySlider,
   CRISIS_NEXT_STEP,
   useAutoSave,
@@ -118,7 +118,7 @@ export default function ThoughtRecordFlow() {
         )}
 
         <div className="space-y-3 mt-10">
-          <a
+          <Link
             href="/tools/stop/start"
             className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
           >
@@ -126,7 +126,7 @@ export default function ThoughtRecordFlow() {
             <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
               Lock in the gap. The thought just had to defend itself; the next one will too.
             </p>
-          </a>
+          </Link>
           <a
             href={CRISIS_NEXT_STEP.href}
             className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
@@ -136,12 +136,12 @@ export default function ThoughtRecordFlow() {
               {CRISIS_NEXT_STEP.description}
             </p>
           </a>
-          <a
+          <Link
             href="/tools"
             className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
           >
             <p className="font-medium text-white">Back to all tools</p>
-          </a>
+          </Link>
         </div>
       </Shell>
     );

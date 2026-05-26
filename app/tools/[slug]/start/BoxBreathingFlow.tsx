@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Shell,
   PrimaryButton,
@@ -177,7 +178,7 @@ export default function BoxBreathingFlow() {
 
           <div className="space-y-3">
             {outcome !== "calmer" && (
-              <a
+              <Link
                 href="/tools/tipp/start"
                 className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
               >
@@ -185,9 +186,9 @@ export default function BoxBreathingFlow() {
                 <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
                   Cold water, intense exercise, paced breath, muscle release. Built for when breath alone isn&rsquo;t enough.
                 </p>
-              </a>
+              </Link>
             )}
-            <a
+            <Link
               href="/tools/grounding/start"
               className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
             >
@@ -195,7 +196,7 @@ export default function BoxBreathingFlow() {
               <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
                 Pull yourself back into the room one sense at a time.
               </p>
-            </a>
+            </Link>
             <a
               href={CRISIS_NEXT_STEP.href}
               className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
@@ -205,7 +206,7 @@ export default function BoxBreathingFlow() {
                 {CRISIS_NEXT_STEP.description}
               </p>
             </a>
-            <a
+            <Link
               href="/tools"
               className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
             >
@@ -213,7 +214,7 @@ export default function BoxBreathingFlow() {
               <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
                 See the other Tier 1 exercises.
               </p>
-            </a>
+            </Link>
           </div>
         </>
       )}

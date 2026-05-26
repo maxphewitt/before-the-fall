@@ -203,7 +203,7 @@ export default function IncidentEditor({
           htmlFor="admin-notes"
           className="block text-[10px] tracking-[0.25em] uppercase text-btf-text-light font-semibold mb-2"
         >
-          Notes (PII-free; admin's own words on rationale)
+          Notes (PII-free; admin&rsquo;s own words on rationale)
         </label>
         <textarea
           id="admin-notes"
