@@ -1,17 +1,23 @@
 import { notFound, redirect } from "next/navigation";
 import { EXERCISES, getExerciseBySlug } from "../../../lib/tools";
 import { getCurrentUserId } from "../../../lib/session";
-import ToolWalker from "./ToolWalker";
+import StopFlow from "./StopFlow";
+import UrgeSurfingFlow from "./UrgeSurfingFlow";
+import BoxBreathingFlow from "./BoxBreathingFlow";
+import GroundingFlow from "./GroundingFlow";
+import TippFlow from "./TippFlow";
+import ThoughtRecordFlow from "./ThoughtRecordFlow";
 
 /**
- * /tools/[slug]/start — the interactive walker for one Tier 1 exercise.
+ * /tools/[slug]/start — interactive walker for one Tier 1 exercise.
  *
- * Server component handles auth + tool lookup, then hands off to the
- * client component for the step-by-step flow.
+ * Each tool has its own bespoke flow (one tile per letter, timers,
+ * animated wave, breathing circle, etc.) rather than a generic
+ * step-by-step renderer. The slug determines which flow renders.
  *
- * Unauthenticated users are bounced to /return so they sign back in. The
- * /tools/[slug] static description remains public; only the walker (which
- * saves to journal) requires identity.
+ * Server component handles auth + lookup, then hands off to the
+ * tool-specific client component for the interactive portion. Unauth
+ * users are bounced to /return so they sign back in.
  *
  * In Next 15+, dynamic route `params` is a Promise. Await it.
  */
@@ -37,5 +43,22 @@ export default async function ToolStartPage({
     redirect("/return");
   }
 
-  return <ToolWalker exercise={ex} />;
+  switch (slug) {
+    case "stop":
+      return <StopFlow />;
+    case "urge-surfing":
+      return <UrgeSurfingFlow />;
+    case "box-breathing":
+      return <BoxBreathingFlow />;
+    case "grounding":
+      return <GroundingFlow />;
+    case "tipp":
+      return <TippFlow />;
+    case "thought-record":
+      return <ThoughtRecordFlow />;
+    default:
+      // Defensive — getExerciseBySlug would have already 404'd, but
+      // TypeScript wants exhaustive handling.
+      notFound();
+  }
 }

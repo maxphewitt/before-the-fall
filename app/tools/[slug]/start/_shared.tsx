@@ -1,0 +1,538 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+
+/* ────────────────────────────────────────────────────────────────────
+   Shared building blocks for the six interactive self-help tool flows.
+
+   Every flow follows the same outer shape:
+     - <Shell> wraps the screen with a header (exit link + optional
+       progress bar) and the BTF aesthetic (deep sky → sky background,
+       gold accents, serif title type).
+     - Tool-specific screens live inside the Shell.
+     - At the end, <ClosingScreen> renders a specific acknowledgment plus
+       2–3 forward-motion choices (return to tools / next tool / call 988).
+
+   Mobile-first. No page reloads between steps — every flow is a single
+   client component managing its own step index.
+   ──────────────────────────────────────────────────────────────────── */
+
+
+/* ─── Shell ───────────────────────────────────────────────────────── */
+
+export function Shell({
+  toolName,
+  toolSlug,
+  progress,
+  children,
+}: {
+  toolName: string;
+  toolSlug: string;
+  progress: { current: number; total: number } | null;
+  children: React.ReactNode;
+}) {
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white">
+      <div className="max-w-xl mx-auto px-6 py-8 sm:py-12">
+        <div className="flex items-center justify-between mb-8">
+          <Link
+            href={`/tools/${toolSlug}`}
+            className="text-white/60 hover:text-white text-xs inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
+          >
+            <span aria-hidden>&larr;</span> Exit
+          </Link>
+          <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
+            {toolName}
+          </p>
+        </div>
+
+        {progress && (
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={progress.total}
+            aria-valuenow={progress.current}
+            aria-label="Progress"
+            className="w-full h-1 bg-white/10 rounded-full overflow-hidden mb-10"
+          >
+            <div
+              className="h-full bg-btf-gold transition-all duration-500"
+              style={{
+                width: `${Math.round(
+                  (progress.current / progress.total) * 100
+                )}%`,
+              }}
+            />
+          </div>
+        )}
+
+        {children}
+      </div>
+    </main>
+  );
+}
+
+
+/* ─── Primary button ──────────────────────────────────────────────── */
+
+export function PrimaryButton({
+  children,
+  onClick,
+  disabled,
+  type = "button",
+  className = "",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  type?: "button" | "submit";
+  className?: string;
+}) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={
+        "w-full bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep font-medium px-8 py-4 rounded-full shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:-translate-y-0.5 " +
+        className
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
+export function GhostButton({
+  children,
+  onClick,
+  disabled,
+  className = "",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={
+        "w-full bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/30 font-medium px-8 py-4 rounded-full disabled:opacity-40 transition-all " +
+        className
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
+
+/* ─── Intensity slider (1–10 or 0–100) ────────────────────────────── */
+
+export function IntensitySlider({
+  value,
+  onChange,
+  min,
+  max,
+  label,
+  leftLabel,
+  rightLabel,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  min: number;
+  max: number;
+  label?: string;
+  leftLabel?: string;
+  rightLabel?: string;
+}) {
+  return (
+    <div className="space-y-3">
+      {label && (
+        <label className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold block">
+          {label}
+        </label>
+      )}
+      <div className="text-center font-serif text-5xl text-white font-light">
+        {value}
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        aria-label={label ?? "Intensity"}
+        className="w-full h-2 bg-white/15 rounded-full appearance-none accent-btf-gold cursor-pointer"
+        style={{
+          WebkitAppearance: "none",
+        }}
+      />
+      <div className="flex justify-between text-xs text-white/60 font-light px-1">
+        <span>{leftLabel ?? `${min}`}</span>
+        <span>{rightLabel ?? `${max}`}</span>
+      </div>
+    </div>
+  );
+}
+
+
+/* ─── Countdown timer ─────────────────────────────────────────────── */
+
+/**
+ * Counts DOWN from `seconds` to 0. Fires `onComplete` when it hits 0.
+ * The "Done early" button (if `allowEarly`) calls `onComplete` immediately.
+ * Visual: large numeric countdown + a thin progress ring (CSS).
+ */
+export function Timer({
+  seconds,
+  label,
+  allowEarly,
+  earlyLabel = "Done",
+  onComplete,
+}: {
+  seconds: number;
+  label: string;
+  allowEarly?: boolean;
+  earlyLabel?: string;
+  onComplete: () => void;
+}) {
+  const [remaining, setRemaining] = useState(seconds);
+  const fired = useRef(false);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setRemaining((r) => Math.max(0, r - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (remaining <= 0 && !fired.current) {
+      fired.current = true;
+      onComplete();
+    }
+  }, [remaining, onComplete]);
+
+  const pct = ((seconds - remaining) / seconds) * 100;
+
+  return (
+    <div className="text-center">
+      <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-4">
+        {label}
+      </p>
+
+      <div className="relative w-44 h-44 mx-auto mb-8">
+        <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+          <circle
+            cx="50"
+            cy="50"
+            r="45"
+            fill="none"
+            stroke="rgba(255,255,255,0.12)"
+            strokeWidth="6"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="45"
+            fill="none"
+            stroke="var(--btf-gold, #d4a44a)"
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeDasharray={`${(pct * 2.827).toFixed(1)} 282.7`}
+            className="transition-[stroke-dasharray] duration-1000 linear"
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="font-serif text-5xl text-white font-light">
+            {remaining}
+          </span>
+          <span className="text-[10px] tracking-[0.25em] uppercase text-white/55 font-semibold mt-1">
+            seconds
+          </span>
+        </div>
+      </div>
+
+      {allowEarly && (
+        <PrimaryButton
+          onClick={() => {
+            if (!fired.current) {
+              fired.current = true;
+              onComplete();
+            }
+          }}
+        >
+          {earlyLabel}
+        </PrimaryButton>
+      )}
+    </div>
+  );
+}
+
+
+/* ─── Breathing circle ────────────────────────────────────────────── */
+
+/**
+ * Square-paced breathing visual. inhale → hold → exhale → hold, each
+ * `secondsPerPhase` long. Loops for `rounds` cycles, then fires `onComplete`.
+ * The circle scales between 0.55 and 1.0 over inhale/exhale; holds are
+ * stationary.
+ */
+export function BreathingCircle({
+  secondsPerPhase = 4,
+  rounds = 4,
+  onComplete,
+}: {
+  secondsPerPhase?: number;
+  rounds?: number;
+  onComplete: () => void;
+}) {
+  const PHASES = ["Inhale", "Hold", "Exhale", "Hold"] as const;
+  const [tick, setTick] = useState(0); // total seconds elapsed
+  const [done, setDone] = useState(false);
+  const cycleSeconds = secondsPerPhase * 4;
+  const totalSeconds = cycleSeconds * rounds;
+
+  useEffect(() => {
+    if (done) return;
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [done]);
+
+  useEffect(() => {
+    if (tick >= totalSeconds && !done) {
+      setDone(true);
+      onComplete();
+    }
+  }, [tick, totalSeconds, done, onComplete]);
+
+  const inCycleSecond = tick % cycleSeconds;
+  const phaseIdx = Math.floor(inCycleSecond / secondsPerPhase);
+  const phase = PHASES[phaseIdx];
+  const secondInPhase = inCycleSecond % secondsPerPhase;
+  const remainingInPhase = secondsPerPhase - secondInPhase;
+  const currentRound = Math.min(rounds, Math.floor(tick / cycleSeconds) + 1);
+
+  // Scale: 0.55 at start of inhale → 1.0 at end of inhale, stays 1.0 on
+  // hold, → 0.55 over exhale, stays 0.55 on next hold.
+  const t = inCycleSecond / cycleSeconds; // 0 to 1 across the full cycle
+  let scale = 0.55;
+  if (t < 0.25) {
+    // inhale
+    scale = 0.55 + (0.45 * t) / 0.25;
+  } else if (t < 0.5) {
+    // hold at top
+    scale = 1.0;
+  } else if (t < 0.75) {
+    // exhale
+    scale = 1.0 - (0.45 * (t - 0.5)) / 0.25;
+  } else {
+    // hold at bottom
+    scale = 0.55;
+  }
+
+  return (
+    <div className="text-center">
+      <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2">
+        Round {currentRound} of {rounds}
+      </p>
+
+      <div className="relative w-64 h-64 mx-auto my-8">
+        <div
+          className="absolute inset-0 rounded-full bg-btf-gold/25 blur-2xl transition-transform duration-1000"
+          style={{ transform: `scale(${scale + 0.1})` }}
+        />
+        <div
+          className="absolute inset-0 rounded-full bg-gradient-to-br from-btf-gold to-btf-gold-light transition-transform duration-1000"
+          style={{ transform: `scale(${scale})` }}
+          aria-hidden
+        />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-btf-sky-deep">
+          <span className="font-serif text-4xl font-light">{phase}</span>
+          <span className="font-serif text-5xl font-light mt-1">
+            {remainingInPhase}
+          </span>
+        </div>
+      </div>
+
+      <p className="text-sm text-white/70 font-light">
+        Follow the circle. {secondsPerPhase} in, {secondsPerPhase} hold,{" "}
+        {secondsPerPhase} out, {secondsPerPhase} hold.
+      </p>
+    </div>
+  );
+}
+
+
+/* ─── Closing screen ──────────────────────────────────────────────── */
+
+export type NextStep = {
+  label: string;
+  href: string;
+  description?: string;
+};
+
+export function ClosingScreen({
+  headline,
+  acknowledgment,
+  nextSteps,
+  saving,
+  saveError,
+}: {
+  headline: string;
+  acknowledgment: string;
+  nextSteps: NextStep[];
+  saving?: boolean;
+  saveError?: string | null;
+}) {
+  return (
+    <div className="text-center">
+      <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3">
+        Done
+      </p>
+      <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-4">
+        {headline}
+      </h1>
+      <p className="font-serif italic text-lg text-white/85 font-light leading-relaxed mb-10 max-w-md mx-auto">
+        {acknowledgment}
+      </p>
+
+      {saving && (
+        <p className="text-xs text-white/55 mb-4">Saving to your journal…</p>
+      )}
+      {saveError && (
+        <div
+          role="alert"
+          className="mb-6 rounded-xl bg-red-900/30 border border-red-400/30 text-red-100 text-sm p-4"
+        >
+          {saveError}
+        </div>
+      )}
+
+      <div className="space-y-3 text-left">
+        {nextSteps.map((step) => (
+          <Link
+            key={step.href}
+            href={step.href}
+            className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
+          >
+            <p className="font-medium text-white">{step.label}</p>
+            {step.description && (
+              <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
+                {step.description}
+              </p>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+/* ─── Choice grid ─────────────────────────────────────────────────── */
+
+export function ChoiceGrid({
+  options,
+  value,
+  onChange,
+  columns = 3,
+}: {
+  options: { value: string; label: string; description?: string }[];
+  value: string | null;
+  onChange: (v: string) => void;
+  columns?: 2 | 3;
+}) {
+  return (
+    <div
+      className={
+        columns === 2
+          ? "grid grid-cols-2 gap-3"
+          : "grid grid-cols-1 sm:grid-cols-3 gap-3"
+      }
+    >
+      {options.map((opt) => {
+        const active = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            aria-pressed={active}
+            className={
+              "rounded-2xl border-2 px-4 py-4 text-left transition-all " +
+              (active
+                ? "border-btf-gold bg-btf-gold/15 text-white shadow-lg"
+                : "border-white/15 bg-white/5 text-white/85 hover:border-white/30 hover:bg-white/10")
+            }
+          >
+            <span className="block font-medium">{opt.label}</span>
+            {opt.description && (
+              <span className="block text-[11px] text-white/65 font-light mt-1 leading-snug">
+                {opt.description}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+
+/* ─── Crisis CTA helper ───────────────────────────────────────────── */
+
+/**
+ * The "go to crisis line" choice surfaces 988 directly. Anchor uses
+ * tel: so mobile dials immediately. Desktop users see the number and
+ * the global crisis button is also visible on every page.
+ */
+export const CRISIS_NEXT_STEP: NextStep = {
+  label: "Call or text 988",
+  href: "tel:988",
+  description:
+    "Suicide & Crisis Lifeline. Free, confidential, 24 hours a day. Veterans press 1.",
+};
+
+
+/* ─── Save status hook ────────────────────────────────────────────── */
+
+/**
+ * Helper for flows that save a tool session to the journal as soon as
+ * the closing screen renders, so the user doesn't have to remember to
+ * tap a Save button. Returns the current save state for display.
+ */
+export function useAutoSave<T>(
+  shouldSave: boolean,
+  doSave: () => Promise<T>
+): { saving: boolean; saveError: string | null; saved: T | null } {
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<T | null>(null);
+  const triggered = useRef(false);
+
+  useEffect(() => {
+    if (!shouldSave || triggered.current) return;
+    triggered.current = true;
+    setSaving(true);
+    doSave()
+      .then((value) => {
+        setSaved(value);
+        setSaving(false);
+      })
+      .catch((err: unknown) => {
+        console.error("useAutoSave error:", err);
+        setSaveError(
+          err instanceof Error ? err.message : "Could not save to journal."
+        );
+        setSaving(false);
+      });
+  }, [shouldSave, doSave]);
+
+  return { saving, saveError, saved };
+}
