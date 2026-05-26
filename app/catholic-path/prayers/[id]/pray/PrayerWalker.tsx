@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createEntry } from "../../../../actions/journal";
+import { recordHabitCompletionForCurrentUser } from "../../../../actions/habits";
 
 /**
  * Guided line-by-line walker for a single prayer.
@@ -42,6 +43,20 @@ export default function PrayerWalker({
   const isLine = stepIdx < totalLines;
   const isIntention = stepIdx === totalLines;
   const isClosing = stepIdx === totalLines + 1;
+
+  // Record habit completion exactly once when the user reaches the
+  // closing screen. The intention save (if any) is handled separately;
+  // this fires regardless so the habit counts as done whether or not
+  // the user wrote anything.
+  const completionFired = useRef(false);
+  useEffect(() => {
+    if (isClosing && !completionFired.current) {
+      completionFired.current = true;
+      recordHabitCompletionForCurrentUser("prayer").catch(() => {
+        /* swallow — best-effort */
+      });
+    }
+  }, [isClosing]);
 
   async function onSaveIntention() {
     if (submitting) return;

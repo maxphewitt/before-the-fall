@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import type { RosaryStep } from "../../../lib/rosary";
+import { recordHabitCompletionForCurrentUser } from "../../../actions/habits";
 
 /**
  * Immersive Rosary walker.
@@ -87,6 +88,19 @@ export default function RosaryWalker({
       containerRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [index]);
+
+  // Record habit completion exactly once when the user reaches the final
+  // step. The ref guard prevents firing twice if React strict-mode
+  // double-invokes effects in dev. Best-effort — never blocks the user.
+  const completionFired = useRef(false);
+  useEffect(() => {
+    if (atEnd && !completionFired.current) {
+      completionFired.current = true;
+      recordHabitCompletionForCurrentUser("rosary").catch(() => {
+        // Swallow — completion logging is best-effort.
+      });
+    }
+  }, [atEnd]);
 
   // ─── Header line: which section + decade + step name ────────────────
   let headerLine = "";

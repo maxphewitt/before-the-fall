@@ -17,6 +17,15 @@ import {
   type ToolSessionStep,
   type ToolSessionPayload,
 } from "../lib/journalTypes";
+import { journalTypeCompletesHabit, type HabitSlug } from "../lib/habits";
+import { recordHabitCompletion } from "./habits";
+
+/** Cheap word count for journal_entries.word_count metadata. */
+function countWords(text: string): number {
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return 0;
+  return trimmed.split(/\s+/).length;
+}
 
 /**
  * Journal CRUD — all guarded by the session cookie, all enforce ownership
@@ -98,6 +107,7 @@ export async function createEntry(
     }
 
     const payload = encryptJournalText(trimmed);
+    const wordCount = countWords(trimmed);
     const supabase = supabaseServer();
     const { data, error } = await supabase
       .from("journal_entries")
@@ -107,6 +117,7 @@ export async function createEntry(
         ciphertext: payload.ciphertext,
         iv: payload.iv,
         auth_tag: payload.authTag,
+        word_count: wordCount,
       })
       .select("id")
       .single();
@@ -122,7 +133,20 @@ export async function createEntry(
     // encrypted entry. See [[Task #14 Dev Note]].
     await runSafetyScan(supabase, trimmed, userId, data.id);
 
+    // Best-effort habit completion. The 'journal' habit fires for any
+    // non-activity entry type (daily / reflection / note / intention).
+    // Activity entries are recorded via createToolSession with their
+    // specific tool slug.
+    if (journalTypeCompletesHabit(journalType)) {
+      await recordHabitCompletion({
+        userId,
+        habitSlug: "journal",
+        sourceJournalId: data.id as string,
+      });
+    }
+
     revalidatePath("/journal");
+    revalidatePath("/today");
     return { success: true, data: { id: data.id } };
   } catch (err) {
     console.error("createEntry exception:", err);
@@ -461,7 +485,14 @@ export async function createToolSession(input: {
       summary: input.summary?.trim() || undefined,
     };
 
-    const encrypted = encryptJournalText(JSON.stringify(payload));
+    const plaintextPayload = JSON.stringify(payload);
+    const encrypted = encryptJournalText(plaintextPayload);
+    // word_count here counts the user's actual ANSWERS only — not the
+    // structured JSON noise — so it's comparable to a free-form entry.
+    const wordCount = normalizedSteps.reduce(
+      (n, s) => n + countWords(s.userAnswer),
+      payload.summary ? countWords(payload.summary) : 0
+    );
     const supabase = supabaseServer();
     const { data, error } = await supabase
       .from("journal_entries")
@@ -471,6 +502,8 @@ export async function createToolSession(input: {
         ciphertext: encrypted.ciphertext,
         iv: encrypted.iv,
         auth_tag: encrypted.authTag,
+        word_count: wordCount,
+        tool_slug: input.toolSlug,
       })
       .select("id")
       .single();
@@ -489,7 +522,17 @@ export async function createToolSession(input: {
       .join("\n");
     await runSafetyScan(supabase, scanText, userId, data.id as string);
 
+    // Best-effort habit completion. The tool slug maps directly to the
+    // habit slug for the six Tier 1 tools. Unknown slugs are quietly
+    // skipped inside recordHabitCompletion.
+    await recordHabitCompletion({
+      userId,
+      habitSlug: input.toolSlug as HabitSlug,
+      sourceJournalId: data.id as string,
+    });
+
     revalidatePath("/journal");
+    revalidatePath("/today");
     return { success: true, data: { id: data.id as string } };
   } catch (err) {
     console.error("createToolSession exception:", err);

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createEntry } from "../../../../actions/journal";
+import { recordHabitCompletionForCurrentUser } from "../../../../actions/habits";
 
 /**
  * Verse-by-verse scripture walker.
@@ -42,6 +43,18 @@ export default function ScriptureWalker({
   const isVerse = stepIdx < totalVerses;
   const isReflection = stepIdx === totalVerses;
   const isClosing = stepIdx === totalVerses + 1;
+
+  // Record habit completion exactly once when the user reaches the
+  // closing screen. Reflection save (if any) is handled separately.
+  const completionFired = useRef(false);
+  useEffect(() => {
+    if (isClosing && !completionFired.current) {
+      completionFired.current = true;
+      recordHabitCompletionForCurrentUser("scripture").catch(() => {
+        /* swallow — best-effort */
+      });
+    }
+  }, [isClosing]);
 
   async function onSaveReflection() {
     if (submitting) return;

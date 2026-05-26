@@ -29,7 +29,13 @@ export default async function Home() {
                 href="/journal"
                 className="text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border border-white/25 backdrop-blur-sm text-[10px] sm:text-xs tracking-[0.25em] uppercase font-medium px-4 py-2 rounded-full transition-colors"
               >
-                Your journal →
+                Journal
+              </Link>
+              <Link
+                href="/today"
+                className="text-btf-sky-deep bg-btf-gold hover:bg-btf-gold-light text-[10px] sm:text-xs tracking-[0.25em] uppercase font-medium px-4 py-2 rounded-full transition-colors shadow-sm"
+              >
+                Today →
               </Link>
             </>
           ) : (

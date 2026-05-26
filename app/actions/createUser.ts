@@ -4,6 +4,8 @@ import { supabaseServer } from "../lib/supabase";
 import { generateRecoveryCode, hashRecoveryCode } from "../lib/recoveryCode";
 import { setSessionCookie } from "../lib/session";
 import { getSafetyMetadata } from "../lib/safetyMetadata";
+import { mapOnboardingPopulation, type PopulationSlug } from "../lib/habits";
+import { seedDefaultHabitsForUser } from "./habits";
 
 export type ProfileData = {
   framing: string;
@@ -90,6 +92,24 @@ export async function createUser(profile: ProfileData): Promise<CreateUserResult
     // immediately. Without this they'd have to bounce through /return after
     // signup, which is a terrible first experience.
     await setSessionCookie(userData.id);
+
+    // 5) Seed default habits for the Today tracker. Best-effort — if
+    // this fails, the user lands on /today empty and edits manually.
+    // Catholic-warm = growing_closer or open; secular gets no
+    // Catholic Path habits.
+    const populationSlugs: PopulationSlug[] = profile.populations
+      .map(mapOnboardingPopulation)
+      .filter((p): p is PopulationSlug => p !== null);
+    const catholicPath = profile.faith_role !== "secular";
+    try {
+      await seedDefaultHabitsForUser({
+        userId: userData.id,
+        populations: populationSlugs,
+        catholicPath,
+      });
+    } catch (err) {
+      console.error("seedDefaultHabitsForUser failed (non-fatal):", err);
+    }
 
     return { success: true, recoveryCode, userId: userData.id };
   } catch (err) {
