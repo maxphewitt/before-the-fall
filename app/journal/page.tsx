@@ -94,7 +94,7 @@ const SECTIONS: SectionDef[] = [
   { key: "reflection", label: "Reflections", blurb: "Longer thinking, after the fact." },
   { key: "activity", label: "Activity journals", blurb: "Self-help tool sessions, grouped by exercise." },
   { key: "note", label: "Notes", blurb: "Quick captures." },
-  { key: "intention", label: "Intentions", blurb: "What you&rsquo;re carrying to God this week." },
+  { key: "intention", label: "Intentions", blurb: "What you’re carrying to God this week." },
 ];
 
 function GroupedEntries({ entries }: { entries: JournalEntry[] }) {

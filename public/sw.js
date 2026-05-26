@@ -15,8 +15,18 @@
  * when we ship a new shell.
  */
 
-const CACHE_VERSION = "btf-v1-2026-05-22";
-const SHELL_URLS = ["/", "/about", "/manifest.webmanifest"];
+const CACHE_VERSION = "btf-v2-2026-05-23";
+const SHELL_URLS = [
+  "/",
+  "/about",
+  "/manifest.webmanifest",
+  // CSO resources — explicitly cached so CSOs can read them offline
+  // on their phones once they've visited once.
+  "/loved-one",
+  "/loved-one/resources/first-conversation",
+  "/loved-one/resources/what-not-to-say",
+  "/loved-one/resources/caring-for-yourself",
+];
 const OFFLINE_FALLBACK = "/offline";
 
 self.addEventListener("install", (event) => {

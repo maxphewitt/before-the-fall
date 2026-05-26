@@ -34,3 +34,70 @@
     letter-spacing: 0.01em;
   }
 }
+
+/* ─── Print stylesheet ─────────────────────────────────────────────
+ *
+ * Strips the chrome (nav, crisis ramp, PWA banner, action buttons)
+ * when a user saves an article to PDF via the PrintButton. Leaves
+ * the article text intact, with black-on-white and serif type so the
+ * saved file reads like a document, not a screenshot of the site.
+ *
+ * To suppress any element from print, add data-print-hide="true".
+ */
+@media print {
+  /* Hide site-wide chrome */
+  [data-print-hide="true"],
+  nav,
+  [role="region"][aria-label*="Install"],
+  button[aria-label*="crisis"],
+  a[aria-label*="crisis"] {
+    display: none !important;
+  }
+
+  /* Plain background, black text, serif throughout */
+  html, body {
+    background: white !important;
+    color: black !important;
+    font-family: Georgia, "Times New Roman", serif !important;
+  }
+
+  /* Tighter line-height for print */
+  body {
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  h1 { font-size: 22pt; margin-top: 0; }
+  h2 { font-size: 16pt; margin-top: 14pt; }
+  h3 { font-size: 13pt; }
+
+  /* Remove all background colors and borders that don't carry meaning */
+  div, section, article, ul, ol, li, p, blockquote {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Keep the citation/source blocks visually distinguished without color */
+  blockquote {
+    border-left: 2pt solid #555 !important;
+    padding-left: 10pt;
+    margin: 10pt 0;
+    font-style: italic;
+  }
+
+  /* Hide gradient hero backgrounds — let the article breathe */
+  .bg-gradient-to-b, .bg-gradient-to-br, .bg-gradient-to-r {
+    background: transparent !important;
+  }
+
+  /* Hide the back-link and other interactive widgets at the top */
+  a[href^="/"] {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+
+  /* Page break inside lists and paragraphs is fine; avoid mid-heading breaks */
+  h1, h2, h3, h4 {
+    page-break-after: avoid;
+  }
+}

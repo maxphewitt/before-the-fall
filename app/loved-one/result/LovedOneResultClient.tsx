@@ -11,17 +11,49 @@ import Link from "next/link";
  *   3. Three CRAFT-informed resources for the CSO.
  *   4. External resources (988, SAMHSA family helpline, Al-Anon, etc.).
  *
- * The code itself lives in ?code= because we generated it server-side
- * and routed here with the plaintext in the URL. After this page is
- * closed the platform has no record of the plaintext — only the hash.
+ * The code itself lives in ?code= when we generated it server-side
+ * and routed here with the plaintext in the URL. We also persist the
+ * code to localStorage on first load so back-button / refresh still
+ * finds it (otherwise the URL loses the query string and the page
+ * shows "no code"). localStorage is acceptable here because the code
+ * is the CSO's own data on their own device.
  */
+const STORAGE_KEY = "btf:lovedOneCode";
+
+function readStoredCode(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem(STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeStoredCode(code: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (code) localStorage.setItem(STORAGE_KEY, code);
+    else localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function LovedOneResultClient() {
   const searchParams = useSearchParams();
-  const code = searchParams.get("code") ?? "";
+  const urlCode = searchParams.get("code") ?? "";
+  // Lazy init: prefer URL code, fall back to localStorage. Persist
+  // URL code to localStorage on first render via the initializer so
+  // we survive back/refresh without a useEffect.
+  const [code] = useState<string>(() => {
+    const stored = readStoredCode();
+    if (urlCode) {
+      if (urlCode !== stored) writeStoredCode(urlCode);
+      return urlCode;
+    }
+    return stored;
+  });
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
-  // Lazy init reads window.location.origin during the first render on
-  // the client (SSR returns empty string). Avoids the React 19
-  // set-state-in-effect rule we'd trip by setting via useEffect.
   const [origin] = useState<string>(() =>
     typeof window !== "undefined" ? window.location.origin : ""
   );
@@ -44,16 +76,21 @@ export default function LovedOneResultClient() {
     return (
       <main className="min-h-screen bg-btf-off-white px-6 py-14">
         <div className="max-w-xl mx-auto text-center">
-          <p className="text-btf-text-mid font-light leading-relaxed">
-            No code in the URL. Please{" "}
-            <Link
-              href="/loved-one/quiz"
-              className="text-btf-sky-deep underline underline-offset-4"
-            >
-              start the quiz
-            </Link>
-            .
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold font-semibold mb-3">
+            Nothing to show yet
           </p>
+          <h1 className="font-serif text-2xl text-btf-sky-deep font-light mb-4">
+            Start the quiz to generate a referral code.
+          </h1>
+          <p className="text-btf-text-mid font-light leading-relaxed mb-6 text-sm">
+            Once you complete the quiz, your code lives here on this device for 90 days. You can come back to copy it or read the resources any time.
+          </p>
+          <Link
+            href="/loved-one/quiz"
+            className="inline-block bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-6 py-3 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform"
+          >
+            Start the quiz &rarr;
+          </Link>
         </div>
       </main>
     );
@@ -243,14 +280,24 @@ export default function LovedOneResultClient() {
           you can&rsquo;t fix this for them. But what you&rsquo;re doing right now &mdash; showing up, learning the right way to help &mdash; is the single most evidence-supported thing you can do.
         </div>
 
-        {/* Return home */}
-        <div className="mt-10 text-center">
+        {/* Return home + forget code */}
+        <div className="mt-10 flex flex-col items-center gap-4">
           <Link
             href="/"
             className="text-btf-text-light hover:text-btf-sky-deep text-sm inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
           >
             <span aria-hidden>&larr;</span> Back to home
           </Link>
+          <button
+            type="button"
+            onClick={() => {
+              writeStoredCode("");
+              window.location.href = "/";
+            }}
+            className="text-xs text-btf-text-light/80 hover:text-btf-text-mid underline underline-offset-4"
+          >
+            Forget this code on this device
+          </button>
         </div>
       </div>
     </main>

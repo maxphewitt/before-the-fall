@@ -76,14 +76,14 @@ const Q6_FAITH: Option[] = [
   { value: "catholic_lapsed", label: "Catholic background, but not practicing" },
   { value: "other_faith", label: "Another faith tradition" },
   { value: "secular", label: "Not religious" },
-  { value: "unsure", label: "I&rsquo;m not sure" },
+  { value: "unsure", label: "I’m not sure" },
 ];
 
 const Q7_CSO_STATE: Option[] = [
   { value: "managing", label: "Managing, but heavy" },
   { value: "exhausted", label: "Exhausted — this has been going on a long time" },
-  { value: "scared", label: "Scared. I don&rsquo;t know what they&rsquo;ll do" },
-  { value: "hopeless", label: "Hopeless. I&rsquo;ve tried so much" },
+  { value: "scared", label: "Scared. I don’t know what they’ll do" },
+  { value: "hopeless", label: "Hopeless. I’ve tried so much" },
   { value: "angry", label: "Angry. And ashamed of being angry" },
 ];
 

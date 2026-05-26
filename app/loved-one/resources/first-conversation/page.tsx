@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PrintButton from "../../../components/PrintButton";
 
 /**
  * /loved-one/resources/first-conversation — CRAFT-informed guidance on
@@ -20,12 +21,15 @@ export default function FirstConversationPage() {
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
       <article className="max-w-2xl mx-auto">
-        <Link
-          href="/loved-one/result"
-          className="text-btf-text-light hover:text-btf-sky-deep text-sm mb-6 inline-flex items-center gap-2 transition-colors"
-        >
-          <span aria-hidden>&larr;</span> Resources
-        </Link>
+        <div className="flex items-center justify-between mb-6">
+          <Link
+            href="/loved-one/result"
+            className="text-btf-text-light hover:text-btf-sky-deep text-sm inline-flex items-center gap-2 transition-colors"
+          >
+            <span aria-hidden>&larr;</span> Resources
+          </Link>
+          <PrintButton />
+        </div>
 
         <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold font-semibold mb-3">
           For you · about 3 minutes
