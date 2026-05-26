@@ -34,8 +34,8 @@ const MODULES: Module[] = [
     slug: "scripture",
     title: "Daily Scripture",
     description:
-      "A short reading from a Catholic translation — NABRE, RSV-2CE, or Douay-Rheims — chosen for what you're carrying today. Plus a guided reflection written for the moment you're in.",
-    status: "pending-content",
+      "Twenty curated passages from the Douay-Rheims Catholic translation (public domain), browseable by what you're carrying — comfort, mercy, trust, suffering, hope. Verse-by-verse walker with optional reflection journaling. NABRE and RSV-2CE coming once licensed.",
+    status: "available",
     href: "/catholic-path/scripture",
   },
   {
