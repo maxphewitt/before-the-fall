@@ -1,5 +1,7 @@
 "use client";
 
+import Tooltip from "./Tooltip";
+
 /**
  * Compact "save as PDF or print" affordance for any standalone article.
  *
@@ -19,13 +21,15 @@ export default function PrintButton({
   label?: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={() => window.print()}
-      data-print-hide="true"
-      className="inline-flex items-center gap-2 text-xs text-btf-sky-deep underline underline-offset-4 hover:text-btf-sky font-medium"
-    >
-      <span aria-hidden>↓</span> {label}
-    </button>
+    <Tooltip text="Opens your device's print or save-as-PDF dialog" side="bottom">
+      <button
+        type="button"
+        onClick={() => window.print()}
+        data-print-hide="true"
+        className="inline-flex items-center gap-2 text-xs text-btf-sky-deep underline underline-offset-4 hover:text-btf-sky font-medium"
+      >
+        <span aria-hidden>↓</span> {label}
+      </button>
+    </Tooltip>
   );
 }

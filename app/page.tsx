@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUserId } from "./lib/session";
 import { shouldShowCatholicPath } from "./lib/profile";
 import { signOutUser } from "./actions/userSession";
+import LovedOneCodeAffordance from "./components/LovedOneCodeAffordance";
 export default async function Home() {
   const userId = await getCurrentUserId();
   const signedIn = userId !== null;
@@ -89,6 +90,9 @@ export default async function Home() {
          Worried about someone you love?
          </Link>
           </div>
+
+          {/* Quiet handoff back to CSO resources for returning CSOs — only renders if localStorage has a stored code. */}
+          <LovedOneCodeAffordance />
 
           {/* Identity / disclosure footer */}
           <p className="mt-10 text-xs tracking-widest text-white/55 uppercase">

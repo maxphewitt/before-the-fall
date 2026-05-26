@@ -7,6 +7,7 @@ import { getSafetyMetadata } from "../lib/safetyMetadata";
 import { mapOnboardingPopulation, type PopulationSlug } from "../lib/habits";
 import { seedDefaultHabitsForUser } from "./habits";
 import { redeemLovedOneIntake } from "./lovedOne";
+import { getBetaAccessCodeId } from "./betaAccess";
 
 export type ProfileData = {
   framing: string;
@@ -45,10 +46,18 @@ export async function createUser(
 
     const supabase = supabaseServer();
 
+    // Resolve the beta access code so we can link this signup back
+    // to the tester who let them in. Null in production after the
+    // gate is turned off.
+    const betaAccessCodeId = await getBetaAccessCodeId();
+
     // 1) Insert user
     const { data: userData, error: userError } = await supabase
       .from("users")
-      .insert({ recovery_code_hash: hash })
+      .insert({
+        recovery_code_hash: hash,
+        beta_access_code_id: betaAccessCodeId,
+      })
       .select("id")
       .single();
 
