@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createEntry } from "../../actions/journal";
@@ -18,6 +18,11 @@ import type { JournalType } from "../../lib/journalTypes";
  * are created by the Self-Help Tool Walker so they always have a
  * structured payload. A freeform "I went for a walk today" belongs
  * under Daily or Note.
+ *
+ * useSearchParams() requires a Suspense boundary in production builds
+ * (Next.js static-prerender CSR-bailout requirement). The default
+ * export wraps the form in <Suspense>; the actual implementation lives
+ * in NewEntryForm below.
  */
 
 type PickableType = Exclude<JournalType, "activity">;
@@ -30,6 +35,14 @@ const TYPE_OPTIONS: { value: PickableType; label: string; blurb: string }[] = [
 ];
 
 export default function NewEntryPage() {
+  return (
+    <Suspense fallback={null}>
+      <NewEntryForm />
+    </Suspense>
+  );
+}
+
+function NewEntryForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 

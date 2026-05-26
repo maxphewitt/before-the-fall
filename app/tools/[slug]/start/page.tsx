@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { EXERCISES, getExerciseBySlug } from "../../../lib/tools";
+import { getExerciseBySlug } from "../../../lib/tools";
 import { getCurrentUserId } from "../../../lib/session";
 import StopFlow from "./StopFlow";
 import UrgeSurfingFlow from "./UrgeSurfingFlow";
@@ -20,13 +20,13 @@ import ThoughtRecordFlow from "./ThoughtRecordFlow";
  * users are bounced to /return so they sign back in.
  *
  * In Next 15+, dynamic route `params` is a Promise. Await it.
+ *
+ * NOTE: We intentionally do NOT export `generateStaticParams` here even
+ * though the slug set is finite. The walker reads the session cookie
+ * (via getCurrentUserId) and writes to the journal, so it must run
+ * dynamically per request. Combining `force-dynamic` with
+ * `generateStaticParams` is a build-time conflict in Next.js.
  */
-export function generateStaticParams() {
-  return EXERCISES.map((e) => ({ slug: e.slug }));
-}
-
-// The walker reads identity from a cookie and writes to the journal,
-// so it must run dynamically per request.
 export const dynamic = "force-dynamic";
 
 export default async function ToolStartPage({
