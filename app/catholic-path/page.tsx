@@ -26,8 +26,8 @@ const MODULES: Module[] = [
     slug: "prayers",
     title: "Prayer Library",
     description:
-      "The prayers Catholics have leaned on for centuries in moments like this. Memorare, St. Michael, Anima Christi, Act of Contrition, Daily Examen, and the Prayer of St. Alphonsus Liguori for Temptation.",
-    status: "pending-content",
+      "Thirty-plus prayers the Church has reached for, searchable by what you're carrying. Memorare, St. Michael, Anima Christi, Divine Mercy, prayers for grief and anxiety and discernment, prayers for the dying, prayers for the seasons. Each one cites its source.",
+    status: "available",
     href: "/catholic-path/prayers",
   },
   {
