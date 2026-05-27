@@ -3,18 +3,23 @@ import { cookies } from "next/headers";
 import { supabaseServer } from "../../lib/supabase";
 
 /**
- * GET /_a/[token]
+ * GET /a/[token]
  *
  * Magic-link admin authentication. The single way to obtain the admin
  * cookie. There is no public admin login form anywhere on the site.
  *
+ * Originally lived at /_a/[token]; renamed because Next.js excludes
+ * underscore-prefixed folders from routing entirely (private-folder
+ * convention), which silently disabled the route. The /a/ prefix has
+ * no special meaning in Next.js — the token is the gate.
+ *
  * How it works:
- *   1. Max bookmarks https://beforethefall.app/_a/<ADMIN_MAGIC_PATH>
+ *   1. Max bookmarks https://beforethefall.app/a/<ADMIN_MAGIC_PATH>
  *      where <ADMIN_MAGIC_PATH> is a long random string stored in the
  *      ADMIN_MAGIC_PATH env var on Vercel.
- *   2. Visiting the URL: middleware checks the beta cookie first
- *      (defense in depth — must be in the beta cohort). If absent,
- *      middleware redirects to `/`. Same as everywhere else.
+ *   2. Proxy (formerly middleware) lets /a/* through without requiring
+ *      a beta cookie. The admin is not a beta tester — they shouldn't
+ *      need to redeem a beta code to claim admin.
  *   3. This route handler then compares the URL path segment to the
  *      env var. If they match, look up the founder admin and issue
  *      the btf_admin_id cookie. Redirect to /admin/review.
@@ -23,10 +28,12 @@ import { supabaseServer } from "../../lib/supabase";
  *      same response as any other non-existent path.
  *
  * Security properties:
- *   - Requires beta cookie + correct token = two-factor.
+ *   - 32 bytes of entropy in the token = the only practical gate.
  *   - No password form anywhere = no brute-forceable input.
  *   - Magic link is bookmarkable; rotating it means changing the env
  *     var on Vercel.
+ *   - All responses are no-cache (Cache-Control headers below) so a
+ *     token-bearing URL is never cached at any layer.
  *   - If the founder admin row is missing (e.g., seed-admin.ts was
  *     never run), we return a generic 500 with no detail.
  *
