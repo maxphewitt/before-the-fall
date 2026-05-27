@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EXERCISES } from "../lib/tools";
+import BetaDisclaimerBanner from "../components/BetaDisclaimerBanner";
 
 /**
  * /tools — index of the six Tier 1 self-help exercises.
@@ -7,6 +8,13 @@ import { EXERCISES } from "../lib/tools";
  * Public, no auth gate. Tools are harm-reduction content; anyone can
  * read them. Per [[Anonymous First Access]] we don't put a signup wall
  * between a person in distress and the tool that might help.
+ *
+ * Visual layout:
+ *   - Eyebrow + headline + lede
+ *   - Dismissible closed-beta banner (BetaDisclaimerBanner — clicks once,
+ *     stays gone via localStorage)
+ *   - Six tool cards (refactored 2026-05-26 sprint)
+ *   - Permanent safety footnote
  */
 export default function ToolsIndex() {
   return (
@@ -25,35 +33,72 @@ export default function ToolsIndex() {
         <h1 className="font-serif text-3xl md:text-4xl text-btf-sky-deep font-light leading-tight mb-3">
           Six exercises for the hardest minutes.
         </h1>
-        <p className="text-btf-text-mid font-light leading-relaxed mb-6">
+        <p className="text-btf-text-mid font-light leading-relaxed mb-8">
           Each one comes from peer-reviewed clinical research and has been used for decades. Read once, use any time. None of them require an account.
         </p>
 
-        <div className="rounded-xl bg-btf-gold-pale/40 border border-btf-gold/30 text-btf-text-mid text-xs font-light p-4 mb-10 leading-relaxed">
-          <span className="font-medium text-btf-sky-deep">Draft v1 &middot; closed beta:</span> these descriptions are pending sign-off by our clinical advisor before public launch. They are not a substitute for a clinician. If you&rsquo;re in immediate danger, use the crisis button at the bottom of the screen.
-        </div>
+        <BetaDisclaimerBanner />
 
         <ul className="grid sm:grid-cols-2 gap-4">
-          {EXERCISES.map((ex) => (
+          {EXERCISES.map((ex, i) => (
             <li key={ex.slug}>
               <Link
                 href={`/tools/${ex.slug}`}
-                className="block h-full rounded-2xl bg-white border-2 border-btf-sky-pale/60 hover:border-btf-sky-light hover:shadow-md p-5 transition-all"
+                className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-btf-sky-pale/70 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-btf-sky-light hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-btf-sky focus-visible:ring-offset-2"
               >
-                <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky font-semibold mb-2">
-                  {ex.estimatedTime ?? "Practice"}
-                </p>
-                <h2 className="font-serif text-xl text-btf-sky-deep font-light mb-2">
+                {/* Soft gold glow on hover */}
+                <div
+                  className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-btf-gold/0 blur-2xl transition-colors duration-500 group-hover:bg-btf-gold/15"
+                  aria-hidden
+                />
+
+                <div className="relative flex items-center justify-between mb-3">
+                  <span className="inline-flex items-center rounded-full bg-btf-sky-pale/70 px-2.5 py-1 text-[10px] tracking-[0.2em] uppercase text-btf-sky-deep font-semibold">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  {ex.estimatedTime && (
+                    <span className="text-[10px] tracking-[0.18em] uppercase text-btf-text-light font-medium">
+                      {shortTime(ex.estimatedTime)}
+                    </span>
+                  )}
+                </div>
+
+                <h2 className="font-serif text-xl text-btf-sky-deep font-light leading-snug mb-2 relative">
                   {ex.name}
                 </h2>
-                <p className="text-sm text-btf-text-mid font-light leading-relaxed">
+                <p className="text-sm text-btf-text-mid font-light leading-relaxed relative mb-5 flex-1">
                   {ex.tagline}
+                </p>
+
+                <p className="relative text-[11px] tracking-[0.2em] uppercase font-semibold text-btf-sky group-hover:text-btf-sky-deep transition-colors">
+                  Begin <span aria-hidden>&rarr;</span>
                 </p>
               </Link>
             </li>
           ))}
         </ul>
+
+        {/* Permanent safety footnote — NEVER dismissible. */}
+        <p className="mt-10 rounded-xl border border-btf-sky-pale/70 bg-white px-5 py-4 text-xs leading-relaxed text-btf-text-mid font-light">
+          These tools are not a substitute for a clinician. If you&rsquo;re in immediate danger, use the crisis button at the bottom of the screen, or call <a href="tel:988" className="text-btf-sky-deep font-medium underline-offset-2 hover:underline">988</a> right now.
+        </p>
       </div>
     </main>
   );
+}
+
+/**
+ * Compact display of the long estimatedTime strings on cards.
+ *
+ * Source notes say things like "5–15 minutes. Long enough for the urge
+ * to crest and fall." On the card we want "5–15 min". The full text
+ * still appears on the detail page.
+ */
+function shortTime(raw: string): string {
+  // Grab the leading numeric / range token + minutes or seconds.
+  const match = raw.match(/^[^a-zA-Z]*(\d+(?:[–—-]\d+)?)\s*(seconds?|minutes?|min|sec)/i);
+  if (!match) return raw.split(/[.\s]/)[0] ?? raw;
+  const range = match[1];
+  const unit = match[2].toLowerCase().startsWith("sec") ? "sec" : "min";
+  return `${range} ${unit}`;
 }

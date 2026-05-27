@@ -418,26 +418,93 @@ function OnboardFlow() {
 
 function Welcome({ onNext }: { onNext: () => void }) {
   return (
-    <div className="pt-6 pb-2">
+    <div className="pt-2 pb-4">
+      {/* Cross — same as home hero so the visual register carries over. */}
+      <div className="relative w-10 h-10 mb-7" aria-hidden>
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 w-1.5 h-10 bg-btf-gold rounded-sm" />
+        <div className="absolute left-1/2 top-2.5 -translate-x-1/2 w-7 h-1.5 bg-btf-gold rounded-sm" />
+      </div>
+
       <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3">
         Welcome
       </p>
-      <h1 className="font-serif text-3xl md:text-4xl text-btf-sky-deep font-light leading-tight mb-5">
+      <h1 className="font-serif text-3xl md:text-4xl text-btf-sky-deep font-light leading-tight mb-4">
         You&rsquo;re here. That matters.
       </h1>
-      <p className="text-btf-text-mid font-light leading-relaxed mb-4">
-        Before the Fall is a place for the moment before harm &mdash; to yourself or to someone else. We don&rsquo;t need to know your name. We don&rsquo;t use email logins. We don&rsquo;t track you across the internet. You can leave at any time, and what you do here stays with you.
+      <p className="font-serif italic text-base text-btf-text-mid font-light leading-relaxed mb-8">
+        Whatever brought you to this page, you&rsquo;re welcome here. Take it at your own pace.
       </p>
-      <p className="text-btf-text-mid font-light leading-relaxed mb-10">
-        We&rsquo;ll ask you seven quick questions before we begin. They&rsquo;re only asked once, and they help us serve you well. Two minutes, give or take.
-      </p>
+
+      {/* Gold divider — visual breath between intro and the substance. */}
+      <div className="w-16 h-px my-8 bg-gradient-to-r from-btf-gold/0 via-btf-gold to-btf-gold/0" aria-hidden />
+
+      {/* Three reassurances — what we don't ask, what we don't store, what we don't sell. */}
+      <div className="space-y-3 mb-8">
+        <Reassurance
+          title="No name. No email. No phone."
+          body="You&rsquo;ll get a 12-word recovery code instead. That&rsquo;s how you come back. We never know who you are."
+        />
+        <Reassurance
+          title="You can leave at any time."
+          body="Nothing follows you. No tracking, no third-party analytics, no advertisers, ever."
+        />
+        <Reassurance
+          title="What you write here is yours."
+          body="Journal entries are encrypted with a key we don&rsquo;t share. Only you can read them."
+        />
+      </div>
+
+      <div className="w-16 h-px my-8 bg-gradient-to-r from-btf-gold/0 via-btf-gold to-btf-gold/0" aria-hidden />
+
+      {/* What we'll ask — sets the expectation so the seven questions don't feel like a wall. */}
+      <div className="rounded-2xl bg-white border border-btf-sky-pale/70 p-5 sm:p-6 mb-8 shadow-sm">
+        <p className="text-[10px] tracking-[0.25em] uppercase text-btf-sky font-semibold mb-3">
+          Seven questions. About two minutes.
+        </p>
+        <p className="text-sm text-btf-text-mid font-light leading-relaxed mb-4">
+          They&rsquo;re only asked once. They tell us how to meet you well &mdash; which tools to surface, whether to offer the Catholic path, how urgent your moment is. Your answers shape the platform around you.
+        </p>
+        <ul className="space-y-1.5 text-sm text-btf-text-dark font-light">
+          <QuestionPreview n={1} text="What brings you here today." />
+          <QuestionPreview n={2} text="What you&rsquo;re dealing with." />
+          <QuestionPreview n={3} text="How you&rsquo;re carrying it right now." />
+          <QuestionPreview n={4} text="Where faith sits for you." />
+          <QuestionPreview n={5} text="What kind of help feels right." />
+          <QuestionPreview n={6} text="How long this has been part of your story." />
+          <QuestionPreview n={7} text="What made you reach out today." />
+        </ul>
+      </div>
+
       <button
         onClick={onNext}
         className="w-full max-w-md mx-auto bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-8 py-3.5 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform block"
       >
         Begin
       </button>
+      <p className="text-center text-xs text-btf-text-light font-light mt-4">
+        If you&rsquo;re in crisis right now, the button at the bottom of every screen is for you.
+      </p>
     </div>
+  );
+}
+
+function Reassurance({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-xl bg-white border border-btf-sky-pale/60 px-5 py-4 shadow-sm">
+      <p className="text-sm font-medium text-btf-sky-deep mb-1">{title}</p>
+      <p className="text-sm text-btf-text-mid font-light leading-relaxed">{body}</p>
+    </div>
+  );
+}
+
+function QuestionPreview({ n, text }: { n: number; text: string }) {
+  return (
+    <li className="flex items-baseline gap-3">
+      <span className="text-[10px] tracking-[0.18em] uppercase text-btf-gold font-semibold w-6 shrink-0">
+        {String(n).padStart(2, "0")}
+      </span>
+      <span className="text-btf-text-mid font-light leading-relaxed">{text}</span>
+    </li>
   );
 }
 
