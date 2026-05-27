@@ -70,7 +70,7 @@ const PUBLIC_PATHS = new Set([
 /** Static asset extensions that always pass through. */
 const STATIC_EXT = /\.(png|jpg|jpeg|svg|gif|webp|ico|woff2?|ttf|css|js|map|txt|xml)$/i;
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const enabled = process.env.BETA_GATE_ENABLED === "true";
   if (!enabled) return NextResponse.next();
 

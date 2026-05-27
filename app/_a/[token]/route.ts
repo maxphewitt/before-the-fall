@@ -41,6 +41,18 @@ export async function GET(
   const { token } = await params;
   const expected = process.env.ADMIN_MAGIC_PATH;
 
+  // Diagnostic logging — structural-only, never the actual values.
+  // Lets us debug 404s in Vercel function logs without leaking the
+  // magic path or token. Safe to keep in production; the secrets
+  // never enter the log line.
+  const diag = {
+    hasEnv: !!expected,
+    envLen: expected?.length ?? 0,
+    tokenLen: token?.length ?? 0,
+    exactMatch: token === expected,
+  };
+  console.log("[_a/token] auth attempt", JSON.stringify(diag));
+
   // Constant-time-ish compare — short-circuit length first, then exact match.
   if (!expected || typeof expected !== "string" || expected.length < 16) {
     // Env var unset or trivially short → don't auth anyone. 404.
