@@ -35,11 +35,12 @@ import { NextResponse, type NextRequest } from "next/server";
  *     `/_a/*` but underscore-prefixed folders are excluded from Next
  *     routing — renamed 2026-05-26.
  *
- *   - Admin routes (`/admin/*`) require BOTH the beta cookie AND the
- *     admin cookie (`btf_admin_id`). Any admin route hit without an
- *     admin cookie redirects to `/` — never to a login form. The
- *     admin auth path lives at `/a/[token]` (magic link, see
- *     route handler). There is no public admin login form.
+ *   - Admin routes (`/admin/*`) require ONLY the admin cookie
+ *     (`btf_admin_id`). The admin is not a beta tester. Demanding
+ *     both cookies created a chicken-and-egg lockout. Any admin route
+ *     hit without an admin cookie redirects to `/` — never to a login
+ *     form. The admin auth path lives at `/a/[token]` (magic link,
+ *     see route handler). There is no public admin login form.
  *
  * Defense-in-depth: middleware does perimeter checks at the edge;
  * server components and actions do deep validation. Both must pass
@@ -89,18 +90,11 @@ export function proxy(request: NextRequest) {
   // Public paths always allowed.
   if (PUBLIC_PATHS.has(pathname)) return NextResponse.next();
 
-  // Everything else needs a beta cookie.
-  const hasBeta = !!request.cookies.get(BETA_COOKIE);
-  if (!hasBeta) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    url.search = ""; // strip any sensitive query params before redirect
-    return NextResponse.redirect(url);
-  }
-
-  // Admin routes additionally require the admin cookie. We do NOT
-  // redirect to a login form — that would advertise the route. We send
-  // them to `/` with no indication that anything else exists here.
+  // Admin routes: only the admin cookie is required. The admin is not
+  // a beta tester; demanding both cookies created a chicken-and-egg
+  // lockout (magic link issues admin cookie -> redirect to /admin/review
+  // -> proxy bounces to / because no beta cookie -> back at the gate).
+  // No redirect to a login form — that would advertise the route.
   if (pathname.startsWith("/admin")) {
     const hasAdmin = !!request.cookies.get(ADMIN_COOKIE);
     if (!hasAdmin) {
@@ -109,6 +103,16 @@ export function proxy(request: NextRequest) {
       url.search = "";
       return NextResponse.redirect(url);
     }
+    return NextResponse.next();
+  }
+
+  // Everything else needs a beta cookie.
+  const hasBeta = !!request.cookies.get(BETA_COOKIE);
+  if (!hasBeta) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    url.search = ""; // strip any sensitive query params before redirect
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
