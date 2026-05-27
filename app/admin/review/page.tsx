@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdminId } from "../../lib/adminSession";
 import { supabaseServer } from "../../lib/supabase";
-import { logoutAdminForm } from "../../actions/admin";
+import AdminNav from "../AdminNav";
 
 /**
  * /admin/review — incident queue.
@@ -96,30 +96,7 @@ export default async function AdminReviewQueue() {
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-5">
-            <Link
-              href="/"
-              className="text-btf-text-light hover:text-btf-sky-deep text-sm inline-flex items-center gap-2 transition-colors"
-            >
-              <span aria-hidden>&larr;</span> Home
-            </Link>
-            <Link
-              href="/admin/audit"
-              className="text-btf-text-light hover:text-btf-sky-deep text-xs tracking-[0.25em] uppercase transition-colors"
-            >
-              Verify chain
-            </Link>
-          </div>
-          <form action={logoutAdminForm}>
-            <button
-              type="submit"
-              className="text-xs tracking-[0.25em] uppercase text-btf-text-light hover:text-btf-sky-deep transition-colors"
-            >
-              Sign out
-            </button>
-          </form>
-        </div>
+        <AdminNav current="review" />
 
         <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3">
           Admin

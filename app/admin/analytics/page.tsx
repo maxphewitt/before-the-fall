@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdminId } from "../../lib/adminSession";
 import { supabaseServer } from "../../lib/supabase";
+import AdminNav from "../AdminNav";
 
 /**
  * /admin/analytics — aggregate engagement metrics for closed beta.
@@ -228,20 +228,7 @@ export default async function AnalyticsPage() {
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <Link
-            href="/admin/review"
-            className="text-btf-text-light hover:text-btf-sky-deep text-sm inline-flex items-center gap-2 transition-colors"
-          >
-            <span aria-hidden>&larr;</span> Admin home
-          </Link>
-          <Link
-            href="/admin/grant-reports"
-            className="text-xs text-btf-sky-deep underline underline-offset-4 hover:text-btf-sky"
-          >
-            Grant reports &rarr;
-          </Link>
-        </div>
+        <AdminNav current="analytics" />
 
         <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3">
           Admin &middot; analytics

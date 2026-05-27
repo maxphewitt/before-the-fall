@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdminId } from "../../lib/adminSession";
 import AuditVerifyPanel from "./AuditVerifyPanel";
+import AdminNav from "../AdminNav";
 
 export const metadata = {
   robots: { index: false, follow: false },
@@ -21,12 +21,7 @@ export default async function AdminAuditPage() {
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
       <div className="max-w-2xl mx-auto">
-        <Link
-          href="/admin/review"
-          className="text-btf-text-light hover:text-btf-sky-deep text-sm mb-6 inline-flex items-center gap-2 transition-colors"
-        >
-          <span aria-hidden>&larr;</span> Review queue
-        </Link>
+        <AdminNav current="audit" />
 
         <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3">
           Admin · Audit
