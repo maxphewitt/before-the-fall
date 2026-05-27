@@ -34,6 +34,21 @@ import { supabaseServer } from "../../lib/supabase";
  * a founder admin_users row.
  */
 
+// CRITICAL: this route must never be cached. The URL contains a secret
+// token in the path; a cached response from a prior token attempt would
+// be served to subsequent requests in the same region — defeating the
+// whole point of the auth check. force-dynamic disables Next's static
+// optimization. The explicit Cache-Control headers below cover any CDN
+// or browser layer that might otherwise cache by path.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, private",
+  "Pragma": "no-cache",
+  "Expires": "0",
+} as const;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
@@ -56,10 +71,10 @@ export async function GET(
   // Constant-time-ish compare — short-circuit length first, then exact match.
   if (!expected || typeof expected !== "string" || expected.length < 16) {
     // Env var unset or trivially short → don't auth anyone. 404.
-    return new NextResponse(null, { status: 404 });
+    return new NextResponse(null, { status: 404, headers: NO_CACHE_HEADERS });
   }
   if (token !== expected) {
-    return new NextResponse(null, { status: 404 });
+    return new NextResponse(null, { status: 404, headers: NO_CACHE_HEADERS });
   }
 
   // Look up the founder admin row.
@@ -75,7 +90,7 @@ export async function GET(
   if (error || !founder) {
     console.error("/_a/[token] founder lookup failed:", error);
     // Don't leak the cause to the client.
-    return new NextResponse(null, { status: 500 });
+    return new NextResponse(null, { status: 500, headers: NO_CACHE_HEADERS });
   }
 
   const cookieStore = await cookies();
@@ -93,9 +108,15 @@ export async function GET(
     .update({ last_seen_at: new Date().toISOString() })
     .eq("id", founder.id);
 
-  // Redirect to the admin home. Same-origin only.
+  // Redirect to the admin home. Same-origin only. The redirect itself
+  // is also no-cache so a different admin (or the same admin after the
+  // cookie expires) can't accidentally get served a cached redirect.
   const dest = request.nextUrl.clone();
   dest.pathname = "/admin/review";
   dest.search = "";
-  return NextResponse.redirect(dest);
+  const redirectResponse = NextResponse.redirect(dest);
+  for (const [key, value] of Object.entries(NO_CACHE_HEADERS)) {
+    redirectResponse.headers.set(key, value);
+  }
+  return redirectResponse;
 }
