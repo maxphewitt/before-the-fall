@@ -26,6 +26,15 @@ import { NextResponse, type NextRequest } from "next/server";
  *     check; deep validation (the session row + code) happens in the
  *     API route and in server actions when the user does something.
  *
+ *   - `/_a/*` is the magic-link admin auth path. It is reachable
+ *     WITHOUT a beta cookie, because the admin is not a beta tester
+ *     and shouldn't have to redeem a beta code before claiming admin.
+ *     The route handler itself is the security boundary: it returns
+ *     404 unless the URL token matches ADMIN_MAGIC_PATH exactly. The
+ *     token (32 bytes of entropy) is the gate. Adding a beta-cookie
+ *     requirement created a chicken-and-egg lockout — fixed
+ *     2026-05-26 in the beta-hardening sprint.
+ *
  *   - Admin routes (`/admin/*`) require BOTH the beta cookie AND the
  *     admin cookie (`btf_admin_id`). Any admin route hit without an
  *     admin cookie redirects to `/` — never to a login form. The
@@ -70,6 +79,12 @@ export function middleware(request: NextRequest) {
   // Static asset shortcut.
   if (STATIC_EXT.test(pathname)) return NextResponse.next();
   if (pathname.startsWith("/_next/")) return NextResponse.next();
+
+  // Magic-link admin auth path. The token in the URL is the gate
+  // (handler returns 404 unless it matches ADMIN_MAGIC_PATH). Letting
+  // it through here means the admin can claim their cookie without
+  // first having to redeem a beta code.
+  if (pathname.startsWith("/_a/")) return NextResponse.next();
 
   // Public paths always allowed.
   if (PUBLIC_PATHS.has(pathname)) return NextResponse.next();
