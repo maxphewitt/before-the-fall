@@ -38,7 +38,7 @@ export default async function IncidentDetailPage({
   const { id } = await params;
 
   const adminId = await getCurrentAdminId();
-  if (!adminId) redirect("/admin/login");
+  if (!adminId) redirect("/");
 
   const supabase = supabaseServer();
 

@@ -3,11 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { supabaseServer } from "../lib/supabase";
 import {
-  setAdminCookie,
   signOutAdmin,
   getCurrentAdminId,
-  hashAdminCode,
-  isValidAdminCodeShape,
 } from "../lib/adminSession";
 import { appendAuditEvent } from "../lib/auditLog";
 import { decryptJournalText } from "../lib/journalCrypto";
@@ -17,67 +14,18 @@ import { decryptJournalText } from "../lib/journalCrypto";
  *
  * **DRAFT v1.** Requires security audit (Launch Gate #2) before public
  * launch. All actions audit-log to the tamper-evident chain.
+ *
+ * Note: there is no `loginAdmin` action and no `/admin/login` route.
+ * Admin authentication is magic-link only via `/_a/[token]`. That route
+ * mints the admin cookie itself; nothing else does. Logout still lives
+ * here so admins can clear their cookie from the /admin/review header.
  */
 
-const GENERIC_LOGIN_ERROR =
-  "We don't recognize that code. Double-check it's the full 64-character hex you were given.";
 const NOT_AUTHORIZED = "You're not signed in as an admin.";
 const NOT_FOUND = "We can't find that incident.";
 const GENERIC = "Something went wrong. Please try again.";
 
-export type AdminLoginResult =
-  | { success: true }
-  | { success: false; error: string };
-
 export type SimpleResult = { success: true } | { success: false; error: string };
-
-/**
- * Validate a pasted admin code and set the admin cookie on match.
- *
- * Single generic error message regardless of failure mode (malformed,
- * unknown, revoked) so an attacker can't tell which condition tripped.
- *
- * Successful login appends an `admin_login` event to the audit chain.
- */
-export async function loginAdmin(rawCode: string): Promise<AdminLoginResult> {
-  try {
-    if (!isValidAdminCodeShape(rawCode)) {
-      return { success: false, error: GENERIC_LOGIN_ERROR };
-    }
-
-    const hash = hashAdminCode(rawCode);
-    const supabase = supabaseServer();
-
-    const { data: admin, error } = await supabase
-      .from("admin_users")
-      .select("id, display_name, role, revoked_at")
-      .eq("recovery_code_hash", hash)
-      .maybeSingle();
-
-    if (error || !admin || admin.revoked_at !== null) {
-      return { success: false, error: GENERIC_LOGIN_ERROR };
-    }
-
-    // Touch last_seen_at. Best effort.
-    await supabase
-      .from("admin_users")
-      .update({ last_seen_at: new Date().toISOString() })
-      .eq("id", admin.id);
-
-    await setAdminCookie(admin.id as string);
-
-    await appendAuditEvent({
-      eventType: "admin_login",
-      actorAdminId: admin.id as string,
-      payload: { display_name: admin.display_name, role: admin.role },
-    });
-
-    return { success: true };
-  } catch (err) {
-    console.error("loginAdmin exception:", err);
-    return { success: false, error: GENERIC_LOGIN_ERROR };
-  }
-}
 
 export async function logoutAdmin(): Promise<SimpleResult> {
   try {

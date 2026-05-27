@@ -86,7 +86,7 @@ function formatAge(iso: string): string {
 
 export default async function AdminReviewQueue() {
   const adminId = await getCurrentAdminId();
-  if (!adminId) redirect("/admin/login");
+  if (!adminId) redirect("/");
 
   const [pending, closed] = await Promise.all([
     fetchPendingIncidents(),

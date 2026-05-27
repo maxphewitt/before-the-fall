@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 
 export default async function BetaCodesPage() {
   const adminId = await getCurrentAdminId();
-  if (!adminId) redirect("/admin/login");
+  if (!adminId) redirect("/");
 
   const res = await listBetaCodes();
 

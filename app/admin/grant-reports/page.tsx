@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 
 export default async function GrantReportsPage() {
   const adminId = await getCurrentAdminId();
-  if (!adminId) redirect("/admin/login");
+  if (!adminId) redirect("/");
 
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">

@@ -221,7 +221,7 @@ async function fetchMetrics(): Promise<Metrics> {
 
 export default async function AnalyticsPage() {
   const adminId = await getCurrentAdminId();
-  if (!adminId) redirect("/admin/login");
+  if (!adminId) redirect("/");
 
   const m = await fetchMetrics();
 
