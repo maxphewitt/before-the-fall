@@ -1,9 +1,40 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { getCurrentUserId } from "./lib/session";
 import { shouldShowCatholicPath } from "./lib/profile";
 import { signOutUser } from "./actions/userSession";
 import LovedOneCodeAffordance from "./components/LovedOneCodeAffordance";
+import BetaGate from "./components/BetaGate";
+
+/**
+ * Home renders one of two things:
+ *
+ *   - The beta gate UI, when BETA_GATE_ENABLED=true AND the visitor
+ *     has no `btf_beta_access` cookie. Closed-beta posture.
+ *
+ *   - The normal home page, otherwise. This is the only state public
+ *     visitors will ever see once we flip BETA_GATE_ENABLED to false
+ *     at public launch — at which point the home page is completely
+ *     unchanged from its pre-beta-gate form.
+ *
+ * The branch happens here in the server component (NOT in middleware)
+ * so the home page itself never redirects — middleware always lets
+ * `/` through. That way a visitor with no cookie still reaches the
+ * site, sees a sensible gate, and the gate doesn't leave any residue
+ * once disabled.
+ */
 export default async function Home() {
+  // Gate detection — env var + cookie presence. The cookie presence
+  // check here is intentionally cheap; the API route does deep DB
+  // validation when issuing the cookie.
+  const gateEnabled = process.env.BETA_GATE_ENABLED === "true";
+  if (gateEnabled) {
+    const cookieStore = await cookies();
+    if (!cookieStore.get("btf_beta_access")) {
+      return <BetaGate />;
+    }
+  }
+
   const userId = await getCurrentUserId();
   const signedIn = userId !== null;
   const showCatholicPath = await shouldShowCatholicPath();

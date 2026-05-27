@@ -1,19 +1,23 @@
-import { Suspense } from "react";
-import BetaAccessForm from "./BetaAccessForm";
+import BetaGateForm from "./BetaGateForm";
 
 /**
- * /beta-access — closed-beta entry gate.
+ * BetaGate — closed-beta entry rendered by the home page when
+ * BETA_GATE_ENABLED=true and the visitor has no btf_beta_access
+ * cookie.
  *
- * The whole site sits behind this when BETA_GATE_ENABLED=true on the
- * deploy. Crisis numbers are surfaced directly here so a person in
- * crisis can still reach help without a code.
+ * Why this lives at `/` (not at `/beta-access`):
+ *   - Middleware always lets `/` through, no matter what.
+ *   - A visitor with no cookie still reaches the site, sees a sensible
+ *     gate, and gets crisis numbers directly even without a code.
+ *   - When BETA_GATE_ENABLED is flipped off at public launch, the home
+ *     page returns to its normal hero with zero residue — no orphan
+ *     `/beta-access` route, no dead links, no extra surface area.
  *
- * Suspense wrapper keeps useSearchParams (from BetaAccessForm) inside
- * a CSR-bailout boundary so the static prerender pass succeeds.
+ * Crisis numbers are surfaced inline so anyone in immediate distress
+ * can call 988 / DV / Crisis Text Line without redeeming a code first.
+ * This is non-negotiable per [[Anonymous First Access]].
  */
-export const dynamic = "force-dynamic";
-
-export default function BetaAccessPage() {
+export default function BetaGate() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white">
       <div className="max-w-xl mx-auto px-6 py-14 sm:py-20">
@@ -33,11 +37,9 @@ export default function BetaAccessPage() {
           We&rsquo;re running a small invite-only beta while we finish content review with our clinical advisor and Father Murphy. If you have an access code, enter it below.
         </p>
 
-        <Suspense fallback={null}>
-          <BetaAccessForm />
-        </Suspense>
+        <BetaGateForm />
 
-        {/* Crisis numbers — always visible on this page */}
+        {/* Crisis numbers — always visible on this page, code or no. */}
         <section className="mt-12 rounded-2xl bg-white/10 border border-white/15 p-5">
           <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 text-center">
             If you&rsquo;re in crisis right now

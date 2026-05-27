@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { redeemBetaAccessCode } from "../actions/betaAccess";
 
 /**
- * Client subcomponent that handles the actual gate input + redemption.
- * Lives inside a Suspense boundary on the parent page so
- * useSearchParams doesn't break the static prerender.
+ * Client subcomponent for the beta gate form.
+ *
+ * Posts to /api/verify-code (the only POST middleware lets through
+ * without a beta cookie) and, on success, does a hard navigate to `/`
+ * so the new cookie is sent on the next page load and the home
+ * renders its normal hero state.
+ *
+ * Generic error messages on all failure paths — never tells an
+ * attacker whether the format was wrong vs. the code was wrong vs.
+ * the code was deactivated.
  */
-export default function BetaAccessForm() {
-  const searchParams = useSearchParams();
-  const destination = searchParams.get("from") || "/";
+export default function BetaGateForm() {
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,13 +25,21 @@ export default function BetaAccessForm() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await redeemBetaAccessCode(code);
-      if (res.success) {
-        // Hard navigate so the new cookie is sent on the next page load.
-        window.location.href = isSafeDestination(destination) ? destination : "/";
-      } else {
-        setError(res.error);
+      const res = await fetch("/api/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+      if (res.ok && data?.ok === true) {
+        // Hard navigate so the cookie set by the API route is included
+        // on the next request and the home renders the normal hero.
+        window.location.href = "/";
+        return;
       }
+      setError(data?.error ?? "Something went wrong. Try again.");
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Try again.");
@@ -76,16 +87,4 @@ export default function BetaAccessForm() {
       </button>
     </form>
   );
-}
-
-/**
- * Only allow same-origin relative destinations so the `from` query
- * param can't be used as an open redirect.
- */
-function isSafeDestination(d: string): boolean {
-  if (!d) return false;
-  if (!d.startsWith("/")) return false;
-  if (d.startsWith("//")) return false;
-  if (d.includes("\\")) return false;
-  return true;
 }

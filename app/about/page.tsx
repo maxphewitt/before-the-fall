@@ -1,5 +1,8 @@
 import Link from "next/link";
-import FounderNote from "../components/FounderNote";
+
+// FounderNote removed for closed-beta per 2026-05-26 sprint decision.
+// The written-but-unshipped note lives in app/components/FounderNote.tsx
+// and can be re-added when we're ready.
 
 export default function About() {
   return (
@@ -35,8 +38,6 @@ export default function About() {
             Most prevention resources are invisible to the people who need them. Their phone numbers don&rsquo;t come up when someone Googles their fear at three in the morning. Their websites don&rsquo;t reach the search algorithms that decide what a struggling person finds. Before the Fall was built by someone who lived this gap &mdash; who searched for months and found nothing. The platform exists because that search shouldn&rsquo;t have been so hard.
           </p>
         </section>
-
-        <FounderNote />
 
         <section className="bg-white rounded-2xl p-6 sm:p-8 border border-btf-sky-pale">
           <h2 className="font-serif text-2xl text-btf-sky-deep mb-3 font-light">Your privacy</h2>

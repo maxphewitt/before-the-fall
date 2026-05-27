@@ -1,41 +1,54 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Beta access gate — closed-beta only.
+ * Beta access gate + admin route guard.
  *
- * When BETA_GATE_ENABLED=true on the deploy, every request that
- * isn't on the allowlist gets redirected to /beta-access unless the
- * client carries a btf_beta_access cookie (set when the user
- * successfully redeems a code).
+ * Behavior is fully toggled by BETA_GATE_ENABLED. When unset or
+ * anything other than "true", middleware is a no-op and the site is
+ * open — this is the public-launch posture.
  *
- * Allowlist (always reachable, code or not):
- *   - /beta-access            the gate itself
- *   - /offline                crisis-line fallback
- *   - /admin/*                admin login / management
- *   - /_next/*                framework assets
- *   - /sw.js                  service worker
- *   - /manifest.webmanifest
- *   - /favicon.ico
- *   - /icon-* /apple-icon /opengraph-image
+ * When BETA_GATE_ENABLED=true:
  *
- * For public launch: set BETA_GATE_ENABLED=false (or unset it) in
- * Vercel. Middleware short-circuits and the site is open.
+ *   - The home `/` is always reachable (it renders the gate UI when
+ *     no cookie is present, full home content when present). The
+ *     home decides what to show based on the same cookie.
  *
- * The cookie is a presence check at the edge. Deep validation (the
- * session row + beta_access_codes link) happens server-side in
- * subsequent actions. The gate is a friendly closure, not a hard
- * security boundary — recovery codes and admin auth still gate the
- * sensitive surfaces independently.
+ *   - `/api/verify-code` is the only API path that can be hit without
+ *     a cookie (it's the POST endpoint that issues the cookie).
+ *
+ *   - `/offline` stays reachable so the crisis-line fallback works
+ *     for anyone in a crisis, code or no.
+ *
+ *   - Static assets pass through unconditionally.
+ *
+ *   - Everything else requires a `btf_beta_access` cookie. Missing or
+ *     malformed cookie → 302 to `/`. The middleware does a presence
+ *     check; deep validation (the session row + code) happens in the
+ *     API route and in server actions when the user does something.
+ *
+ *   - Admin routes (`/admin/*`) require BOTH the beta cookie AND the
+ *     admin cookie (`btf_admin_id`). Any admin route hit without an
+ *     admin cookie redirects to `/` — never to a login form. The
+ *     admin auth path lives at `/_a/[token]` (magic link, see
+ *     route handler). There is no public admin login form.
+ *
+ * Defense-in-depth: middleware does perimeter checks at the edge;
+ * server components and actions do deep validation. Both must pass
+ * for sensitive operations.
  */
-const ALLOW_PREFIXES = [
-  "/beta-access",
-  "/offline",
-  "/admin",
-  "/_next",
-  "/api",
-];
 
-const ALLOW_EXACT = new Set([
+// Cookie name matches what app/actions/betaAccess.ts and the
+// /api/verify-code route set. Renamed from `beta_authorized` in the
+// 2026-05-26 beta-hardening sprint to align with the existing
+// btf_*-prefixed naming convention (btf_user_id, btf_admin_id).
+const BETA_COOKIE = "btf_beta_access";
+const ADMIN_COOKIE = "btf_admin_id";
+
+/** Paths that never require a beta cookie. */
+const PUBLIC_PATHS = new Set([
+  "/",
+  "/api/verify-code",
+  "/offline",
   "/sw.js",
   "/manifest.webmanifest",
   "/favicon.ico",
@@ -45,7 +58,8 @@ const ALLOW_EXACT = new Set([
   "/icon-512",
 ]);
 
-const BETA_COOKIE = "btf_beta_access";
+/** Static asset extensions that always pass through. */
+const STATIC_EXT = /\.(png|jpg|jpeg|svg|gif|webp|ico|woff2?|ttf|css|js|map|txt|xml)$/i;
 
 export function middleware(request: NextRequest) {
   const enabled = process.env.BETA_GATE_ENABLED === "true";
@@ -53,32 +67,41 @@ export function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Static file extensions that should always pass through.
-  if (/\.(png|jpg|jpeg|svg|gif|webp|ico|woff2?|ttf|css|js|map|txt|xml)$/i.test(pathname)) {
-    return NextResponse.next();
+  // Static asset shortcut.
+  if (STATIC_EXT.test(pathname)) return NextResponse.next();
+  if (pathname.startsWith("/_next/")) return NextResponse.next();
+
+  // Public paths always allowed.
+  if (PUBLIC_PATHS.has(pathname)) return NextResponse.next();
+
+  // Everything else needs a beta cookie.
+  const hasBeta = !!request.cookies.get(BETA_COOKIE);
+  if (!hasBeta) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    url.search = ""; // strip any sensitive query params before redirect
+    return NextResponse.redirect(url);
   }
 
-  if (ALLOW_EXACT.has(pathname)) return NextResponse.next();
-  if (ALLOW_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
-    return NextResponse.next();
+  // Admin routes additionally require the admin cookie. We do NOT
+  // redirect to a login form — that would advertise the route. We send
+  // them to `/` with no indication that anything else exists here.
+  if (pathname.startsWith("/admin")) {
+    const hasAdmin = !!request.cookies.get(ADMIN_COOKIE);
+    if (!hasAdmin) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
   }
 
-  // If the cookie exists, allow through (server actions deep-validate
-  // on demand).
-  if (request.cookies.get(BETA_COOKIE)) {
-    return NextResponse.next();
-  }
-
-  // Otherwise redirect to the gate, preserving the destination so we
-  // can route them back after redemption.
-  const url = request.nextUrl.clone();
-  url.pathname = "/beta-access";
-  url.searchParams.set("from", pathname);
-  return NextResponse.redirect(url);
+  return NextResponse.next();
 }
 
 export const config = {
-  // Run on all paths except internal Next.js routes the matcher
-  // shouldn't touch.
+  // Run on every request except framework asset paths the matcher
+  // shouldn't touch. The static-extension shortcut inside the function
+  // is the second line of defense.
   matcher: ["/((?!_next/static|_next/image).*)"],
 };
