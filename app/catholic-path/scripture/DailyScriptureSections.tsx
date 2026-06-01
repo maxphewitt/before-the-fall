@@ -76,14 +76,16 @@ export default function DailyScriptureSections({
           href={`/catholic-path/scripture/${todaysPassage.id}`}
           className="block rounded-2xl bg-white border-2 border-btf-gold/30 hover:border-btf-gold hover:shadow-md p-6 transition-all"
         >
-          <p className="font-serif text-base text-btf-text-dark font-light leading-relaxed mb-4 line-clamp-5">
-            {todaysPassage.full_text.split("\n\n")[0]}
+          {/* No verse preview — the guided read is the experience.
+              Just the why-it-was-picked framing + the begin CTA. */}
+          <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky font-semibold mb-2">
+            For when
           </p>
-          <p className="text-xs text-btf-text-mid font-light leading-relaxed italic">
+          <p className="font-serif italic text-base text-btf-text-mid font-light leading-relaxed mb-4">
             {todaysPassage.when_to_use}
           </p>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-btf-gold font-semibold mt-4">
-            Read this passage &rarr;
+          <p className="text-[10px] uppercase tracking-[0.25em] text-btf-gold font-semibold">
+            Read this slowly &rarr;
           </p>
         </Link>
       </section>

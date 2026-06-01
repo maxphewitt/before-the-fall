@@ -28,7 +28,7 @@ export default async function ScriptureDetailPage({
   const passage = getPassageById(id);
   if (!passage) notFound();
 
-  const paragraphs = passage.full_text.split("\n\n");
+  const verseCount = passage.verses.length;
   const related = PASSAGES.filter(
     (p) =>
       p.id !== passage.id &&
@@ -53,11 +53,11 @@ export default async function ScriptureDetailPage({
           {passage.title}
         </h1>
         <p className="text-xs text-btf-text-light font-light mb-8">
-          {passage.citation} &middot; {passage.translation}
+          {passage.citation} &middot; {passage.translation} &middot; {verseCount} {verseCount === 1 ? "verse" : "verses"}
         </p>
 
-        {/* When to use */}
-        <section className="rounded-2xl bg-white border border-btf-sky-pale p-5 mb-6">
+        {/* When to read it */}
+        <section className="rounded-2xl bg-white border border-btf-sky-pale p-5 mb-5">
           <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky font-semibold mb-2">
             When to read it
           </p>
@@ -66,18 +66,14 @@ export default async function ScriptureDetailPage({
           </p>
         </section>
 
-        {/* The passage */}
-        <section className="rounded-2xl bg-white border-2 border-btf-gold/30 p-6 sm:p-7 mb-6">
-          <div className="space-y-4">
-            {paragraphs.map((para, i) => (
-              <p
-                key={i}
-                className="font-serif text-lg text-btf-text-dark font-light leading-relaxed whitespace-pre-line"
-              >
-                {para}
-              </p>
-            ))}
-          </div>
+        {/* Why it's on the platform — no preview of the actual verses */}
+        <section className="rounded-2xl bg-white border border-btf-sky-pale p-5 mb-8">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky font-semibold mb-2">
+            Why this passage is here
+          </p>
+          <p className="text-sm text-btf-text-mid font-light leading-relaxed">
+            This passage is part of the Daily Scripture library because it speaks directly to the kind of moment described above. In the guided reading you&rsquo;ll see one verse at a time &mdash; read it slowly, the way it was meant to be read. At the end, space to write what rises.
+          </p>
         </section>
 
         {/* Read this slowly CTA */}
@@ -86,24 +82,14 @@ export default async function ScriptureDetailPage({
             href={`/catholic-path/scripture/${passage.id}/read`}
             className="block w-full text-center bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-8 py-4 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform"
           >
-            Read this slowly, verse by verse &rarr;
+            Begin reading &rarr;
           </Link>
           <p className="text-xs text-btf-text-light font-light text-center mt-2">
-            One verse per screen. Reflect at the end. Optional save to journal.
+            One verse per screen. Reflection prompt at the end. Optional save to journal.
           </p>
         </div>
 
-        {/* Reflection prompt */}
-        <section className="rounded-2xl bg-btf-sky-pale/30 border border-btf-sky-pale p-5 mb-8">
-          <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky-deep font-semibold mb-2">
-            Reflect
-          </p>
-          <p className="font-serif italic text-base text-btf-text-dark font-light leading-relaxed">
-            {passage.reflection_prompt}
-          </p>
-        </section>
-
-        {/* Translation note */}
+        {/* Translation note — small print */}
         <section className="rounded-2xl bg-btf-off-white border border-btf-text-light/15 p-4 mb-8">
           <p className="text-[10px] tracking-[0.2em] uppercase text-btf-text-light font-semibold mb-2">
             About this translation

@@ -33,8 +33,6 @@ export default async function PrayerDetailPage({
     (p) => p.category === prayer.category && p.id !== prayer.id
   ).slice(0, 3);
 
-  const paragraphs = prayer.full_text.split("\n\n");
-
   return (
     <main className="min-h-screen bg-btf-off-white">
       <div className="max-w-2xl mx-auto px-6 py-10 sm:py-14">
@@ -57,7 +55,7 @@ export default async function PrayerDetailPage({
         </p>
 
         {/* When to use */}
-        <section className="rounded-2xl bg-white border border-btf-sky-pale p-5 mb-6">
+        <section className="rounded-2xl bg-white border border-btf-sky-pale p-5 mb-5">
           <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky font-semibold mb-2">
             When to use it
           </p>
@@ -66,18 +64,14 @@ export default async function PrayerDetailPage({
           </p>
         </section>
 
-        {/* Prayer text */}
-        <section className="rounded-2xl bg-white border-2 border-btf-gold/30 p-6 sm:p-7 mb-6">
-          <div className="space-y-4">
-            {paragraphs.map((para, i) => (
-              <p
-                key={i}
-                className="font-serif text-lg text-btf-text-dark font-light leading-relaxed whitespace-pre-line"
-              >
-                {para}
-              </p>
-            ))}
-          </div>
+        {/* Why this prayer is here — no preview of the prayer text */}
+        <section className="rounded-2xl bg-white border border-btf-sky-pale p-5 mb-8">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky font-semibold mb-2">
+            Why this prayer is here
+          </p>
+          <p className="text-sm text-btf-text-mid font-light leading-relaxed">
+            Catholics have prayed this for generations. It&rsquo;s in the library because it meets the moment described above. In the guided mode you&rsquo;ll see one line at a time so the words aren&rsquo;t rushed past &mdash; with space at the end to save an intention to your journal.
+          </p>
         </section>
 
         {/* Pray this CTA */}
@@ -86,10 +80,10 @@ export default async function PrayerDetailPage({
             href={`/catholic-path/prayers/${prayer.id}/pray`}
             className="block w-full text-center bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-8 py-4 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform"
           >
-            Pray this, line by line →
+            Begin praying →
           </Link>
           <p className="text-xs text-btf-text-light font-light text-center mt-2">
-            One line at a time, with the option to save an intention to your journal at the end.
+            One line at a time. Optional intention save to your journal at the end.
           </p>
         </div>
 

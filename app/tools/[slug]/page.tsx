@@ -64,65 +64,32 @@ export default async function ExercisePage({
           )}
         </section>
 
-        {/* Instructions */}
-        <section className="rounded-2xl bg-white border-2 border-btf-gold/30 p-6 mb-5">
-          <p className="text-[10px] tracking-[0.2em] uppercase text-btf-gold font-semibold mb-4">
-            {ex.instructionsHeader}
-          </p>
-          <ol className="space-y-4">
-            {ex.instructions.map((step, i) => (
-              <li key={i} className="flex gap-4">
-                <span
-                  aria-hidden
-                  className="flex-shrink-0 w-8 h-8 rounded-full bg-btf-gold-pale text-btf-sky-deep font-medium text-sm flex items-center justify-center mt-0.5"
-                >
-                  {i + 1}
-                </span>
-                <div>
-                  {step.heading && (
-                    <p className="font-medium text-btf-sky-deep mb-1">
-                      {step.heading}
-                    </p>
-                  )}
-                  <p className="text-sm text-btf-text-mid font-light leading-relaxed">
-                    {step.body}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          {ex.instructionsNote && (
-            <p className="text-sm text-btf-text-mid font-light leading-relaxed mt-5 pt-5 border-t border-btf-text-light/15 italic">
-              {ex.instructionsNote}
-            </p>
-          )}
-        </section>
-
-        {/* Start walker CTA */}
-        <div className="mb-5">
-          <Link
-            href={`/tools/${ex.slug}/start`}
-            className="block w-full text-center bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-8 py-4 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform"
-          >
-            Start walking through it →
-          </Link>
-          <p className="text-xs text-btf-text-light font-light text-center mt-2">
-            We&rsquo;ll guide you step by step and save your notes to your journal.
-          </p>
-        </div>
-
-        {/* Mechanism */}
-        <section className="rounded-2xl bg-white border border-btf-sky-pale p-6 mb-5">
+        {/* Why this is one of the six — pastoral framing of the clinical
+            mechanism, no step-by-step content. The walker has the steps. */}
+        <section className="rounded-2xl bg-white border border-btf-sky-pale p-6 mb-8">
           <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky font-semibold mb-2">
-            Why it works
+            Why this is one of the six
           </p>
           <p className="text-btf-text-mid font-light leading-relaxed">
             {ex.mechanism}
           </p>
         </section>
 
-        {/* Source */}
-        <section className="rounded-2xl bg-btf-off-white border border-btf-text-light/15 p-5 mb-8">
+        {/* Start walker CTA */}
+        <div className="mb-8">
+          <Link
+            href={`/tools/${ex.slug}/start`}
+            className="block w-full text-center bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-8 py-4 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform"
+          >
+            Begin →
+          </Link>
+          <p className="text-xs text-btf-text-light font-light text-center mt-2">
+            We&rsquo;ll walk you through it step by step and save your notes to your journal.
+          </p>
+        </div>
+
+        {/* Source — small print at bottom */}
+        <section className="rounded-2xl bg-btf-off-white border border-btf-text-light/15 p-5 mb-6">
           <p className="text-[10px] tracking-[0.2em] uppercase text-btf-text-light font-semibold mb-2">
             Source
           </p>
