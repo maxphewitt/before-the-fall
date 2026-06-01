@@ -1,7 +1,12 @@
 import ModuleStub from "../_ModuleStub";
+import BumpActivity from "../../components/BumpActivity";
+
+export const dynamic = "force-dynamic";
 
 export default function ParishesStub() {
   return (
+    <>
+    <BumpActivity />
     <ModuleStub
       title="Parish Finder"
       description="A directory of Catholic parishes near you, with everything you need to actually walk through the doors."
@@ -13,5 +18,6 @@ export default function ParishesStub() {
         "Notes for the spiritually-distant: which parishes welcome anonymous walk-ins and quiet visits without obligation.",
       ]}
     />
+    </>
   );
 }

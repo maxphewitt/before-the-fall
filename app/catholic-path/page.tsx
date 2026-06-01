@@ -1,4 +1,10 @@
 import Link from "next/link";
+import BumpActivity from "../components/BumpActivity";
+
+// Calling cookies() inside BumpActivity opts this route into dynamic
+// rendering, which is what we want — activity tracking requires the
+// request context.
+export const dynamic = "force-dynamic";
 
 /**
  * /catholic-path — landing page for the Tier 5 faith layer.
@@ -87,6 +93,7 @@ const STATUS_BADGE_STYLES: Record<ModuleStatus, string> = {
 export default function CatholicPathLanding() {
   return (
     <main className="min-h-screen">
+      <BumpActivity />
       {/* Hero */}
       <section className="relative bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white py-16 px-6 overflow-hidden">
         {/* Gold glow */}

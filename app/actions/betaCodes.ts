@@ -171,6 +171,10 @@ export async function listBetaCodes(): Promise<ListOk | Err> {
     >();
     const habitsByUser = new Map<string, string[]>(); // user_id -> completed_at[]
     const incidentsByUser = new Map<string, number>();
+    // Authoritative per-day activity (any authenticated page hit). Populated
+    // by touchUserActivity() in app/lib/session.ts. Source of truth for
+    // daysActiveLast30 and "are they coming back" signal.
+    const activeDaysByUser = new Map<string, Set<string>>();
 
     if (allLinkedUserIds.length > 0) {
       const { data: journals } = await supabase
@@ -205,6 +209,22 @@ export async function listBetaCodes(): Promise<ListOk | Err> {
         const uid = inc.user_id as string;
         incidentsByUser.set(uid, (incidentsByUser.get(uid) ?? 0) + 1);
       }
+
+      // Pull rows from user_daily_activity for the last 30 days.
+      const cutoffDate = new Date();
+      cutoffDate.setUTCDate(cutoffDate.getUTCDate() - 30);
+      const cutoffIso = cutoffDate.toISOString().slice(0, 10);
+      const { data: dailyActivity } = await supabase
+        .from("user_daily_activity")
+        .select("user_id, activity_date")
+        .in("user_id", allLinkedUserIds)
+        .gte("activity_date", cutoffIso);
+      for (const row of dailyActivity ?? []) {
+        const uid = row.user_id as string;
+        const date = row.activity_date as string;
+        if (!activeDaysByUser.has(uid)) activeDaysByUser.set(uid, new Set());
+        activeDaysByUser.get(uid)!.add(date);
+      }
     }
 
     // Build per-code activity rollup.
@@ -229,21 +249,37 @@ export async function listBetaCodes(): Promise<ListOk | Err> {
         for (const j of journalByUser.get(u.id) ?? []) {
           if (j.kind === "activity") toolSessions += 1;
           else journalEntries += 1;
-          if (new Date(j.createdAt) >= day30Ago) {
-            activeDays.add(j.createdAt.slice(0, 10));
-          }
+          // Don't infer activity days from journal anymore — the
+          // dedicated user_daily_activity table is authoritative. We
+          // keep the count metrics here though.
         }
-        for (const completedAt of habitsByUser.get(u.id) ?? []) {
-          habitCompletions += 1;
-          if (new Date(completedAt) >= day30Ago) {
-            activeDays.add(completedAt.slice(0, 10));
-          }
-        }
-        // last_seen_at also implies activity on that calendar day.
-        if (u.lastSeenAt && new Date(u.lastSeenAt) >= day30Ago) {
-          activeDays.add(u.lastSeenAt.slice(0, 10));
-        }
+        habitCompletions += (habitsByUser.get(u.id) ?? []).length;
         incidentsFlagged += incidentsByUser.get(u.id) ?? 0;
+
+        // Authoritative source for daysActive: user_daily_activity.
+        // Falls back to journal/habit dates if the migration hasn't
+        // run yet on this DB.
+        const days = activeDaysByUser.get(u.id);
+        if (days && days.size > 0) {
+          days.forEach((d) => activeDays.add(d));
+        } else {
+          // Fallback for users with activity that pre-dates the
+          // user_daily_activity migration. Infer from journal +
+          // habit dates within the 30-day window.
+          for (const j of journalByUser.get(u.id) ?? []) {
+            if (new Date(j.createdAt) >= day30Ago) {
+              activeDays.add(j.createdAt.slice(0, 10));
+            }
+          }
+          for (const completedAt of habitsByUser.get(u.id) ?? []) {
+            if (new Date(completedAt) >= day30Ago) {
+              activeDays.add(completedAt.slice(0, 10));
+            }
+          }
+          if (u.lastSeenAt && new Date(u.lastSeenAt) >= day30Ago) {
+            activeDays.add(u.lastSeenAt.slice(0, 10));
+          }
+        }
       }
 
       return {

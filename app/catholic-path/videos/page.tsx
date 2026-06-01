@@ -1,7 +1,12 @@
 import ModuleStub from "../_ModuleStub";
+import BumpActivity from "../../components/BumpActivity";
+
+export const dynamic = "force-dynamic";
 
 export default function VideosStub() {
   return (
+    <>
+    <BumpActivity />
     <ModuleStub
       title="Weekly Teaching Videos"
       description="Short videos from Catholic priests and clinicians on what scripture and the Magisterium have to say about the kinds of struggles people bring here."
@@ -12,5 +17,6 @@ export default function VideosStub() {
         "A small library of past episodes you can return to.",
       ]}
     />
+    </>
   );
 }

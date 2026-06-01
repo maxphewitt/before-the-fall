@@ -1,6 +1,12 @@
 import { notFound } from "next/navigation";
 import { getMysteryBySlug, MYSTERIES, generateRosary } from "../../../lib/rosary";
 import RosaryWalker from "./RosaryWalker";
+import BumpActivity from "../../../components/BumpActivity";
+
+// Activity tracking requires request context (cookies), so this
+// route renders per-request. generateStaticParams stays for routing
+// hints / sitemap.
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
   return MYSTERIES.map((m) => ({ mystery: m.slug }));
@@ -17,5 +23,10 @@ export default async function RosaryMysteryPage({
 
   const steps = generateRosary(mystery);
 
-  return <RosaryWalker mysteryName={mystery.name} steps={steps} />;
+  return (
+    <>
+      <BumpActivity />
+      <RosaryWalker mysteryName={mystery.name} steps={steps} />
+    </>
+  );
 }

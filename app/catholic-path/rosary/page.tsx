@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MYSTERIES, todaysMysterySlug, getMysteryBySlug } from "../../lib/rosary";
+import BumpActivity from "../../components/BumpActivity";
 
 /**
  * /catholic-path/rosary — pick a mystery.
@@ -23,6 +24,8 @@ export default function RosaryLanding() {
   const weekdayName = new Date().toLocaleDateString(undefined, { weekday: "long" });
 
   return (
+    <>
+    <BumpActivity />
     <main className="min-h-screen">
       {/* Hero */}
       <section className="relative bg-gradient-to-b from-btf-sky-deep to-btf-sky text-white py-14 px-6 overflow-hidden">
@@ -116,5 +119,6 @@ export default function RosaryLanding() {
         </div>
       </section>
     </main>
+    </>
   );
 }

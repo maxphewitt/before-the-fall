@@ -12,6 +12,7 @@ import {
   getSeasonBlurb,
 } from "../../lib/liturgicalCalendar";
 import { SEASON_LABELS } from "../../lib/prayers";
+import BumpActivity from "../../components/BumpActivity";
 
 /**
  * /catholic-path/scripture — Daily Scripture landing.
@@ -59,6 +60,7 @@ export default function ScriptureLandingPage() {
 
   return (
     <main className="min-h-screen">
+      <BumpActivity />
       {/* Hero */}
       <section className="relative bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white py-14 px-6 overflow-hidden">
         <div

@@ -12,6 +12,7 @@ import {
   getSeasonBlurb,
 } from "../../lib/liturgicalCalendar";
 import PrayerSearch from "./PrayerSearch";
+import BumpActivity from "../../components/BumpActivity";
 
 /**
  * /catholic-path/prayers — Prayer Library landing.
@@ -46,6 +47,7 @@ export default function PrayerLibraryPage() {
 
   return (
     <main className="min-h-screen">
+      <BumpActivity />
       {/* Hero */}
       <section className="relative bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white py-14 px-6 overflow-hidden">
         <div
