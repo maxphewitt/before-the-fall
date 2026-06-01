@@ -12,7 +12,8 @@ import {
   getSeasonBlurb,
 } from "../../lib/liturgicalCalendar";
 import { SEASON_LABELS } from "../../lib/prayers";
-import BumpActivity from "../../components/BumpActivity";
+import { getCurrentUserId } from "../../lib/session";
+import OnboardingRequired from "../../components/OnboardingRequired";
 
 /**
  * /catholic-path/scripture — Daily Scripture landing.
@@ -44,7 +45,10 @@ const THEMES_DISPLAY_ORDER = [
   "conversion",
 ] as const;
 
-export default function ScriptureLandingPage() {
+export default async function ScriptureLandingPage() {
+  const userId = await getCurrentUserId();
+  if (!userId) return <OnboardingRequired returnTo="/catholic-path/scripture" />;
+
   const season = getCurrentLiturgicalSeason();
   const today = new Date();
   const todaysPassage = getPassageForDate(today, season);
@@ -60,7 +64,6 @@ export default function ScriptureLandingPage() {
 
   return (
     <main className="min-h-screen">
-      <BumpActivity />
       {/* Hero */}
       <section className="relative bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white py-14 px-6 overflow-hidden">
         <div

@@ -1,12 +1,14 @@
 import ModuleStub from "../_ModuleStub";
-import BumpActivity from "../../components/BumpActivity";
+import { getCurrentUserId } from "../../lib/session";
+import OnboardingRequired from "../../components/OnboardingRequired";
 
 export const dynamic = "force-dynamic";
 
-export default function VideosStub() {
+export default async function VideosStub() {
+  const userId = await getCurrentUserId();
+  if (!userId) return <OnboardingRequired returnTo="/catholic-path/videos" />;
+
   return (
-    <>
-    <BumpActivity />
     <ModuleStub
       title="Weekly Teaching Videos"
       description="Short videos from Catholic priests and clinicians on what scripture and the Magisterium have to say about the kinds of struggles people bring here."
@@ -17,6 +19,5 @@ export default function VideosStub() {
         "A small library of past episodes you can return to.",
       ]}
     />
-    </>
   );
 }

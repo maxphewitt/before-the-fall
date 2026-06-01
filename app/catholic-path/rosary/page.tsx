@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MYSTERIES, todaysMysterySlug, getMysteryBySlug } from "../../lib/rosary";
-import BumpActivity from "../../components/BumpActivity";
+import { getCurrentUserId } from "../../lib/session";
+import OnboardingRequired from "../../components/OnboardingRequired";
 
 /**
  * /catholic-path/rosary — pick a mystery.
@@ -16,7 +17,10 @@ import BumpActivity from "../../components/BumpActivity";
  */
 export const dynamic = "force-dynamic";
 
-export default function RosaryLanding() {
+export default async function RosaryLanding() {
+  const userId = await getCurrentUserId();
+  if (!userId) return <OnboardingRequired returnTo="/catholic-path/rosary" />;
+
   const todaySlug = todaysMysterySlug();
   const today = getMysteryBySlug(todaySlug)!;
   const others = MYSTERIES.filter((m) => m.slug !== todaySlug);
@@ -24,8 +28,6 @@ export default function RosaryLanding() {
   const weekdayName = new Date().toLocaleDateString(undefined, { weekday: "long" });
 
   return (
-    <>
-    <BumpActivity />
     <main className="min-h-screen">
       {/* Hero */}
       <section className="relative bg-gradient-to-b from-btf-sky-deep to-btf-sky text-white py-14 px-6 overflow-hidden">
@@ -119,6 +121,5 @@ export default function RosaryLanding() {
         </div>
       </section>
     </main>
-    </>
   );
 }

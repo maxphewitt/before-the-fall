@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EXERCISES, getExerciseBySlug } from "../../lib/tools";
+import { getCurrentUserId } from "../../lib/session";
+import OnboardingRequired from "../../components/OnboardingRequired";
 
-/**
- * Dynamic page that renders one of the six Tier 1 exercises.
- * Static-export friendly via generateStaticParams.
- *
- * In Next 15+, dynamic route `params` is a Promise. Await it.
- */
+// Beta posture: per-tester gate. Renders dynamically so the cookie
+// check happens per request. generateStaticParams stays for routing
+// hints.
+export const dynamic = "force-dynamic";
+
 export function generateStaticParams() {
   return EXERCISES.map((e) => ({ slug: e.slug }));
 }
@@ -20,6 +21,9 @@ export default async function ExercisePage({
   const { slug } = await params;
   const ex = getExerciseBySlug(slug);
   if (!ex) notFound();
+
+  const userId = await getCurrentUserId();
+  if (!userId) return <OnboardingRequired returnTo={`/tools/${slug}`} />;
 
   const relatedExercises = ex.related
     .map((s) => getExerciseBySlug(s))

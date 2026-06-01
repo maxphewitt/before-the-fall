@@ -12,7 +12,8 @@ import {
   getSeasonBlurb,
 } from "../../lib/liturgicalCalendar";
 import PrayerSearch from "./PrayerSearch";
-import BumpActivity from "../../components/BumpActivity";
+import { getCurrentUserId } from "../../lib/session";
+import OnboardingRequired from "../../components/OnboardingRequired";
 
 /**
  * /catholic-path/prayers — Prayer Library landing.
@@ -33,7 +34,10 @@ import BumpActivity from "../../components/BumpActivity";
  */
 export const dynamic = "force-dynamic";
 
-export default function PrayerLibraryPage() {
+export default async function PrayerLibraryPage() {
+  const userId = await getCurrentUserId();
+  if (!userId) return <OnboardingRequired returnTo="/catholic-path/prayers" />;
+
   const season = getCurrentLiturgicalSeason();
   const seasonPrayers = getPrayersBySeason(season);
   const categories = [
@@ -47,7 +51,6 @@ export default function PrayerLibraryPage() {
 
   return (
     <main className="min-h-screen">
-      <BumpActivity />
       {/* Hero */}
       <section className="relative bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white py-14 px-6 overflow-hidden">
         <div

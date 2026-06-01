@@ -1,9 +1,8 @@
 import Link from "next/link";
-import BumpActivity from "../components/BumpActivity";
+import { getCurrentUserId } from "../lib/session";
+import OnboardingRequired from "../components/OnboardingRequired";
 
-// Calling cookies() inside BumpActivity opts this route into dynamic
-// rendering, which is what we want — activity tracking requires the
-// request context.
+// Onboarding gate + activity tracking both require request context.
 export const dynamic = "force-dynamic";
 
 /**
@@ -90,10 +89,12 @@ const STATUS_BADGE_STYLES: Record<ModuleStatus, string> = {
   "pending-production": "bg-btf-off-white text-btf-text-light",
 };
 
-export default function CatholicPathLanding() {
+export default async function CatholicPathLanding() {
+  const userId = await getCurrentUserId(); // also bumps activity as a side effect
+  if (!userId) return <OnboardingRequired returnTo="/catholic-path" />;
+
   return (
     <main className="min-h-screen">
-      <BumpActivity />
       {/* Hero */}
       <section className="relative bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white py-16 px-6 overflow-hidden">
         {/* Gold glow */}

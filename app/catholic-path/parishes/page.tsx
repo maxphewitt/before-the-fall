@@ -1,12 +1,14 @@
 import ModuleStub from "../_ModuleStub";
-import BumpActivity from "../../components/BumpActivity";
+import { getCurrentUserId } from "../../lib/session";
+import OnboardingRequired from "../../components/OnboardingRequired";
 
 export const dynamic = "force-dynamic";
 
-export default function ParishesStub() {
+export default async function ParishesStub() {
+  const userId = await getCurrentUserId();
+  if (!userId) return <OnboardingRequired returnTo="/catholic-path/parishes" />;
+
   return (
-    <>
-    <BumpActivity />
     <ModuleStub
       title="Parish Finder"
       description="A directory of Catholic parishes near you, with everything you need to actually walk through the doors."
@@ -18,6 +20,5 @@ export default function ParishesStub() {
         "Notes for the spiritually-distant: which parishes welcome anonymous walk-ins and quiet visits without obligation.",
       ]}
     />
-    </>
   );
 }

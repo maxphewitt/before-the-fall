@@ -1,22 +1,26 @@
 import Link from "next/link";
 import { EXERCISES } from "../lib/tools";
 import BetaDisclaimerBanner from "../components/BetaDisclaimerBanner";
+import OnboardingRequired from "../components/OnboardingRequired";
+import { getCurrentUserId } from "../lib/session";
+
+// Activity tracking + onboarding gate both require request context.
+export const dynamic = "force-dynamic";
 
 /**
  * /tools — index of the six Tier 1 self-help exercises.
  *
- * Public, no auth gate. Tools are harm-reduction content; anyone can
- * read them. Per [[Anonymous First Access]] we don't put a signup wall
- * between a person in distress and the tool that might help.
- *
- * Visual layout:
- *   - Eyebrow + headline + lede
- *   - Dismissible closed-beta banner (BetaDisclaimerBanner — clicks once,
- *     stays gone via localStorage)
- *   - Six tool cards (refactored 2026-05-26 sprint)
- *   - Permanent safety footnote
+ * Beta posture: requires an onboarded user (btf_user_id cookie). The
+ * [[Anonymous First Access]] principle is paused during closed beta so
+ * Max can attribute every interaction to a specific tester. Will
+ * revisit at public launch — at that point the index may go back to
+ * being open content with only the interactive walker (/tools/[slug]/start)
+ * requiring sign-in.
  */
-export default function ToolsIndex() {
+export default async function ToolsIndex() {
+  const userId = await getCurrentUserId();
+  if (!userId) return <OnboardingRequired returnTo="/tools" />;
+
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
       <div className="max-w-3xl mx-auto">

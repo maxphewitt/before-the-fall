@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import { getMysteryBySlug, MYSTERIES, generateRosary } from "../../../lib/rosary";
 import RosaryWalker from "./RosaryWalker";
-import BumpActivity from "../../../components/BumpActivity";
+import { getCurrentUserId } from "../../../lib/session";
+import OnboardingRequired from "../../../components/OnboardingRequired";
 
-// Activity tracking requires request context (cookies), so this
-// route renders per-request. generateStaticParams stays for routing
-// hints / sitemap.
+// Beta posture: onboarded users only. Per-request render so the cookie
+// check happens at request time; generateStaticParams stays for
+// routing hints.
 export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
@@ -21,12 +22,12 @@ export default async function RosaryMysteryPage({
   const mystery = getMysteryBySlug(slug);
   if (!mystery) notFound();
 
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return <OnboardingRequired returnTo={`/catholic-path/rosary/${slug}`} />;
+  }
+
   const steps = generateRosary(mystery);
 
-  return (
-    <>
-      <BumpActivity />
-      <RosaryWalker mysteryName={mystery.name} steps={steps} />
-    </>
-  );
+  return <RosaryWalker mysteryName={mystery.name} steps={steps} />;
 }
