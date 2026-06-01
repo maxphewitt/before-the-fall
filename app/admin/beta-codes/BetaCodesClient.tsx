@@ -54,6 +54,7 @@ export default function BetaCodesClient({
             useCount: 0,
             sessionCount: 0,
             signupCount: 0,
+            activity: null,
           },
           ...c,
         ]);
@@ -259,6 +260,9 @@ function CodeRow({
   onDeactivate: (id: string) => void;
 }) {
   const isActive = !row.deactivatedAt;
+  const a = row.activity;
+  const stage = stageOf(row);
+
   return (
     <li
       className={
@@ -268,39 +272,27 @@ function CodeRow({
           : "bg-btf-off-white border-btf-text-light/15 opacity-60")
       }
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-btf-sky-deep">
-            {row.label || (
-              <span className="italic text-btf-text-light">unlabeled</span>
-            )}
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-medium text-btf-sky-deep">
+              {row.label || (
+                <span className="italic text-btf-text-light">unlabeled</span>
+              )}
+            </p>
+            <StageBadge stage={stage} />
+          </div>
           <p className="text-xs text-btf-text-light font-light mt-0.5">
             Created {formatDate(row.createdAt)}
             {row.lastUsedAt
-              ? ` · last used ${formatDate(row.lastUsedAt)}`
-              : " · never used"}
+              ? ` · redeemed ${formatDate(row.lastUsedAt)}`
+              : " · never redeemed"}
+            {a?.lastSeenAt
+              ? ` · last seen ${formatRelative(a.lastSeenAt)}`
+              : ""}
           </p>
         </div>
-        <div className="flex items-center gap-4 text-xs text-btf-text-mid">
-          <span title="Number of times the code was redeemed">
-            <span className="font-mono tabular-nums text-btf-sky-deep font-medium">
-              {row.useCount}
-            </span>{" "}
-            redeem{row.useCount === 1 ? "" : "s"}
-          </span>
-          <span title="Distinct sessions (browser cookies issued)">
-            <span className="font-mono tabular-nums text-btf-sky-deep font-medium">
-              {row.sessionCount}
-            </span>{" "}
-            session{row.sessionCount === 1 ? "" : "s"}
-          </span>
-          <span title="User accounts created while this code's cookie was set">
-            <span className="font-mono tabular-nums text-btf-sky-deep font-medium">
-              {row.signupCount}
-            </span>{" "}
-            signup{row.signupCount === 1 ? "" : "s"}
-          </span>
+        <div className="flex items-center gap-3 text-xs text-btf-text-mid">
           {isActive ? (
             <button
               type="button"
@@ -314,7 +306,101 @@ function CodeRow({
           )}
         </div>
       </div>
+
+      {/* Per-tester activity row — only meaningful once a user is linked */}
+      {a ? (
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2 pt-3 border-t border-btf-sky-pale/40">
+          <Metric label="Days active /30" value={a.daysActiveLast30} accent={a.daysActiveLast30 === 0} />
+          <Metric label="Journal" value={a.journalEntries} />
+          <Metric label="Tool sessions" value={a.toolSessions} />
+          <Metric label="Habits" value={a.habitCompletions} />
+          <Metric
+            label="Incidents"
+            value={a.incidentsFlagged}
+            accent={a.incidentsFlagged > 0}
+            accentColor="red"
+          />
+        </div>
+      ) : (
+        <div className="mt-2 pt-3 border-t border-btf-sky-pale/40">
+          <p className="text-xs text-btf-text-light font-light italic">
+            {row.useCount > 0
+              ? "Code redeemed but tester hasn't completed onboarding yet."
+              : "No activity yet — tester hasn't entered the code."}
+          </p>
+        </div>
+      )}
     </li>
+  );
+}
+
+type Stage = "unused" | "redeemed_pending_onboard" | "onboarded_inactive" | "active";
+
+function stageOf(row: BetaCodeRow): Stage {
+  if (row.signupCount === 0 && row.useCount === 0) return "unused";
+  if (row.signupCount === 0) return "redeemed_pending_onboard";
+  if (!row.activity || (row.activity.daysActiveLast30 === 0 && !row.activity.lastSeenAt)) {
+    return "onboarded_inactive";
+  }
+  // Active if they've been seen in the last 7 days
+  if (row.activity.lastSeenAt) {
+    const ms = Date.now() - new Date(row.activity.lastSeenAt).getTime();
+    if (ms < 7 * 24 * 60 * 60 * 1000) return "active";
+  }
+  return "onboarded_inactive";
+}
+
+function StageBadge({ stage }: { stage: Stage }) {
+  const map: Record<Stage, { label: string; bg: string; fg: string }> = {
+    unused: { label: "unused", bg: "bg-btf-text-light/10", fg: "text-btf-text-light" },
+    redeemed_pending_onboard: {
+      label: "pending onboard",
+      bg: "bg-amber-50",
+      fg: "text-amber-700",
+    },
+    onboarded_inactive: {
+      label: "inactive",
+      bg: "bg-btf-gold-pale/60",
+      fg: "text-btf-gold",
+    },
+    active: { label: "active", bg: "bg-emerald-50", fg: "text-emerald-700" },
+  };
+  const m = map[stage];
+  return (
+    <span
+      className={`text-[9px] tracking-[0.2em] uppercase font-semibold px-2 py-0.5 rounded-full ${m.bg} ${m.fg}`}
+    >
+      {m.label}
+    </span>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  accent,
+  accentColor,
+}: {
+  label: string;
+  value: number;
+  accent?: boolean;
+  accentColor?: "red" | "default";
+}) {
+  const color =
+    accent && accentColor === "red"
+      ? "text-red-700"
+      : accent
+        ? "text-btf-text-light"
+        : "text-btf-sky-deep";
+  return (
+    <div className="flex flex-col">
+      <span className="text-[9px] tracking-[0.18em] uppercase text-btf-text-light font-medium">
+        {label}
+      </span>
+      <span className={`font-mono tabular-nums text-base font-medium ${color}`}>
+        {value}
+      </span>
+    </div>
   );
 }
 
@@ -326,4 +412,16 @@ function formatDate(iso: string): string {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+function formatRelative(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(ms / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return formatDate(iso);
 }
