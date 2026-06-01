@@ -181,6 +181,26 @@ export default function RosaryWalker({
           </div>
         )}
 
+        {/* Pope's intention step — sits between the Creed and the
+            opening Our Father. The next prayers (Our Father, 3 Hail
+            Marys, Glory Be) are traditionally offered for this. */}
+        {step.kind === "intention" && (
+          <div key={index} className="text-center animate-in fade-in duration-500">
+            <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/80 font-semibold mb-3">
+              {step.name}
+            </p>
+            <h1 className="font-serif text-2xl md:text-4xl font-light text-white mb-5 text-balance leading-[1.2]">
+              {step.title}
+            </h1>
+            <p className="font-serif italic text-base md:text-lg text-white/85 font-light leading-relaxed text-balance mb-8 max-w-xl mx-auto">
+              {step.body}
+            </p>
+            <p className="text-xs text-white/55 font-light leading-relaxed max-w-md mx-auto">
+              Offer the Our Father, three Hail Marys, and Glory Be that follow for this intention.
+            </p>
+          </div>
+        )}
+
         {/* Prayer step */}
         {step.kind === "prayer" && (
           <div key={index} className="text-center animate-in fade-in duration-500">

@@ -14,6 +14,7 @@ import {
 import { SEASON_LABELS } from "../../lib/prayers";
 import { getCurrentUserId } from "../../lib/session";
 import OnboardingRequired from "../../components/OnboardingRequired";
+import DailyScriptureSections from "./DailyScriptureSections";
 
 /**
  * /catholic-path/scripture — Daily Scripture landing.
@@ -50,17 +51,11 @@ export default async function ScriptureLandingPage() {
   if (!userId) return <OnboardingRequired returnTo="/catholic-path/scripture" />;
 
   const season = getCurrentLiturgicalSeason();
-  const today = new Date();
-  const todaysPassage = getPassageForDate(today, season);
   const seasonPassages = getPassagesBySeason(season);
 
-  // USCCB daily-readings URL format is MMDDYY.cfm.
-  const usccbDate = (() => {
-    const yy = String(today.getFullYear()).slice(-2);
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    return `${mm}${dd}${yy}`;
-  })();
+  // Server's best guess at today — used for the SSR placeholder before
+  // the client picks the user-local date. The client overrides on mount.
+  const initialPassage = getPassageForDate(new Date(), season);
 
   return (
     <main className="min-h-screen">
@@ -91,74 +86,17 @@ export default async function ScriptureLandingPage() {
       </section>
 
       <div className="max-w-2xl mx-auto px-6 py-10 sm:py-14">
-        {/* Today's passage */}
-        <section className="mb-12" aria-labelledby="today-heading">
-          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold font-semibold mb-3">
-            Today
-          </p>
-          <h2
-            id="today-heading"
-            className="font-serif text-2xl text-btf-sky-deep font-light mb-2"
-          >
-            {todaysPassage.title}
-          </h2>
-          <p className="text-xs text-btf-text-light font-light mb-5">
-            {todaysPassage.citation} &middot; {todaysPassage.translation}
-          </p>
-
-          <Link
-            href={`/catholic-path/scripture/${todaysPassage.id}`}
-            className="block rounded-2xl bg-white border-2 border-btf-gold/30 hover:border-btf-gold hover:shadow-md p-6 transition-all"
-          >
-            <p className="font-serif text-base text-btf-text-dark font-light leading-relaxed mb-4 line-clamp-5">
-              {todaysPassage.full_text.split("\n\n")[0]}
-            </p>
-            <p className="text-xs text-btf-text-mid font-light leading-relaxed italic">
-              {todaysPassage.when_to_use}
-            </p>
-            <p className="text-[10px] uppercase tracking-[0.25em] text-btf-gold font-semibold mt-4">
-              Read this passage &rarr;
-            </p>
-          </Link>
-        </section>
-
-        {/* Liturgical season */}
-        {seasonPassages.length > 1 && (
-          <section className="mb-12" aria-labelledby="season-heading">
-            <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold font-semibold mb-3">
-              For this season
-            </p>
-            <h2
-              id="season-heading"
-              className="font-serif text-2xl text-btf-sky-deep font-light mb-2"
-            >
-              {SEASON_LABELS[season]}
-            </h2>
-            <p className="text-sm text-btf-text-mid font-light leading-relaxed mb-5">
-              {getSeasonBlurb(season)}
-            </p>
-            <ul className="space-y-3">
-              {seasonPassages
-                .filter((p) => p.id !== todaysPassage.id)
-                .map((p) => (
-                  <li key={p.id}>
-                    <Link
-                      href={`/catholic-path/scripture/${p.id}`}
-                      className="block rounded-2xl bg-white border border-btf-sky-pale/60 hover:border-btf-sky-light hover:shadow-md p-4 transition-all"
-                    >
-                      <p className="font-medium text-btf-sky-deep">{p.title}</p>
-                      <p className="text-xs text-btf-text-light font-light mt-0.5">
-                        {p.citation}
-                      </p>
-                      <p className="text-xs text-btf-text-mid font-light mt-1 leading-relaxed">
-                        {p.when_to_use}
-                      </p>
-                    </Link>
-                  </li>
-                ))}
-            </ul>
-          </section>
-        )}
+        {/* Today's passage + season list + USCCB link — all rendered by
+            DailyScriptureSections, which picks "today" from the user's
+            local Date on mount. */}
+        <DailyScriptureSections
+          allPassages={PASSAGES}
+          seasonPassages={seasonPassages}
+          season={season}
+          seasonLabel={SEASON_LABELS[season]}
+          seasonBlurb={getSeasonBlurb(season)}
+          initialPassageId={initialPassage.id}
+        />
 
         {/* Themes */}
         <section className="mt-12" aria-labelledby="themes-heading">
@@ -197,24 +135,6 @@ export default async function ScriptureLandingPage() {
               );
             })}
           </ul>
-        </section>
-
-        {/* Today's Mass readings link */}
-        <section className="mt-12 rounded-2xl bg-btf-sky-pale/40 border border-btf-sky-pale p-5 text-center">
-          <p className="text-[10px] tracking-[0.25em] uppercase text-btf-sky-deep font-semibold mb-2">
-            For today&rsquo;s Mass
-          </p>
-          <a
-            href={`https://bible.usccb.org/bible/readings/${usccbDate}.cfm`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-btf-sky-deep underline underline-offset-4 font-medium"
-          >
-            Read today&rsquo;s actual Mass readings at usccb.org &rarr;
-          </a>
-          <p className="text-xs text-btf-text-mid font-light mt-2 leading-relaxed">
-            The library above is a curated set of passages for moments the platform&rsquo;s users actually face. For the daily lectionary, go directly to the USCCB.
-          </p>
         </section>
 
         {/* DRAFT v1 banner */}

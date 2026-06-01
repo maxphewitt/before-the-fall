@@ -273,18 +273,48 @@ export type RosaryStep =
       summary: string;
       section: "decade";
       decade: number;
+    }
+  | {
+      // The Pope's monthly intention. Sits at the top of the opening
+      // sequence (after the Creed, before the opening Our Father).
+      // Traditional practice: the next Our Father, 3 Hail Marys, and
+      // Glory Be are prayed for this intention.
+      kind: "intention";
+      name: string; // "The Pope's Intention · <month>"
+      title: string;
+      body: string;
+      section: "opening";
     };
 
 /**
- * Emit the full linear sequence of steps for one Rosary, given a mystery.
- * Total steps: 7 opening + 5 × 14 decade + 2 closing = 79.
+ * Emit the full linear sequence of steps for one Rosary, given a mystery
+ * and (optionally) the Pope's intention for the current month.
+ *
+ * Total steps: 7 opening + (optional) 1 intention + 5 × 14 decade + 2
+ * closing = 79 or 80.
+ *
+ * The intention step renders between the Apostles' Creed and the opening
+ * Our Father. If `intention` is omitted (e.g., during testing), the
+ * walker degrades to the 79-step classic flow.
  */
-export function generateRosary(mystery: Mystery): RosaryStep[] {
+export function generateRosary(
+  mystery: Mystery,
+  intention?: { title: string; body: string; period: string }
+): RosaryStep[] {
   const steps: RosaryStep[] = [];
 
   // ── Opening ──
   steps.push({ kind: "prayer", name: "Sign of the Cross", body: PRAYERS.signOfTheCross, section: "opening" });
   steps.push({ kind: "prayer", name: "Apostles' Creed", body: PRAYERS.apostlesCreed, section: "opening" });
+  if (intention) {
+    steps.push({
+      kind: "intention",
+      name: `The Pope's Intention · ${intention.period}`,
+      title: intention.title,
+      body: intention.body,
+      section: "opening",
+    });
+  }
   steps.push({ kind: "prayer", name: "Our Father", body: PRAYERS.ourFather, section: "opening" });
   for (let i = 0; i < 3; i++) {
     steps.push({

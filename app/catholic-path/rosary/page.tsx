@@ -1,19 +1,22 @@
 import Link from "next/link";
-import { MYSTERIES, todaysMysterySlug, getMysteryBySlug } from "../../lib/rosary";
+import { MYSTERIES, todaysMysterySlug } from "../../lib/rosary";
 import { getCurrentUserId } from "../../lib/session";
 import OnboardingRequired from "../../components/OnboardingRequired";
+import MysteryPicker from "./MysteryPicker";
 
 /**
  * /catholic-path/rosary — pick a mystery.
  *
  * Today's mystery surfaces prominently per the traditional day-of-week
- * pairing; the other three are below as quieter tiles. DRAFT v1 banner
- * at the bottom — content is public-domain prayer text + factual scripture
+ * pairing; the other three are quieter tiles. DRAFT v1 banner at the
+ * bottom — content is public-domain prayer text + factual scripture
  * summaries; framing copy pending Father Murphy review.
  *
- * Rendered dynamically so the day-of-week reflects the actual request time
- * instead of the build-time snapshot (which would freeze the rosary on
- * whatever day Vercel last built the page).
+ * Day-of-week determination is delegated to the <MysteryPicker /> client
+ * component so it uses the visitor's local timezone (the server runs in
+ * UTC, which would make Sunday-night visitors in the US see Monday's
+ * mystery). Server pre-renders the picker with the server's best guess
+ * so we don't ship an empty hero on first paint.
  */
 export const dynamic = "force-dynamic";
 
@@ -21,11 +24,9 @@ export default async function RosaryLanding() {
   const userId = await getCurrentUserId();
   if (!userId) return <OnboardingRequired returnTo="/catholic-path/rosary" />;
 
-  const todaySlug = todaysMysterySlug();
-  const today = getMysteryBySlug(todaySlug)!;
-  const others = MYSTERIES.filter((m) => m.slug !== todaySlug);
-
-  const weekdayName = new Date().toLocaleDateString(undefined, { weekday: "long" });
+  // Server's "today" is the initial placeholder; the client overwrites
+  // it from the browser's local Date on mount.
+  const initialTodaySlug = todaysMysterySlug();
 
   return (
     <main className="min-h-screen">
@@ -57,69 +58,7 @@ export default async function RosaryLanding() {
         </div>
       </section>
 
-      {/* Today's mystery */}
-      <section className="py-12 px-6 bg-gradient-to-b from-white to-btf-gold-pale/30">
-        <div className="max-w-3xl mx-auto">
-          <p className="text-center text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-4">
-            Today is {weekdayName}
-          </p>
-          <Link
-            href={`/catholic-path/rosary/${today.slug}`}
-            className="group block rounded-2xl p-8 md:p-10 bg-white border-2 border-btf-gold shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all"
-          >
-            <h2 className="font-serif text-2xl md:text-3xl text-btf-sky-deep font-light mb-3 text-center">
-              {today.name}
-            </h2>
-            <p className="text-center text-btf-text-mid font-light leading-relaxed mb-6 text-balance">
-              {today.subtitle}
-            </p>
-            <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-2 max-w-xl mx-auto text-sm text-btf-text-mid font-light">
-              {today.decades.map((d) => (
-                <li key={d.number} className="flex gap-2">
-                  <span aria-hidden className="text-btf-gold">✦</span>
-                  <span>{d.name}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="text-center text-[10px] uppercase tracking-[0.25em] text-btf-gold font-semibold mt-7 group-hover:translate-x-1 transition-transform">
-              Begin →
-            </p>
-          </Link>
-        </div>
-      </section>
-
-      {/* Other mysteries */}
-      <section className="py-12 px-6 bg-btf-off-white">
-        <div className="max-w-3xl mx-auto">
-          <p className="text-center text-[11px] tracking-[0.25em] text-btf-text-light uppercase font-semibold mb-6">
-            Other mysteries
-          </p>
-          <ul className="grid sm:grid-cols-3 gap-4">
-            {others.map((m) => (
-              <li key={m.slug}>
-                <Link
-                  href={`/catholic-path/rosary/${m.slug}`}
-                  className="group h-full block rounded-2xl bg-white border border-btf-gold/30 hover:border-btf-gold hover:shadow-md p-5 transition-all flex flex-col"
-                >
-                  <h3 className="font-serif text-lg text-btf-sky-deep font-light mb-1">
-                    {m.name.replace(/^The /, "")}
-                  </h3>
-                  <p className="text-xs text-btf-text-light font-light mb-3">
-                    {m.days.join(" · ")}
-                  </p>
-                  <p className="text-xs text-btf-text-mid font-light leading-relaxed flex-1">
-                    {m.subtitle}
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          <div className="rounded-xl bg-btf-gold-pale/40 border border-btf-gold/30 text-btf-text-mid text-xs font-light p-4 mt-10 leading-relaxed">
-            <span className="font-medium text-btf-sky-deep">Draft v1 &middot; closed beta:</span> the prayer texts are traditional and public-domain. The brief mystery descriptions are factual summaries of scripture, not full meditations &mdash; richer reflections will be added after Father Murphy&rsquo;s review. The Rosary never replaces a priest or the sacraments.
-          </div>
-        </div>
-      </section>
+      <MysteryPicker mysteries={MYSTERIES} initialTodaySlug={initialTodaySlug} />
     </main>
   );
 }
