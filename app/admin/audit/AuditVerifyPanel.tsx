@@ -53,7 +53,10 @@ export default function AuditVerifyPanel() {
             Chain intact
           </p>
           <p className="font-light leading-relaxed">
-            Every row hash matches a recompute. Checked at{" "}
+            All <span className="font-mono font-semibold">{result.rowsVerified}</span> {result.rowsVerified === 1 ? "row" : "rows"} verified. Every <code>row_hash</code> equals SHA-256(<code>hash_input</code>) and the <code>prev_hash</code> chain is consistent.
+          </p>
+          <p className="font-light leading-relaxed mt-2 text-xs">
+            Checked at{" "}
             <span className="font-mono text-emerald-900">
               {new Date(result.checkedAt).toLocaleString()}
             </span>
@@ -68,14 +71,18 @@ export default function AuditVerifyPanel() {
             Chain integrity FAILED
           </p>
           <p className="font-light leading-relaxed">
-            Row <span className="font-mono font-semibold">{result.firstBadRowId}</span> is the first row whose stored <code>row_hash</code> does not match a recompute. This row or any prior row may have been tampered with.
+            Row <span className="font-mono font-semibold">{result.firstBadRowId}</span> is the first row that failed verification.
           </p>
-          <div className="bg-white rounded-lg p-3 font-mono text-[11px] space-y-1">
+          <p className="font-light leading-relaxed">
+            <span className="font-medium text-red-700">Reason: </span>
+            {result.reason}
+          </p>
+          <div className="bg-white rounded-lg p-3 font-mono text-[11px] space-y-1 break-all">
             <p><span className="text-red-700">Expected:</span> {result.expected}</p>
             <p><span className="text-red-700">Actual:&nbsp;&nbsp;</span> {result.actual}</p>
           </div>
           <p className="font-light leading-relaxed text-xs">
-            Next steps: do NOT use the audit log as evidence until investigated. Capture a snapshot of the table via Supabase backup, then trace what changed.
+            Next steps: do NOT use the audit log as evidence until investigated. Capture a snapshot of the table, then trace what changed.
           </p>
           <p className="font-light text-xs">
             Checked at <span className="font-mono">{new Date(result.checkedAt).toLocaleString()}</span>.

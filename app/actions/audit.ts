@@ -5,11 +5,12 @@ import { verifyChain } from "../lib/auditLog";
 
 export type AuditVerifyResult =
   | { authorized: false }
-  | { authorized: true; ok: true; checkedAt: string }
+  | { authorized: true; ok: true; rowsVerified: number; checkedAt: string }
   | {
       authorized: true;
       ok: false;
       firstBadRowId: number;
+      reason: string;
       expected: string;
       actual: string;
       checkedAt: string;
@@ -30,13 +31,19 @@ export async function runAuditVerify(): Promise<AuditVerifyResult> {
   const checkedAt = new Date().toISOString();
 
   if (result.ok) {
-    return { authorized: true, ok: true, checkedAt };
+    return {
+      authorized: true,
+      ok: true,
+      rowsVerified: result.rowsVerified,
+      checkedAt,
+    };
   }
 
   return {
     authorized: true,
     ok: false,
     firstBadRowId: result.firstBadRowId,
+    reason: result.reason,
     expected: result.expected,
     actual: result.actual,
     checkedAt,
