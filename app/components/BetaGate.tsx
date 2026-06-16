@@ -17,7 +17,11 @@ import BetaGateForm from "./BetaGateForm";
  * can call 988 / DV / Crisis Text Line without redeeming a code first.
  * This is non-negotiable per [[Anonymous First Access]].
  */
-export default function BetaGate() {
+export default function BetaGate({
+  redirectTo = "/",
+}: {
+  redirectTo?: string;
+}) {
   return (
     <main className="min-h-screen bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white">
       <div className="max-w-xl mx-auto px-6 py-14 sm:py-20">
@@ -37,7 +41,7 @@ export default function BetaGate() {
           We&rsquo;re running a small invite-only beta while we finish content review with our clinical advisor and Father Murphy. If you have an access code, enter it below.
         </p>
 
-        <BetaGateForm />
+        <BetaGateForm redirectTo={redirectTo} />
 
         {/* Crisis numbers — always visible on this page, code or no. */}
         <section className="mt-12 rounded-2xl bg-white/10 border border-white/15 p-5">

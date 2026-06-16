@@ -34,7 +34,8 @@ export const ALLOWED_FROM_PREFIXES: readonly string[] = [
   "/catholic-path",
   "/tools",
   "/journal", // for re-entry from a journal detail page
-  "/about",
+  "/who-we-are", // renamed from /about in the 2026-06-15 restructure
+  "/today",
 ];
 
 export function safeRedirectPath(

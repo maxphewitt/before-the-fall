@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scratch files from the 2026-06-15 Cowork restructure session (safe to delete)
+.cowork-trash/
+.build.log
+.build.summary*

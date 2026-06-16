@@ -101,3 +101,135 @@
     page-break-after: avoid;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────
+ * Signature motion + texture — 2026-06-15 design pass.
+ *
+ * A restrained "light that seeks" system, in keeping with Luke 19:10
+ * and the locked brand (sky blue + gold + the cross). Calm, never
+ * flashy: slow drifting light, a faint grain, gentle entrances, and
+ * tactile hover/press. All GPU-friendly (transform/opacity only) and
+ * fully disabled under prefers-reduced-motion.
+ *
+ * Applied per UI/UX rules: transform-performance, duration-timing
+ * (150–300ms), easing (ease-out enter), motion-consistency,
+ * reduced-motion, focus-states.
+ * ───────────────────────────────────────────────────────────────── */
+
+/* Drifting light orbs behind heroes */
+.btf-aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.btf-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  will-change: transform, opacity;
+}
+.btf-orb--gold {
+  width: 46rem;
+  height: 46rem;
+  top: -16rem;
+  left: 50%;
+  margin-left: -23rem;
+  background: radial-gradient(circle, rgba(201, 168, 76, 0.38), transparent 62%);
+  animation: btf-drift-a 18s ease-in-out infinite;
+}
+.btf-orb--sky {
+  width: 38rem;
+  height: 38rem;
+  bottom: -14rem;
+  left: -8rem;
+  background: radial-gradient(circle, rgba(61, 143, 196, 0.45), transparent 62%);
+  animation: btf-drift-b 22s ease-in-out infinite;
+}
+.btf-orb--sky-2 {
+  width: 30rem;
+  height: 30rem;
+  top: -6rem;
+  right: -8rem;
+  background: radial-gradient(circle, rgba(232, 204, 122, 0.28), transparent 60%);
+  animation: btf-drift-a 26s ease-in-out infinite reverse;
+}
+
+@keyframes btf-drift-a {
+  0%, 100% { transform: translate3d(-5%, -3%, 0) scale(1); opacity: 0.6; }
+  50%      { transform: translate3d(5%, 4%, 0) scale(1.14); opacity: 0.9; }
+}
+@keyframes btf-drift-b {
+  0%, 100% { transform: translate3d(4%, 3%, 0) scale(1.05); opacity: 0.55; }
+  50%      { transform: translate3d(-5%, -4%, 0) scale(1); opacity: 0.85; }
+}
+
+/* Faint film grain so flat gradients feel like printed light, not banding */
+.btf-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Gentle entrance — pair with .btf-d-1..6 for stagger */
+.btf-fade-up { animation: btf-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes btf-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+.btf-d-1 { animation-delay: 0.06s; }
+.btf-d-2 { animation-delay: 0.14s; }
+.btf-d-3 { animation-delay: 0.22s; }
+.btf-d-4 { animation-delay: 0.30s; }
+.btf-d-5 { animation-delay: 0.38s; }
+.btf-d-6 { animation-delay: 0.46s; }
+
+/* Shimmer sweep for the gold divider / accents */
+.btf-shimmer {
+  background-size: 200% 100%;
+  animation: btf-shimmer 6s ease-in-out infinite;
+}
+@keyframes btf-shimmer {
+  0%, 100% { background-position: 200% 0; }
+  50%      { background-position: 0 0; }
+}
+
+/* Tactile cards: lift on hover, press-scale on active (scale-feedback rule) */
+.btf-rise {
+  transition: transform 0.25s ease-out, box-shadow 0.25s ease-out,
+    border-color 0.2s ease-out;
+}
+.btf-rise:hover { transform: translateY(-4px); }
+.btf-rise:active { transform: scale(0.985); }
+
+/* Slow breathing glow for the cross mark */
+.btf-breathe { animation: btf-breathe 7s ease-in-out infinite; }
+@keyframes btf-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.06); }
+}
+
+/* Consistent, visible keyboard focus (focus-states rule) */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-btf-gold);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Honor reduced-motion: kill all of the above, keep content visible */
+@media (prefers-reduced-motion: reduce) {
+  .btf-orb,
+  .btf-shimmer,
+  .btf-breathe { animation: none !important; }
+  .btf-fade-up {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .btf-rise { transition: none !important; }
+  .btf-rise:hover { transform: none !important; }
+}

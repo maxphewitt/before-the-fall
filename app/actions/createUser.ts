@@ -38,18 +38,32 @@ export type CreateUserResult =
  */
 export async function createUser(
   profile: ProfileData,
-  options?: { lovedOneCode?: string }
+  options?: { lovedOneCode?: string; persist?: boolean }
 ): Promise<CreateUserResult> {
   try {
+    // Resolve the beta access code FIRST. It does double duty:
+    //   1. The closed-beta SERVER-SIDE gate. When BETA_GATE_ENABLED is
+    //      on, account creation requires a valid, redeemed beta access
+    //      session (the `btf_beta_access` cookie issued by
+    //      /api/verify-code). A null here means no/invalid code → reject
+    //      before any row is written. This is the real enforcement
+    //      boundary: it can't be bypassed by hitting /onboard directly
+    //      or by calling this action, because it runs server-side.
+    //   2. Linking the signup back to the tester whose code let them in.
+    // Null is allowed once the gate is turned off at public launch.
+    const betaAccessCodeId = await getBetaAccessCodeId();
+
+    if (process.env.BETA_GATE_ENABLED === "true" && !betaAccessCodeId) {
+      return {
+        success: false,
+        error: "A beta access code is required to create an account right now.",
+      };
+    }
+
     const recoveryCode = generateRecoveryCode();
     const hash = hashRecoveryCode(recoveryCode);
 
     const supabase = supabaseServer();
-
-    // Resolve the beta access code so we can link this signup back
-    // to the tester who let them in. Null in production after the
-    // gate is turned off.
-    const betaAccessCodeId = await getBetaAccessCodeId();
 
     // 1) Insert user
     const { data: userData, error: userError } = await supabase
@@ -103,8 +117,10 @@ export async function createUser(
 
     // 4) Set the session cookie so the new user is treated as logged in
     // immediately. Without this they'd have to bounce through /return after
-    // signup, which is a terrible first experience.
-    await setSessionCookie(userData.id);
+    // signup, which is a terrible first experience. `persist` honors the
+    // "Keep me logged in on this device" choice made on the disclosure step
+    // (defaults to true).
+    await setSessionCookie(userData.id, options?.persist ?? true);
 
     // 5) Seed default habits for the Today tracker. Best-effort — if
     // this fails, the user lands on /today empty and edits manually.

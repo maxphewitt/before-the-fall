@@ -34,15 +34,28 @@ const LAST_SEEN_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 /**
  * Set the session cookie for a freshly authenticated user.
  * Called from createUser (after signup) and resumeSession (after code paste).
+ *
+ * `persist` controls device-level "remember me" behavior:
+ *   - true  (default): a 30-day persistent cookie. Survives browser
+ *     restarts. This is the "Keep me logged in on this device" choice.
+ *   - false: a SESSION cookie (no maxAge). The browser drops it when the
+ *     window/session closes, so a new window has no session and lands
+ *     back on the public home to log in again. This is the safer default
+ *     for shared or borrowed devices, given the sensitive nature of the
+ *     platform.
  */
-export async function setSessionCookie(userId: string): Promise<void> {
+export async function setSessionCookie(
+  userId: string,
+  persist: boolean = true
+): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, userId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: COOKIE_MAX_AGE_SECONDS,
+    // Omitting maxAge produces a session cookie (cleared on browser close).
+    ...(persist ? { maxAge: COOKIE_MAX_AGE_SECONDS } : {}),
   });
 }
 

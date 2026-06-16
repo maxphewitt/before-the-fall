@@ -39,7 +39,8 @@ const GENERIC_ERROR =
  *   5. On any failure: return the generic error. We never reveal which step failed.
  */
 export async function resumeSession(
-  pastedCode: string
+  pastedCode: string,
+  persist: boolean = true
 ): Promise<ResumeSessionResult> {
   try {
     if (typeof pastedCode !== "string" || pastedCode.trim().length === 0) {
@@ -98,8 +99,10 @@ export async function resumeSession(
     }
 
     // Set the cookie LAST, so we don't authenticate a session whose
-    // bookkeeping silently failed in a way we'd want to retry.
-    await setSessionCookie(user.id);
+    // bookkeeping silently failed in a way we'd want to retry. `persist`
+    // honors the "Keep me logged in on this device" choice on /return
+    // (defaults to true).
+    await setSessionCookie(user.id, persist);
 
     return { success: true, userId: user.id };
   } catch (err) {

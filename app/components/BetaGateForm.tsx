@@ -6,15 +6,20 @@ import { useState } from "react";
  * Client subcomponent for the beta gate form.
  *
  * Posts to /api/verify-code (the only POST middleware lets through
- * without a beta cookie) and, on success, does a hard navigate to `/`
- * so the new cookie is sent on the next page load and the home
- * renders its normal hero state.
+ * without a beta cookie) and, on success, does a hard navigate to
+ * `redirectTo` (default `/`) so the new cookie is sent on the next page
+ * load. On the create-account flow this is set to `/onboard`, so a
+ * redeemed code drops the visitor straight into the questionnaire.
  *
  * Generic error messages on all failure paths — never tells an
  * attacker whether the format was wrong vs. the code was wrong vs.
  * the code was deactivated.
  */
-export default function BetaGateForm() {
+export default function BetaGateForm({
+  redirectTo = "/",
+}: {
+  redirectTo?: string;
+}) {
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,8 +40,8 @@ export default function BetaGateForm() {
         | null;
       if (res.ok && data?.ok === true) {
         // Hard navigate so the cookie set by the API route is included
-        // on the next request and the home renders the normal hero.
-        window.location.href = "/";
+        // on the next request.
+        window.location.href = redirectTo;
         return;
       }
       setError(data?.error ?? "Something went wrong. Try again.");

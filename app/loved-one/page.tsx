@@ -1,28 +1,36 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 
 /**
- * /loved-one — landing for the Concerned Significant Other (CSO) flow.
- *
- * The CTA on the home page that says "Worried about someone you love?"
- * now routes here instead of to /onboard, because:
- *   - The CSO is not the user. They need different things.
- *   - The struggling person has to make the sign-up step themselves
- *     for retention to work.
- *   - The platform can capture meaningful data from the CSO that
- *     pre-populates and improves the struggling person's eventual
- *     onboarding (via a referral code).
+ * /loved-one — public landing for the Concerned Significant Other (CSO)
+ * flow. This explainer page is OPEN (no account) so anyone can read what
+ * the "bridge" program is. The quiz, results, and resources beneath it
+ * (/loved-one/quiz, /result, /resources) are gated and require an
+ * account — per the 2026-06-15 decision that CSOs create accounts so
+ * each is real, countable data for grant reporting.
  *
  * Research grounding: CRAFT (Community Reinforcement and Family
  * Training, Meyers et al.) — when CSOs are trained in evidence-based
  * engagement, 60–70% of their struggling person enters treatment
  * within 6 months, versus <30% for traditional approaches.
  *
+ * NOTE (flagged for clinical-advisor review): requiring the CSO to
+ * create an account is in tension with the CRAFT framing below
+ * ("You're not the user, you're the bridge"). Account-gating is a
+ * product/grant decision; the copy and a dedicated CSO onboarding flow
+ * should be revisited with the clinical advisor before public launch.
+ *
  * DRAFT v1 — pending clinical advisor review (see
  * Clinical Advisor Pre-Launch Checklist in the Vault).
  */
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
-export default function LovedOneLandingPage() {
+export default async function LovedOneLandingPage() {
+  const signedIn = !!(await cookies()).get("btf_user_id");
+  // Logged-out CSOs create an account first (so they're counted);
+  // logged-in CSOs go straight to the quiz.
+  const startHref = signedIn ? "/loved-one/quiz" : "/onboard";
+
   return (
     <main className="min-h-screen">
       <section className="relative bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white py-16 px-6 overflow-hidden">
@@ -121,11 +129,25 @@ export default function LovedOneLandingPage() {
 
         <div className="mb-10">
           <Link
-            href="/loved-one/quiz"
+            href={startHref}
             className="block w-full text-center bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-8 py-4 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform"
           >
-            Start the quiz &rarr;
+            {signedIn ? "Start the quiz →" : "Create an account to start →"}
           </Link>
+          {!signedIn && (
+            <p className="text-center text-xs text-btf-text-light font-light mt-3 leading-relaxed">
+              A free, pseudonymous account takes about two minutes and never
+              asks your name. It&rsquo;s how we keep your place and how this
+              program is funded.{" "}
+              <Link
+                href="/return"
+                className="text-btf-sky-deep underline underline-offset-2 hover:text-btf-sky"
+              >
+                Already have one? Log in
+              </Link>
+              .
+            </p>
+          )}
         </div>
 
         <section className="rounded-2xl bg-btf-off-white border border-btf-text-light/15 p-5 mb-10">
