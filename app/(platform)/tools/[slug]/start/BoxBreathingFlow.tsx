@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   Shell,
   PrimaryButton,
   BreathingCircle,
   ChargeScale,
   ChoiceGrid,
+  ActivityComplete,
   CRISIS_NEXT_STEP,
   useAutoSave,
+  type CompletionStat,
+  type NextStep,
 } from "./_shared";
 import { createToolSession } from "../../../../actions/journal";
 import { timeOfDayBucket } from "../../../../lib/journalTypes";
@@ -171,77 +173,57 @@ export default function BoxBreathingFlow() {
   }
 
   /* ─── Step 3: closing ─── */
+  const stats: CompletionStat[] = [
+    { label: "rounds", value: String(rounds) },
+    ...(before !== null || after !== null
+      ? [{ label: "charge", value: `${before ?? "—"} → ${after ?? "—"}` }]
+      : []),
+  ];
+  const nextSteps: NextStep[] = [
+    ...(eased !== true
+      ? [
+          {
+            label: "Continue to TIPP →",
+            href: "/tools/tipp/start",
+            description:
+              "Cold water, intense exercise, paced breath, muscle release. Built for when breath alone isn't enough.",
+          },
+        ]
+      : []),
+    {
+      label: "5-4-3-2-1 Grounding →",
+      href: "/tools/grounding/start",
+      description: "Pull yourself back into the room one sense at a time.",
+    },
+    CRISIS_NEXT_STEP,
+    {
+      label: "Back to all tools",
+      href: "/tools",
+      description: "See the other Tier 1 exercises.",
+    },
+  ];
+
   return (
     <Shell
       toolName="Box Breathing"
       toolSlug="box-breathing"
       progress={{ current: 4, total: 4 }}
     >
-      <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-4 text-center">
-        {eased ? "You brought it down." : "You paced your breath."}
-      </h1>
-      <p className="font-serif italic text-base text-white/85 font-light leading-relaxed mb-8 max-w-md mx-auto text-center">
-        {eased === true
-          ? "That's the parasympathetic nervous system settling — slow, paced breath is one of the few things shown to shift it. The body knows the pattern."
-          : eased === false
-            ? "Sometimes breath alone doesn't land — the body's already loaded. TIPP works on the physiology more directly; that's a fair next move."
-            : "You gave the breath a few rounds. However it landed, that's enough."}
-      </p>
-
-      {saving && (
-        <p className="text-xs text-white/55 text-center mb-4">
-          Saving to your journal…
-        </p>
-      )}
-      {saveError && (
-        <div
-          role="alert"
-          className="mb-6 rounded-xl bg-red-900/30 border border-red-400/30 text-red-100 text-sm p-4"
-        >
-          {saveError}
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {eased !== true && (
-          <Link
-            href="/tools/tipp/start"
-            className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-          >
-            <p className="font-medium text-white">Continue to TIPP →</p>
-            <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-              Cold water, intense exercise, paced breath, muscle release. Built for when breath alone isn&rsquo;t enough.
-            </p>
-          </Link>
-        )}
-        <Link
-          href="/tools/grounding/start"
-          className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-        >
-          <p className="font-medium text-white">5-4-3-2-1 Grounding →</p>
-          <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-            Pull yourself back into the room one sense at a time.
-          </p>
-        </Link>
-        <a
-          href={CRISIS_NEXT_STEP.href}
-          className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-        >
-          <p className="font-medium text-white">{CRISIS_NEXT_STEP.label}</p>
-          <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-            {CRISIS_NEXT_STEP.description}
-          </p>
-        </a>
-        <Link
-          href="/tools"
-          className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-        >
-          <p className="font-medium text-white">Back to all tools</p>
-          <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-            See the other Tier 1 exercises.
-          </p>
-        </Link>
-      </div>
+      <ActivityComplete
+        eyebrow="Done"
+        headline={eased ? "You brought it down." : "You paced your breath."}
+        acknowledgment={
+          eased === true
+            ? "That's the parasympathetic nervous system settling — slow, paced breath is one of the few things shown to shift it. The body knows the pattern."
+            : eased === false
+              ? "Sometimes breath alone doesn't land — the body's already loaded. TIPP works on the physiology more directly; that's a fair next move."
+              : "You gave the breath a few rounds. However it landed, that's enough."
+        }
+        stats={stats}
+        saving={saving}
+        saveError={saveError}
+        nextSteps={nextSteps}
+      />
     </Shell>
   );
 }

@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { EXERCISES } from "../../../lib/tools";
 import { createEntry } from "../../../actions/journal";
+import { getDisplayStreak } from "../../../actions/streaks";
+import StreakChip from "../../../components/StreakChip";
+import type { DisplayStreak } from "../../../lib/streakTypes";
 
 /**
  * Daily Journal — freeform write + optional "Reflect on this" (the
@@ -85,6 +88,11 @@ export default function DailyJournal() {
     return <Insight insight={insight} />;
   }
 
+  // Completion window for the "just save" path (no reflection requested).
+  if (saved && !error && busy === null) {
+    return <SavedComplete />;
+  }
+
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
       <div className="max-w-2xl mx-auto">
@@ -152,12 +160,19 @@ export default function DailyJournal() {
 }
 
 function Insight({ insight }: { insight: Analysis }) {
+  const streak = useStreak();
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
       <div className="max-w-2xl mx-auto">
         <Link href="/field-journal" className="text-btf-text-light hover:text-btf-sky-deep text-sm mb-6 inline-flex items-center gap-2 transition-colors">
           <span aria-hidden>←</span> Field Journal
         </Link>
+
+        {streak && (
+          <div className="flex justify-center mb-8">
+            <StreakChip streak={streak} tone="light" />
+          </div>
+        )}
 
         <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3 btf-fade-up">
           Read back, with care
@@ -246,5 +261,78 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
       <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-2">{title}</p>
       {children}
     </section>
+  );
+}
+
+/* ─── Saved completion (the "just save" path) ─────────────────────── */
+
+function useStreak(): DisplayStreak | null {
+  const [streak, setStreak] = useState<DisplayStreak | null>(null);
+  useEffect(() => {
+    let on = true;
+    getDisplayStreak()
+      .then((v) => {
+        if (on) setStreak(v);
+      })
+      .catch(() => {});
+    return () => {
+      on = false;
+    };
+  }, []);
+  return streak;
+}
+
+function SavedComplete() {
+  const streak = useStreak();
+  return (
+    <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
+      <div className="max-w-2xl mx-auto text-center">
+        {streak && (
+          <div className="flex justify-center mb-8">
+            <StreakChip streak={streak} tone="light" />
+          </div>
+        )}
+
+        <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3">
+          Saved
+        </p>
+        <h1 className="font-serif text-3xl md:text-4xl text-btf-sky-deep font-light leading-tight mb-3">
+          It&rsquo;s down on paper.
+        </h1>
+        <p className="font-serif italic text-lg text-btf-text-mid font-light leading-relaxed mb-8 max-w-md mx-auto">
+          Naming it is the work. It&rsquo;s encrypted and kept — yours to look back on.
+        </p>
+
+        <div className="space-y-3 text-left max-w-md mx-auto">
+          <Link
+            href="/tools/grounding/start"
+            className="block rounded-2xl bg-btf-gold/15 border border-btf-gold/50 hover:bg-btf-gold/20 px-5 py-4 transition-all"
+          >
+            <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold font-semibold mb-1">
+              Recommended next
+            </p>
+            <p className="font-medium text-btf-sky-deep">5-4-3-2-1 Grounding →</p>
+            <p className="text-xs text-btf-text-mid font-light mt-1 leading-relaxed">
+              Come back into the room one sense at a time.
+            </p>
+          </Link>
+          <Link
+            href="/today/grove"
+            className="block rounded-2xl bg-white border border-btf-sky-deep/10 hover:border-btf-gold/50 px-5 py-4 transition-all shadow-sm"
+          >
+            <p className="font-medium text-btf-sky-deep">See your grove →</p>
+            <p className="text-xs text-btf-text-mid font-light mt-1 leading-relaxed">
+              Your journey, your moments, all in one place.
+            </p>
+          </Link>
+          <Link
+            href="/field-journal"
+            className="block rounded-2xl bg-white border border-btf-sky-deep/10 hover:border-btf-gold/50 px-5 py-4 transition-all shadow-sm"
+          >
+            <p className="font-medium text-btf-sky-deep">Back to Field Journal</p>
+          </Link>
+        </div>
+      </div>
+    </main>
   );
 }

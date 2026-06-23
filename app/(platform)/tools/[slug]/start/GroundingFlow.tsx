@@ -6,9 +6,9 @@ import {
   Shell,
   PrimaryButton,
   ChargeScale,
+  ActivityComplete,
   CRISIS_NEXT_STEP,
   useAutoSave,
-  type NextStep,
 } from "./_shared";
 import { createToolSession } from "../../../../actions/journal";
 import { timeOfDayBucket } from "../../../../lib/journalTypes";
@@ -234,90 +234,63 @@ export default function GroundingFlow() {
         toolName="5-4-3-2-1"
         progress={{ current: totalDrill + 1, total: totalDrill + 1 }}
       >
-        <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 text-center">
-          you named the room
-        </p>
-        <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-3 text-center">
-          This is where you are.
-        </h1>
-        <p className="font-serif italic text-lg text-white/85 font-light leading-relaxed mb-8 text-center max-w-md mx-auto">
-          This moment is real. Whatever pulled you out of it, this is what you
-          came back to.
-        </p>
-
-        {showDelta && (
-          <div className="rounded-2xl bg-white/[0.07] border border-white/15 px-5 py-4 mb-6 text-center">
-            <p className="text-white/85 font-light">
-              You went from{" "}
-              <span className="font-serif text-btf-gold-light text-xl">
-                {beforeCharge}
-              </span>{" "}
-              to{" "}
-              <span className="font-serif text-btf-gold-light text-xl">
-                {afterCharge}
-              </span>
-              .
-            </p>
-            <p className="text-xs text-white/55 font-light mt-1">
-              {eased
-                ? "That's your own note that it eased a little — worth remembering."
-                : "However it moved, you stayed and came back. That's the part that counts."}
-            </p>
-          </div>
-        )}
-
-        <ul className="space-y-3 mb-8">
-          {SENSES.map((s, i) => {
-            const answer = stepAnswers[i];
-            return (
-              <li
-                key={s.sense}
-                className="bg-white/10 border border-white/15 rounded-2xl px-5 py-4"
-              >
-                <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2">
-                  {s.count} {s.sense}
-                </p>
-                <p className="text-white font-light leading-relaxed">
-                  {answer || (
-                    <span className="italic text-white/40">(let it pass)</span>
-                  )}
-                </p>
-              </li>
-            );
-          })}
-        </ul>
-
-        {saving && (
-          <p className="text-xs text-white/55 text-center mb-4">
-            Saving to your grove…
-          </p>
-        )}
-        {saveError && (
-          <div
-            role="alert"
-            className="mb-6 rounded-xl bg-red-900/30 border border-red-400/30 text-red-100 text-sm p-4"
-          >
-            {saveError}
-          </div>
-        )}
-
-        <NextStepsList
-          steps={[
-            {
-              label: "See your grove →",
-              href: "/today/grove",
-              description:
-                "Every time you came back, kept in your own words. No streaks, no scores.",
-            },
+        <ActivityComplete
+          eyebrow="you named the room"
+          headline="This is where you are."
+          acknowledgment="This moment is real. Whatever pulled you out of it, this is what you came back to."
+          stats={
+            showDelta
+              ? [
+                  { label: "before", value: String(beforeCharge) },
+                  { label: "after", value: String(afterCharge) },
+                ]
+              : []
+          }
+          saving={saving}
+          saveError={saveError}
+          nextSteps={[
             {
               label: "Continue to Box Breathing →",
               href: "/tools/box-breathing/start",
               description:
                 "Pace your breath now that you're back in the room. Often the natural next move.",
             },
+            {
+              label: "See your grove →",
+              href: "/today/grove",
+              description: "Every time you came back, kept in your own words.",
+            },
             CRISIS_NEXT_STEP,
           ]}
-        />
+        >
+          {showDelta && (
+            <p className="text-xs text-white/55 font-light mb-6 -mt-2">
+              {eased
+                ? "That's your own note that it eased a little — worth remembering."
+                : "However it moved, you stayed and came back. That's the part that counts."}
+            </p>
+          )}
+          <ul className="space-y-3 mb-8 text-left">
+            {SENSES.map((s, i) => {
+              const answer = stepAnswers[i];
+              return (
+                <li
+                  key={s.sense}
+                  className="bg-white/10 border border-white/15 rounded-2xl px-5 py-4"
+                >
+                  <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2">
+                    {s.count} {s.sense}
+                  </p>
+                  <p className="text-white font-light leading-relaxed">
+                    {answer || (
+                      <span className="italic text-white/40">(let it pass)</span>
+                    )}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </ActivityComplete>
       </GroundShell>
     );
   }
@@ -526,35 +499,3 @@ function WordCapture({
   );
 }
 
-/* ─── Next-steps list (closing) ───────────────────────────────────── */
-
-function NextStepsList({ steps }: { steps: NextStep[] }) {
-  return (
-    <div className="space-y-3">
-      {steps.map((step) => {
-        const isInternal = step.href.startsWith("/");
-        const className =
-          "block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all";
-        const content = (
-          <>
-            <p className="font-medium text-white">{step.label}</p>
-            {step.description && (
-              <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-                {step.description}
-              </p>
-            )}
-          </>
-        );
-        return isInternal ? (
-          <Link key={step.label} href={step.href} className={className}>
-            {content}
-          </Link>
-        ) : (
-          <a key={step.label} href={step.href} className={className}>
-            {content}
-          </a>
-        );
-      })}
-    </div>
-  );
-}

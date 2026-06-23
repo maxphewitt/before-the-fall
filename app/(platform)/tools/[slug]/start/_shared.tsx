@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import StreakChip from "../../../../components/StreakChip";
+import { getDisplayStreak } from "../../../../actions/streaks";
+import type { DisplayStreak } from "../../../../lib/streakTypes";
 
 /* ────────────────────────────────────────────────────────────────────
    Shared building blocks for the six interactive self-help tool flows.
@@ -491,6 +494,147 @@ export function ClosingScreen({
             )}
           </Link>
         ))}
+      </div>
+    </div>
+  );
+}
+
+
+/* ─── Display streak hook + unified completion screen ─────────────── */
+
+/**
+ * Loads the single surfaced streak once (after an activity completes).
+ * Returns null while loading or if unavailable.
+ */
+export function useDisplayStreak(active: boolean): DisplayStreak | null {
+  const [streak, setStreak] = useState<DisplayStreak | null>(null);
+  const fetched = useRef(false);
+  useEffect(() => {
+    if (!active || fetched.current) return;
+    fetched.current = true;
+    getDisplayStreak()
+      .then(setStreak)
+      .catch((err) => console.error("getDisplayStreak (client):", err));
+  }, [active]);
+  return streak;
+}
+
+export type CompletionStat = { label: string; value: string };
+
+/**
+ * The unified "you completed it" window shared by every activity:
+ * a streak chip (gold cross, taps through to the grove), a confirmation +
+ * a reflective line, optional stats, optional custom content, and a
+ * recommended next tool (the first next-step, highlighted) plus other
+ * options. The recommendation will later be AI-guided.
+ */
+export function ActivityComplete({
+  eyebrow = "Done",
+  headline,
+  acknowledgment,
+  stats,
+  nextSteps,
+  saving,
+  saveError,
+  children,
+}: {
+  eyebrow?: string;
+  headline: string;
+  acknowledgment?: string;
+  stats?: CompletionStat[];
+  nextSteps: NextStep[];
+  saving?: boolean;
+  saveError?: string | null;
+  children?: React.ReactNode;
+}) {
+  const streak = useDisplayStreak(true);
+
+  return (
+    <div className="text-center">
+      {streak && (
+        <div className="flex justify-center mb-8">
+          <StreakChip streak={streak} tone="dark" />
+        </div>
+      )}
+
+      <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3">
+        {eyebrow}
+      </p>
+      <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-3">
+        {headline}
+      </h1>
+      {acknowledgment && (
+        <p className="font-serif italic text-lg text-white/85 font-light leading-relaxed mb-8 max-w-md mx-auto">
+          {acknowledgment}
+        </p>
+      )}
+
+      {children}
+
+      {stats && stats.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-3 mb-8">
+          {stats.map((s) => (
+            <div
+              key={s.label}
+              className="rounded-2xl bg-white/[0.07] border border-white/15 px-5 py-3 min-w-[7rem]"
+            >
+              <div className="font-serif text-2xl text-btf-gold-light font-light leading-none">
+                {s.value}
+              </div>
+              <div className="text-[10px] tracking-[0.2em] uppercase text-white/55 font-semibold mt-1.5">
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {saving && (
+        <p className="text-xs text-white/55 mb-4">Saving to your journal…</p>
+      )}
+      {saveError && (
+        <div
+          role="alert"
+          className="mb-6 rounded-xl bg-red-900/30 border border-red-400/30 text-red-100 text-sm p-4"
+        >
+          {saveError}
+        </div>
+      )}
+
+      <div className="space-y-3 text-left">
+        {nextSteps.map((step, i) => {
+          const isInternal = step.href.startsWith("/");
+          const highlight = i === 0;
+          const className =
+            "block rounded-2xl px-5 py-4 transition-all border " +
+            (highlight
+              ? "bg-btf-gold/15 border-btf-gold/50 hover:bg-btf-gold/20"
+              : "bg-white/10 hover:bg-white/15 border-white/15 hover:border-white/30");
+          const content = (
+            <>
+              {highlight && (
+                <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-1">
+                  Recommended next
+                </p>
+              )}
+              <p className="font-medium text-white">{step.label}</p>
+              {step.description && (
+                <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
+                  {step.description}
+                </p>
+              )}
+            </>
+          );
+          return isInternal ? (
+            <Link key={step.label} href={step.href} className={className}>
+              {content}
+            </Link>
+          ) : (
+            <a key={step.label} href={step.href} className={className}>
+              {content}
+            </a>
+          );
+        })}
       </div>
     </div>
   );

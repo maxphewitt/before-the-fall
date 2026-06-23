@@ -46,12 +46,6 @@ export default async function TodayPage() {
               Your grove
             </Link>
             <Link
-              href="/today/waves"
-              className="text-xs text-btf-sky-deep underline underline-offset-4 hover:text-btf-sky"
-            >
-              Waves you rode
-            </Link>
-            <Link
               href="/today/edit"
               className="text-xs text-btf-sky-deep underline underline-offset-4 hover:text-btf-sky"
             >
@@ -153,7 +147,7 @@ export default async function TodayPage() {
 
               <div className="mt-6 pt-5 border-t border-white/15">
                 <Link
-                  href="/today/journey"
+                  href="/today/grove"
                   className="text-xs text-btf-gold-light hover:text-btf-gold underline underline-offset-4 inline-flex items-center gap-1"
                 >
                   See your 90-day journey &rarr;
