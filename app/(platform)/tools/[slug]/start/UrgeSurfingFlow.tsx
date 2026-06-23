@@ -1,552 +1,910 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  Shell,
-  PrimaryButton,
-  GhostButton,
-  IntensitySlider,
-  CRISIS_NEXT_STEP,
-  useAutoSave,
-} from "./_shared";
 import { createToolSession } from "../../../../actions/journal";
+import {
+  saveUrgeSurfSession,
+  getUrgeSurfStats,
+  type UrgeSurfStats,
+} from "../../../../actions/urgeSurf";
+import {
+  type Path,
+  type Theme,
+  QUOTES,
+  ENCOURAGE,
+  CHECKINS,
+  PROMPTS,
+  ACKS_CRESTING,
+  ACKS_EASING,
+  BREATH_WORDS,
+  inferThemes,
+  pick,
+  pickQuote,
+  selectStory,
+  bridgeFor,
+} from "../../../../lib/urgeSurfContent";
 
 /**
- * Urge Surfing.
+ * Ride It Out — narrator-guided urge surfing.
  *
- * Screens:
- *   0. Intensity check — 1–10 slider. Required before starting.
- *   1. Wave session. Animated cresting wave for SESSION_SECONDS total.
- *      At 4 checkpoint times, a re-rate prompt slides in over the
- *      animation; the user picks a new 1–10 rating and keeps watching.
- *      The wave visually decays after roughly the 30% mark — research
- *      from Marlatt & Gordon shows urges peak then fall.
- *   2. Closing — simple SVG line chart of the 5 ratings + "Look at that.
- *      You rode it down." or "You stayed with it" if it didn't drop.
- *      Saved to journal with the time-series.
+ * Locked mechanics (per PROMPT.md): breath-paced orb metronome (in 4s,
+ * hold 1.5s, out 5.5s), a single silent narrator ABOVE the orb,
+ * reflections answered at the BOTTOM, a "jot a thought" tab, OPEN-ENDED
+ * (the user decides when it's passed), every input gets a warm reply,
+ * and an always-present crisis off-ramp. Restyled to the Before the Fall
+ * brand; reduced-motion respected; content public-domain + verified.
  *
- * The user can end the session early (e.g. urge has passed) via a button.
- * A "still rough" path on the closing screen routes to TIPP.
+ * Faith path is draft pending pastoral review; CBT approach pending
+ * licensed-clinician review.
  */
 
-const SESSION_SECONDS = 600; // 10 minutes
-const CHECKPOINTS: number[] = [150, 300, 450, 600]; // 2.5m, 5m, 7.5m, 10m (end)
+type Reflection = { q: string | null; a: string; own: boolean };
+type Screen = "path" | "welcome" | "name" | "wave" | "journal";
 
-type Rating = { atSecond: number; value: number };
+export default function UrgeSurfingFlow({ initialPath }: { initialPath?: Path }) {
+  // If we already know the voice from the user's faith preference, skip the
+  // chooser and go straight to the welcome (the voice stays switchable there).
+  const [screen, setScreen] = useState<Screen>(initialPath ? "welcome" : "path");
+  const [path, setPath] = useState<Path>(initialPath ?? "secular");
+  const [triggers, setTriggers] = useState<string[]>([]);
+  const [reflections, setReflections] = useState<Reflection[]>([]);
+  const addReflection = useCallback(
+    (r: Reflection) => setReflections((prev) => [...prev, r]),
+    []
+  );
+  const [durationMs, setDurationMs] = useState(0);
 
-export default function UrgeSurfingFlow() {
-  const [stepIdx, setStepIdx] = useState(0);
-  const [initialIntensity, setInitialIntensity] = useState(7);
-  const [ratings, setRatings] = useState<Rating[]>([]);
-
-  const isClosing = stepIdx === 2;
-  const finalRating = ratings[ratings.length - 1]?.value ?? initialIntensity;
-  const delta = initialIntensity - finalRating;
-
-  const { saving, saveError } = useAutoSave(isClosing, async () => {
-    const allRatings: Rating[] = [{ atSecond: 0, value: initialIntensity }, ...ratings];
-    const res = await createToolSession({
-      toolSlug: "urge-surfing",
-      toolName: "Urge Surfing",
-      steps: [
-        {
-          heading: "Starting intensity",
-          prompt: "Rate the urge 1–10 at the start.",
-          userAnswer: `${initialIntensity}/10`,
-        },
-        ...ratings.map((r) => ({
-          heading: `Re-rate at ${formatMinSec(r.atSecond)}`,
-          prompt: "How intense is it right now?",
-          userAnswer: `${r.value}/10`,
-        })),
-        {
-          heading: "Change",
-          prompt: "Start vs. end.",
-          userAnswer:
-            delta > 0
-              ? `Dropped ${delta} points (${initialIntensity} → ${finalRating})`
-              : delta < 0
-                ? `Rose ${Math.abs(delta)} points — staying with it`
-                : `Held steady at ${initialIntensity}`,
-        },
-      ],
-      summary: `Time series: ${allRatings.map((r) => `${formatMinSec(r.atSecond)}=${r.value}`).join(", ")}`,
-    });
-    if (!res.success) throw new Error(res.error);
-    return res;
-  });
-
-  /* ─── Step 0: starting intensity ─── */
-  if (stepIdx === 0) {
-    return (
-      <Shell
-        toolName="Urge Surfing"
-        toolSlug="urge-surfing"
-        progress={{ current: 1, total: 3 }}
-      >
-        <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-3 text-center">
-          How strong is the urge?
-        </h1>
-        <p className="text-white/75 font-light leading-relaxed mb-10 text-center text-sm">
-          One is barely there. Ten is right at the edge of acting on it. There&rsquo;s no wrong number.
-        </p>
-
-        <IntensitySlider
-          value={initialIntensity}
-          onChange={setInitialIntensity}
-          min={1}
-          max={10}
-          label="Right now"
-          leftLabel="1 · barely there"
-          rightLabel="10 · about to act"
-        />
-
-        <div className="mt-12">
-          <PrimaryButton onClick={() => setStepIdx(1)}>
-            Start the wave →
-          </PrimaryButton>
-          <p className="text-xs text-white/55 font-light text-center mt-3">
-            ~10 minutes. You can stop early when it passes.
-          </p>
-        </div>
-      </Shell>
-    );
+  function reset() {
+    setReflections([]);
+    setTriggers([]);
+    setDurationMs(0);
+    setScreen(initialPath ? "welcome" : "path");
   }
-
-  /* ─── Step 1: wave session ─── */
-  if (stepIdx === 1) {
-    return (
-      <WaveSession
-        initialIntensity={initialIntensity}
-        onRating={(r) =>
-          setRatings((prev) => {
-            // Replace existing rating at this checkpoint if any.
-            const filtered = prev.filter((p) => p.atSecond !== r.atSecond);
-            return [...filtered, r].sort((a, b) => a.atSecond - b.atSecond);
-          })
-        }
-        ratings={ratings}
-        onComplete={() => setStepIdx(2)}
-        onEndEarly={() => setStepIdx(2)}
-      />
-    );
-  }
-
-  /* ─── Step 2: closing ─── */
-  const allRatings: Rating[] = [
-    { atSecond: 0, value: initialIntensity },
-    ...ratings,
-  ];
 
   return (
-    <Shell
-      toolName="Urge Surfing"
-      toolSlug="urge-surfing"
-      progress={{ current: 3, total: 3 }}
-    >
-      <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 text-center">
-        The wave broke
-      </p>
-      <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-3 text-center">
-        {delta > 0 ? "Look at that. You rode it down." : delta < 0 ? "You stayed with it." : "It held — and you didn't act."}
+    <main className="min-h-screen bg-gradient-to-b from-btf-deep-night via-btf-sky-deep to-btf-sky text-white overflow-hidden">
+      {screen === "path" && (
+        <PathScreen
+          onPick={(p) => {
+            setPath(p);
+            setScreen("welcome");
+          }}
+        />
+      )}
+      {screen === "welcome" && (
+        <WelcomeScreen
+          path={path}
+          onSwitch={() => setPath((p) => (p === "catholic" ? "secular" : "catholic"))}
+          onBegin={() => setScreen("name")}
+        />
+      )}
+      {screen === "name" && (
+        <NameScreen
+          triggers={triggers}
+          setTriggers={setTriggers}
+          onStart={() => setScreen("wave")}
+        />
+      )}
+      {screen === "wave" && (
+        <WaveScreen
+          path={path}
+          triggers={triggers}
+          onReflection={addReflection}
+          onFinish={(ms) => {
+            setDurationMs(ms);
+            setScreen("journal");
+          }}
+        />
+      )}
+      {screen === "journal" && (
+        <JournalScreen
+          path={path}
+          triggers={triggers}
+          reflections={reflections}
+          durationMs={durationMs}
+          onRestart={reset}
+        />
+      )}
+    </main>
+  );
+}
+
+/* ─── Screen 1: path ─── */
+function PathScreen({ onPick }: { onPick: (p: Path) => void }) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 py-12 max-w-xl mx-auto">
+      <Cross className="mb-8" />
+      <h1 className="font-serif text-3xl md:text-4xl font-light leading-tight mb-3">
+        First, who&rsquo;s walking with you?
       </h1>
-      <p className="font-serif italic text-base text-white/85 font-light leading-relaxed mb-10 text-center max-w-md mx-auto">
-        {delta > 0
-          ? `You started at ${initialIntensity} and ended at ${finalRating}. That's ${delta} points the urge lost to you. The next time it shows up, you have evidence it crests and falls.`
-          : delta < 0
-            ? `You stayed with the wave even when it built. That's the skill — the urge doesn't get to dictate your next move just because it's loud.`
-            : `The intensity didn't drop, but you didn't act. That counts. Sitting with an urge without obeying it is the whole exercise.`}
+      <p className="text-white/75 font-light leading-relaxed mb-9 max-w-md">
+        Pick the voice that feels like home. It shapes the words you&rsquo;ll
+        hear &mdash; and you can change it anytime.
       </p>
-
-      <UrgeChart ratings={allRatings} />
-
-      {saving && (
-        <p className="text-xs text-white/55 text-center mt-6 mb-4">
-          Saving to your journal…
-        </p>
-      )}
-      {saveError && (
-        <div
-          role="alert"
-          className="mt-6 mb-6 rounded-xl bg-red-900/30 border border-red-400/30 text-red-100 text-sm p-4"
+      <div className="w-full max-w-sm space-y-3">
+        <button
+          onClick={() => onPick("catholic")}
+          className="w-full text-left rounded-2xl border-2 border-white/15 bg-white/5 hover:border-btf-gold hover:bg-white/10 p-5 transition-all cursor-pointer"
         >
-          {saveError}
-        </div>
-      )}
-
-      <div className="space-y-3 mt-10">
-        {finalRating >= 6 && (
-          <Link
-            href="/tools/tipp/start"
-            className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-          >
-            <p className="font-medium text-white">Continue to TIPP →</p>
-            <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-              If it&rsquo;s still loud, TIPP works on the body when thinking-based tools aren&rsquo;t enough.
-            </p>
-          </Link>
-        )}
-        <Link
-          href="/tools/box-breathing/start"
-          className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-        >
-          <p className="font-medium text-white">Box Breathing →</p>
-          <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-            A minute or two of paced breath to settle the rest of the way.
+          <p className="font-serif text-xl">The faith path</p>
+          <p className="text-sm text-white/70 font-light mt-1">
+            Scripture and the Psalms meet you in the harder moments.
           </p>
-        </Link>
-        <a
-          href={CRISIS_NEXT_STEP.href}
-          className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
+        </button>
+        <button
+          onClick={() => onPick("secular")}
+          className="w-full text-left rounded-2xl border-2 border-white/15 bg-white/5 hover:border-btf-gold hover:bg-white/10 p-5 transition-all cursor-pointer"
         >
-          <p className="font-medium text-white">{CRISIS_NEXT_STEP.label}</p>
-          <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-            {CRISIS_NEXT_STEP.description}
+          <p className="font-serif text-xl">The wisdom path</p>
+          <p className="text-sm text-white/70 font-light mt-1">
+            Philosophers and quiet, time-tested words keep you company.
           </p>
-        </a>
-        <Link
-          href="/tools"
-          className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-        >
-          <p className="font-medium text-white">Back to all tools</p>
-          <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-            See the other Tier 1 exercises.
-          </p>
-        </Link>
-      </div>
-    </Shell>
-  );
-}
-
-/* ─── Wave session ─────────────────────────────────────────────── */
-
-function WaveSession({
-  initialIntensity,
-  ratings,
-  onRating,
-  onComplete,
-  onEndEarly,
-}: {
-  initialIntensity: number;
-  ratings: Rating[];
-  onRating: (r: Rating) => void;
-  onComplete: () => void;
-  onEndEarly: () => void;
-}) {
-  const startedAtRef = useRef<number | null>(null);
-  const [elapsed, setElapsed] = useState(0);
-
-  // Initialize the start time after mount so we don't call Date.now()
-  // during render (which fails react-hooks/purity in React 19).
-  useEffect(() => {
-    startedAtRef.current = Date.now();
-    const id = setInterval(() => {
-      if (startedAtRef.current === null) return;
-      const e = Math.floor((Date.now() - startedAtRef.current) / 1000);
-      setElapsed(e);
-    }, 250);
-    return () => clearInterval(id);
-  }, []);
-
-  // Derived during render — no setState in effect, no useEffect that
-  // mirrors state. `promptForSecond` is just "first checkpoint reached
-  // that the user hasn't answered yet" computed from elapsed + ratings.
-  const promptForSecond =
-    CHECKPOINTS.find(
-      (cp) => elapsed >= cp && !ratings.some((r) => r.atSecond === cp)
-    ) ?? null;
-  const promptOpen = promptForSecond !== null;
-
-  // Complete the session once we hit total seconds AND the final
-  // checkpoint has been answered. Side-effect lives in an effect; no
-  // setState here, only the parent's onComplete callback.
-  useEffect(() => {
-    if (
-      elapsed >= SESSION_SECONDS &&
-      ratings.some((r) => r.atSecond === SESSION_SECONDS) &&
-      !promptOpen
-    ) {
-      onComplete();
-    }
-  }, [elapsed, ratings, promptOpen, onComplete]);
-
-  function submitRating(value: number) {
-    if (promptForSecond === null) return;
-    onRating({ atSecond: promptForSecond, value });
-  }
-
-  const tNorm = Math.min(1, elapsed / SESSION_SECONDS);
-  const elapsedMin = Math.floor(elapsed / 60);
-  const elapsedSec = elapsed % 60;
-
-  return (
-    <Shell
-      toolName="Urge Surfing"
-      toolSlug="urge-surfing"
-      progress={{ current: 2, total: 3 }}
-    >
-      <div className="text-center mb-4">
-        <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2">
-          Stay with the wave
-        </p>
-        <p className="font-serif text-2xl text-white font-light tabular-nums">
-          {String(elapsedMin).padStart(2, "0")}:
-          {String(elapsedSec).padStart(2, "0")}
-        </p>
-      </div>
-
-      <WaveVisual tNorm={tNorm} intensity={initialIntensity} />
-
-      <p className="text-white/75 font-light leading-relaxed text-center text-sm mt-8 mb-2">
-        Urges follow a wave. They peak, then they fall on their own.
-      </p>
-      <p className="text-white/55 font-light leading-relaxed text-center text-xs mb-10">
-        You don&rsquo;t have to do anything to make this one leave. Just don&rsquo;t feed it.
-      </p>
-
-      <GhostButton onClick={onEndEarly}>It passed — end early</GhostButton>
-
-      {/* Re-rate prompt — modal-style sheet */}
-      {promptOpen && promptForSecond !== null && (
-        <RerateDialog
-          key={promptForSecond}
-          atSecond={promptForSecond}
-          initialValue={
-            ratings[ratings.length - 1]?.value ?? initialIntensity
-          }
-          onSubmit={(value) => submitRating(value)}
-        />
-      )}
-    </Shell>
-  );
-}
-
-/* ─── Re-rate dialog ──────────────────────────────────────────── */
-
-/**
- * Modal sheet that opens at each checkpoint to ask "where is the urge
- * now?". Owns its own slider state so we can derive `promptOpen` in the
- * parent without mirroring slider value through React state in the
- * parent (which would trip the new react-hooks/set-state-in-effect rule).
- *
- * Remounted whenever `promptForSecond` changes (via React `key={}`),
- * which is how the slider resets to the prior rating between
- * checkpoints.
- */
-function RerateDialog({
-  atSecond,
-  initialValue,
-  onSubmit,
-}: {
-  atSecond: number;
-  initialValue: number;
-  onSubmit: (value: number) => void;
-}) {
-  const [value, setValue] = useState<number>(initialValue);
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="rerate-title"
-      className="fixed inset-0 z-50 bg-btf-sky-deep/90 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
-    >
-      <div className="bg-btf-sky-deep border border-white/15 rounded-3xl max-w-md w-full p-6 shadow-2xl">
-        <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2 text-center">
-          {formatMinSec(atSecond)} in
-        </p>
-        <h2
-          id="rerate-title"
-          className="font-serif text-2xl text-white font-light mb-6 text-center"
-        >
-          Where is it now?
-        </h2>
-        <IntensitySlider
-          value={value}
-          onChange={setValue}
-          min={1}
-          max={10}
-          leftLabel="1 · barely there"
-          rightLabel="10 · about to act"
-        />
-        <div className="mt-8">
-          <PrimaryButton onClick={() => onSubmit(value)}>
-            Keep going →
-          </PrimaryButton>
-        </div>
+        </button>
       </div>
     </div>
   );
 }
 
-/* ─── Wave visual ─────────────────────────────────────────────── */
-
-/**
- * SVG wave that rises to a crest around the 30% mark, then decays.
- * Amplitude scales with initial intensity. Animated by mapping `tNorm`
- * (0..1) to phase + an envelope curve.
- */
-function WaveVisual({
-  tNorm,
-  intensity,
+/* ─── Screen 2: welcome ─── */
+function WelcomeScreen({
+  path,
+  onSwitch,
+  onBegin,
 }: {
-  tNorm: number;
-  intensity: number;
+  path: Path;
+  onSwitch: () => void;
+  onBegin: () => void;
 }) {
-  // Envelope: rises 0 → 1 from 0..0.3, then 1 → 0.2 from 0.3..1.
-  let envelope;
-  if (tNorm < 0.3) {
-    envelope = tNorm / 0.3;
-  } else {
-    envelope = 1 - ((tNorm - 0.3) / 0.7) * 0.8;
-  }
-  const amplitude = 30 + 30 * (intensity / 10);
-  const swellY = 90 - envelope * amplitude;
-
-  // Build a smooth wave path across width 400, baseline y=90.
-  const points: string[] = [];
-  const N = 80;
-  for (let i = 0; i <= N; i++) {
-    const x = (i / N) * 400;
-    const phase = (i / N) * Math.PI * 3 + tNorm * 12;
-    const oscillation = Math.sin(phase) * (8 + envelope * 6);
-    const yLine =
-      90 - envelope * amplitude * (0.6 + 0.4 * Math.sin(phase / 2));
-    points.push(`${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${(yLine + oscillation).toFixed(1)}`);
-  }
-  const wavePath = points.join(" ");
-  const fillPath = `${wavePath} L 400 120 L 0 120 Z`;
-
   return (
-    <div className="relative">
-      <svg
-        viewBox="0 0 400 120"
-        className="w-full h-44 sm:h-52"
-        aria-label="Urge wave visualization"
+    <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 py-12 max-w-xl mx-auto">
+      <div className="btf-breathe mb-8">
+        <Cross />
+      </div>
+      <h1 className="font-serif text-3xl md:text-4xl font-light leading-tight mb-4">
+        An urge is a wave.
+      </h1>
+      <p className="text-white/80 font-light leading-relaxed mb-10 max-w-md">
+        It rises, it crests, and &mdash; every single time &mdash; it falls
+        again. You don&rsquo;t have to fight it or fix it. You just have to stay
+        on the board until it passes.
+      </p>
+      <button
+        onClick={onBegin}
+        className="bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep font-medium px-10 py-4 rounded-full shadow-lg shadow-btf-gold/30 transition-all hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
       >
-        <defs>
-          <linearGradient id="waveGradient" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#d4a44a" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="#d4a44a" stopOpacity="0.1" />
-          </linearGradient>
-        </defs>
-        <line
-          x1="0"
-          y1="90"
-          x2="400"
-          y2="90"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth="0.5"
-          strokeDasharray="2 4"
-        />
-        <path d={fillPath} fill="url(#waveGradient)" />
-        <path d={wavePath} fill="none" stroke="#d4a44a" strokeWidth="1.5" />
-        <line
-          x1={tNorm * 400}
-          y1="10"
-          x2={tNorm * 400}
-          y2="110"
-          stroke="rgba(255,255,255,0.4)"
-          strokeWidth="1"
-        />
-      </svg>
-      <p className="text-xs text-white/45 font-light text-center mt-2 tabular-nums">
-        Intensity at start: {intensity}/10 · Envelope: {Math.round(envelope * 100)}%
-      </p>
-      <p className="sr-only">
-        Wave amplitude at peak {Math.round(amplitude)} units; current
-        envelope {(envelope * 100).toFixed(0)}%; current y-offset {swellY.toFixed(0)}.
+        I&rsquo;m ready to begin
+      </button>
+      <p className="mt-6 text-sm text-white/55 font-light">
+        {path === "catholic" ? "Walking the faith path." : "Walking the wisdom path."}{" "}
+        <button
+          onClick={onSwitch}
+          className="underline underline-offset-2 text-white/70 hover:text-white cursor-pointer"
+        >
+          Switch to the {path === "catholic" ? "wisdom" : "faith"} voice
+        </button>
       </p>
     </div>
   );
 }
 
-/* ─── Closing chart ───────────────────────────────────────────── */
-
-function UrgeChart({ ratings }: { ratings: Rating[] }) {
-  if (ratings.length < 2) {
-    return (
-      <p className="text-white/65 text-sm text-center italic">
-        (Session ended too early to chart.)
-      </p>
-    );
+/* ─── Screen 3: name the urge ─── */
+function NameScreen({
+  triggers,
+  setTriggers,
+  onStart,
+}: {
+  triggers: string[];
+  setTriggers: (t: string[]) => void;
+  onStart: () => void;
+}) {
+  const [input, setInput] = useState("");
+  function add() {
+    const v = input.trim();
+    if (!v) return;
+    setTriggers([...triggers, v]);
+    setInput("");
   }
-  const W = 320;
-  const H = 160;
-  const padX = 24;
-  const padY = 16;
-  const xs = ratings.map((r) => r.atSecond);
-  const xMax = Math.max(...xs);
-  const yMax = 10;
-  const yMin = 0;
+  return (
+    <div className="min-h-screen flex flex-col justify-center px-6 py-12 max-w-xl mx-auto">
+      <h1 className="font-serif text-2xl md:text-3xl font-light leading-tight mb-2 text-center">
+        What&rsquo;s pulling at you?
+      </h1>
+      <p className="text-white/75 font-light leading-relaxed mb-7 text-center text-sm">
+        Name it plainly &mdash; the urge, the trigger, whatever&rsquo;s here
+        right now. Just naming it loosens its grip a little.
+      </p>
+      <div className="rounded-2xl bg-white/5 border border-white/15 p-5">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                add();
+              }
+            }}
+            placeholder="e.g. stress after work, late and alone…"
+            autoComplete="off"
+            className="flex-1 rounded-xl bg-white/10 border border-white/15 focus:border-btf-gold focus:outline-none px-4 py-3 text-white placeholder:text-white/40"
+          />
+          <button
+            onClick={add}
+            className="rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-4 text-sm font-medium transition-colors cursor-pointer"
+          >
+            Add
+          </button>
+        </div>
+        {triggers.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {triggers.map((t, i) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-2 bg-white/10 border border-white/15 rounded-full px-3 py-1.5 text-sm"
+              >
+                {t}
+                <button
+                  aria-label={`Remove ${t}`}
+                  onClick={() => setTriggers(triggers.filter((_, j) => j !== i))}
+                  className="text-btf-gold-light hover:text-white cursor-pointer"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+        <p className="text-xs text-white/50 font-light mt-3">
+          Add as many as you like. We&rsquo;ll keep them for your journal.
+        </p>
+      </div>
+      <button
+        onClick={onStart}
+        className="mt-7 bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep font-medium px-8 py-3.5 rounded-full shadow-lg shadow-btf-gold/30 transition-all hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer mx-auto"
+      >
+        Take me to the water →
+      </button>
+    </div>
+  );
+}
 
-  const toX = (s: number) => padX + (s / xMax) * (W - padX * 2);
-  const toY = (v: number) =>
-    H - padY - ((v - yMin) / (yMax - yMin)) * (H - padY * 2);
+/* ─── Screen 4: the wave ─── */
+const IN = 4,
+  HOLD = 1.5,
+  OUT = 5.5,
+  CYCLE = IN + HOLD + OUT;
 
-  const pathD = ratings
-    .map((r, i) => `${i === 0 ? "M" : "L"} ${toX(r.atSecond)} ${toY(r.value)}`)
-    .join(" ");
+function breathPhase(t: number): { amt: number; cue: "in" | "hold" | "out" } {
+  const p = t % CYCLE;
+  if (p < IN) return { amt: p / IN, cue: "in" };
+  if (p < IN + HOLD) return { amt: 1, cue: "hold" };
+  return { amt: 1 - (p - IN - HOLD) / OUT, cue: "out" };
+}
+function urgeIntensity(t: number): number {
+  const peak = 46,
+    climb = 18,
+    ease = 60;
+  const v =
+    t < peak
+      ? Math.exp(-Math.pow((t - peak) / climb, 2))
+      : Math.max(0.16, Math.exp(-Math.pow((t - peak) / ease, 2)));
+  return Math.max(0.16, v);
+}
+
+type NarrState = { text: string; cls: string; visible: boolean };
+
+function WaveScreen({
+  path,
+  triggers,
+  onReflection,
+  onFinish,
+}: {
+  path: Path;
+  triggers: string[];
+  onReflection: (r: Reflection) => void;
+  onFinish: (ms: number) => void;
+}) {
+  const orbRef = useRef<HTMLDivElement | null>(null);
+  const w1 = useRef<SVGPathElement | null>(null);
+  const w2 = useRef<SVGPathElement | null>(null);
+  const w3 = useRef<SVGPathElement | null>(null);
+
+  const [narr, setNarr] = useState<NarrState>({ text: "", cls: "lead", visible: false });
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [promptText, setPromptText] = useState("");
+  const [promptInput, setPromptInput] = useState("");
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [noteInput, setNoteInput] = useState("");
+  const [noteConfirm, setNoteConfirm] = useState("");
+  const [helpOpen, setHelpOpen] = useState(false);
+  const promptTextRef = useRef<string>("");
+
+  // Engine API exposed to JSX handlers.
+  const api = useRef<{
+    answer: (text: string) => void;
+    skip: () => void;
+    openNote: () => void;
+    saveNote: (text: string) => void;
+    finish: () => void;
+  } | null>(null);
+
+  useEffect(() => {
+    const themes: Theme[] = inferThemes(triggers);
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // ── engine state (local; refs not needed since closure is stable) ──
+    let raf = 0;
+    let narrTimer: ReturnType<typeof setTimeout> | null = null;
+    const startTime = performance.now();
+    const beatQueue: { say?: string; cls?: string; guided?: number; reflect?: string }[] = [];
+    let movementIdx = 0;
+    const toldIds: string[] = [];
+    let breathGuide = false;
+    let breatheTarget = 0;
+    let breatheDone = 0;
+    let gPrev = "";
+    let reflectOpen = false;
+    let noteShowing = false;
+    let finished = false;
+
+    const elapsed = () => (performance.now() - startTime) / 1000;
+    const isEasing = () => elapsed() > 50 || urgeIntensity(elapsed()) < 0.55;
+
+    function setNarrator(text: string, cls: string) {
+      setNarr((p) => ({ ...p, visible: false }));
+      window.setTimeout(() => setNarr({ text, cls, visible: true }), 280);
+    }
+    function readMs(text: string) {
+      return Math.min(9500, 4200 + text.length * 38);
+    }
+    function scheduleNext(ms: number) {
+      if (narrTimer) clearTimeout(narrTimer);
+      narrTimer = setTimeout(advance, ms);
+    }
+    function startGuidedBreath(cycles: number) {
+      breathGuide = true;
+      breatheTarget = cycles;
+      breatheDone = 0;
+      gPrev = "";
+      setNarrator("Let's take a few slow breaths together.", "breath");
+    }
+    function refill() {
+      const m = movementIdx++;
+      if (m > 0 && m % 3 === 2) beatQueue.push({ guided: 2 });
+      const story = selectStory(path, themes, toldIds);
+      if (story) {
+        toldIds.push(story.id);
+        story.lines.forEach((line) => beatQueue.push({ say: line }));
+        beatQueue.push({ say: bridgeFor(path), cls: "ack" });
+      }
+      beatQueue.push({ say: pick(ENCOURAGE), cls: "ack" });
+      if (m % 2 === 1) beatQueue.push({ reflect: pick(PROMPTS) });
+      if (m % 2 === 0) {
+        const q = pickQuote(path, isEasing() ? "closing" : "peak");
+        beatQueue.push({ say: `“${q.text}” — ${q.src}`, cls: "quote" });
+      }
+      if (m % 3 === 0) beatQueue.push({ say: pick(CHECKINS), cls: "lead" });
+    }
+    function advance() {
+      if (finished || reflectOpen) return;
+      if (noteShowing) {
+        scheduleNext(2500);
+        return;
+      }
+      if (!beatQueue.length) refill();
+      const beat = beatQueue.shift();
+      if (!beat) return;
+      if (beat.guided) {
+        startGuidedBreath(beat.guided);
+        return;
+      }
+      if (beat.reflect) {
+        reflectOpen = true;
+        setPromptText(beat.reflect);
+        setPromptInput("");
+        setPromptOpen(true);
+        setNarrator("Let's pause a moment. " + beat.reflect, "lead");
+        return;
+      }
+      setNarrator(beat.say ?? "", beat.cls ?? "");
+      scheduleNext(readMs(beat.say ?? ""));
+    }
+
+    function drawWave(el: SVGPathElement | null, phase: number, amp: number, yBase: number) {
+      if (!el) return;
+      const W = 560,
+        H = 300,
+        baseY = H * yBase;
+      let d = `M0 ${baseY}`;
+      for (let x = 0; x <= W; x += 20) {
+        const y = baseY + Math.sin((x / W) * 6.28 * 1.4 + phase) * amp;
+        d += ` L${x} ${y.toFixed(1)}`;
+      }
+      d += ` L${W} ${H} L0 ${H} Z`;
+      el.setAttribute("d", d);
+    }
+
+    function loop() {
+      const t = elapsed();
+      const b = breathPhase(t);
+      const urge = urgeIntensity(t);
+
+      if (breathGuide && b.cue !== gPrev) {
+        if (b.cue === "in" && gPrev === "out") breatheDone++;
+        gPrev = b.cue;
+        if (breatheDone >= breatheTarget) {
+          breathGuide = false;
+          setNarrator(pick(["Good. Stay just like that.", "There. The breath is yours now."]), "ack");
+          scheduleNext(2600);
+        } else {
+          setNarrator(BREATH_WORDS[b.cue], "breath");
+        }
+      }
+
+      const orb = orbRef.current;
+      if (orb) {
+        const base = 70 + urge * 60;
+        const breathScale = reduced ? 1 : 0.9 + b.amt * 0.35;
+        orb.style.width = orb.style.height = `${base}px`;
+        orb.style.transform = `translate(-50%,-50%) scale(${breathScale})`;
+        orb.style.boxShadow = `0 0 ${40 + urge * 60}px ${8 + urge * 16}px rgba(201,168,76,${0.35 + urge * 0.4})`;
+      }
+      if (!reduced) {
+        drawWave(w1.current, t * 0.7, 26, 0.6);
+        drawWave(w2.current, t * 0.9, 20, 0.45);
+        drawWave(w3.current, t * 1.1, 14, 0.3);
+      }
+      raf = requestAnimationFrame(loop);
+    }
+
+    // expose handlers
+    api.current = {
+      answer: (text) => {
+        const v = text.trim();
+        reflectOpen = false;
+        setPromptOpen(false);
+        if (v) onReflection({ q: promptTextRef.current, a: v, own: false });
+        setNarrator(
+          v ? pick(isEasing() ? ACKS_EASING : ACKS_CRESTING) : "That's okay. Stay with the breath — I'm right here.",
+          "ack"
+        );
+        scheduleNext(v ? 3400 : 2600);
+      },
+      skip: () => {
+        reflectOpen = false;
+        setPromptOpen(false);
+        setNarrator("That's okay. Just stay with the breath — I'll keep going.", "ack");
+        scheduleNext(2600);
+      },
+      openNote: () => {
+        noteShowing = true;
+        if (reflectOpen) {
+          reflectOpen = false;
+          setPromptOpen(false);
+          scheduleNext(1200);
+        }
+        setNoteConfirm("");
+        setNoteOpen(true);
+      },
+      saveNote: (text) => {
+        const v = text.trim();
+        if (v) {
+          onReflection({ q: null, a: v, own: true });
+          setNoteConfirm("Kept in your journal — add another, or close.");
+        } else {
+          noteShowing = false;
+          setNoteOpen(false);
+        }
+      },
+      finish: () => {
+        finished = true;
+        if (raf) cancelAnimationFrame(raf);
+        if (narrTimer) clearTimeout(narrTimer);
+        onFinish(performance.now() - startTime);
+      },
+    };
+
+    // start
+    loop();
+    setNarrator(
+      "Welcome. Let's ride this out together — there's no clock here, and you decide when it's passed.",
+      "lead"
+    );
+    narrTimer = setTimeout(() => startGuidedBreath(3), 5400);
+
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      if (narrTimer) clearTimeout(narrTimer);
+      api.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path]);
+
+  // keep latest prompt text available to the engine's answer handler
+  useEffect(() => {
+    promptTextRef.current = promptText;
+  }, [promptText]);
+
+  // close the note sheet when needed
+  function closeNote() {
+    setNoteOpen(false);
+  }
 
   return (
-    <div className="bg-white/5 border border-white/15 rounded-2xl px-4 py-5">
-      <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 text-center">
-        Your urge curve
-      </p>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" aria-label="Urge intensity over time chart">
-        {/* y-axis grid */}
-        {[2, 4, 6, 8, 10].map((v) => (
-          <g key={v}>
-            <line
-              x1={padX}
-              x2={W - padX}
-              y1={toY(v)}
-              y2={toY(v)}
-              stroke="rgba(255,255,255,0.08)"
-              strokeWidth="0.5"
-            />
-            <text
-              x={padX - 6}
-              y={toY(v) + 3}
-              fill="rgba(255,255,255,0.4)"
-              fontSize="7"
-              textAnchor="end"
-            >
-              {v}
-            </text>
-          </g>
-        ))}
-        <path d={pathD} fill="none" stroke="#d4a44a" strokeWidth="2" strokeLinejoin="round" />
-        {ratings.map((r, i) => (
-          <g key={i}>
-            <circle cx={toX(r.atSecond)} cy={toY(r.value)} r="3" fill="#d4a44a" />
-            <text
-              x={toX(r.atSecond)}
-              y={toY(r.value) - 8}
-              fill="white"
-              fontSize="8"
-              textAnchor="middle"
-            >
-              {r.value}
-            </text>
-            <text
-              x={toX(r.atSecond)}
-              y={H - 4}
-              fill="rgba(255,255,255,0.5)"
-              fontSize="7"
-              textAnchor="middle"
-            >
-              {formatMinSec(r.atSecond)}
-            </text>
-          </g>
-        ))}
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Narrator — above the orb */}
+      <div className="absolute left-0 right-0 top-[7%] h-[34%] flex items-center justify-center px-6 pointer-events-none">
+        <p
+          className={
+            "max-w-[34ch] text-center leading-relaxed transition-opacity duration-500 " +
+            (narr.visible ? "opacity-100" : "opacity-0") +
+            " " +
+            narratorClass(narr.cls)
+          }
+        >
+          {narr.text}
+        </p>
+      </div>
+
+      {/* Orb */}
+      <div
+        ref={orbRef}
+        className="absolute left-1/2 top-[54%] rounded-full"
+        style={{
+          width: 96,
+          height: 96,
+          transform: "translate(-50%,-50%)",
+          background: "radial-gradient(circle at 35% 30%, #fff, #c9a84c 70%)",
+          willChange: "transform",
+        }}
+        aria-hidden
+      />
+
+      {/* Waves */}
+      <svg
+        className="absolute bottom-0 left-0 w-full h-[46%]"
+        viewBox="0 0 560 300"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <path ref={w1} fill="rgba(255,255,255,0.16)" />
+        <path ref={w2} fill="rgba(61,143,196,0.45)" />
+        <path ref={w3} fill="#0d4f7c" />
       </svg>
+
+      {/* Done bar */}
+      <div className="absolute top-4 right-4 z-20">
+        <button
+          onClick={() => api.current?.finish()}
+          className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-4 py-2 text-sm font-medium transition-colors cursor-pointer"
+        >
+          I&rsquo;m ready to come back
+        </button>
+      </div>
+
+      {/* Jot a thought tab (left edge) */}
+      <button
+        onClick={() => api.current?.openNote()}
+        className="absolute left-0 top-[56%] -translate-y-1/2 z-20 bg-white/10 hover:bg-white/20 border border-white/15 rounded-r-2xl pl-3 pr-4 py-3 text-sm font-medium transition-colors cursor-pointer"
+      >
+        jot a thought
+      </button>
+
+      {/* Reflection prompt (bottom) — compact; the narrator carries the
+          question, so the card is just a quiet place to answer. */}
+      {promptOpen && (
+        <div className="absolute left-4 right-4 bottom-5 z-30 mx-auto max-w-sm rounded-2xl bg-btf-sky-deep/95 border border-white/15 p-3 shadow-xl">
+          <input
+            type="text"
+            value={promptInput}
+            onChange={(e) => setPromptInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                api.current?.answer(promptInput);
+                setPromptInput("");
+              }
+            }}
+            placeholder="a word or two is plenty…"
+            className="w-full rounded-lg bg-white/10 border border-white/15 focus:border-btf-gold focus:outline-none px-3 py-2 text-sm text-white placeholder:text-white/40"
+          />
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => api.current?.skip()}
+              className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full py-2 text-xs font-medium transition-colors cursor-pointer"
+            >
+              Just breathe
+            </button>
+            <button
+              onClick={() => {
+                api.current?.answer(promptInput);
+                setPromptInput("");
+              }}
+              className="flex-1 bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep rounded-full py-2 text-xs font-medium transition-colors cursor-pointer"
+            >
+              Share it
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Note sheet (bottom) — compact */}
+      {noteOpen && (
+        <div className="absolute left-4 right-4 bottom-5 z-40 mx-auto max-w-sm rounded-2xl bg-btf-sky-deep/95 border border-white/15 p-3 shadow-xl">
+          <p className="text-xs text-white/70 font-light mb-2">
+            In your own words — what do you want to remember?
+          </p>
+          <textarea
+            value={noteInput}
+            onChange={(e) => setNoteInput(e.target.value)}
+            rows={2}
+            placeholder="anything you want in your journal…"
+            className="w-full rounded-lg bg-white/10 border border-white/15 focus:border-btf-gold focus:outline-none px-3 py-2 text-sm text-white placeholder:text-white/40 resize-none"
+          />
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={closeNote}
+              className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full py-2 text-xs font-medium transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => {
+                api.current?.saveNote(noteInput);
+                setNoteInput("");
+              }}
+              className="flex-1 bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep rounded-full py-2 text-xs font-medium transition-colors cursor-pointer"
+            >
+              Keep it
+            </button>
+          </div>
+          {noteConfirm && (
+            <p className="text-[11px] text-btf-gold-light font-medium mt-2">{noteConfirm}</p>
+          )}
+        </div>
+      )}
+
+      {/* Crisis off-ramp */}
+      {!promptOpen && !noteOpen && (
+        <div className="absolute bottom-4 left-0 right-0 text-center z-10">
+          <button
+            onClick={() => setHelpOpen(true)}
+            className="text-white/70 hover:text-white text-xs underline underline-offset-2 cursor-pointer"
+          >
+            Feeling unsafe right now?
+          </button>
+        </div>
+      )}
+
+      {helpOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="absolute inset-0 z-50 bg-btf-deep-night/70 flex items-center justify-center p-6"
+        >
+          <div className="bg-btf-sky-deep border border-white/15 rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+            <h3 className="font-serif text-xl mb-3">
+              You don&rsquo;t have to ride this one alone.
+            </h3>
+            <p className="text-sm text-white/80 font-light leading-relaxed mb-4">
+              If the urge feels like more than a wave right now, a real person
+              can help more than any app.
+            </p>
+            <div className="space-y-2 mb-4">
+              <a
+                href="tel:988"
+                className="block bg-white/10 hover:bg-white/15 border border-white/20 rounded-xl px-4 py-3 text-center transition-colors"
+              >
+                <span className="text-btf-gold-light font-semibold">988</span> · Suicide &amp; Crisis Lifeline
+              </a>
+              <a
+                href="sms:741741&body=HOME"
+                className="block bg-white/10 hover:bg-white/15 border border-white/20 rounded-xl px-4 py-3 text-center transition-colors text-sm"
+              >
+                Text <span className="text-btf-gold-light font-semibold">HOME</span> to 741741
+              </a>
+            </div>
+            <button
+              onClick={() => setHelpOpen(false)}
+              className="w-full bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep rounded-full py-3 text-sm font-medium transition-colors cursor-pointer"
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function formatMinSec(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${m}:${String(sec).padStart(2, "0")}`;
+function narratorClass(cls: string): string {
+  switch (cls) {
+    case "breath":
+      return "font-serif text-2xl text-btf-gold-light";
+    case "quote":
+      return "font-serif italic text-lg text-white/90";
+    case "ack":
+    case "lead":
+    default:
+      return "font-light text-lg text-white/90";
+  }
+}
+
+/* ─── Screen 5: journal ─── */
+function JournalScreen({
+  path,
+  triggers,
+  reflections,
+  durationMs,
+  onRestart,
+}: {
+  path: Path;
+  triggers: string[];
+  reflections: Reflection[];
+  durationMs: number;
+  onRestart: () => void;
+}) {
+  const [stats, setStats] = useState<UrgeSurfStats | null>(null);
+  const savedRef = useRef(false);
+  const closing = QUOTES[path].closing[0];
+  const prompted = reflections.filter((r) => !r.own);
+  const own = reflections.filter((r) => r.own);
+  const mins = Math.floor(durationMs / 60000);
+  const secs = Math.round((durationMs % 60000) / 1000);
+  const durText = `${mins} min ${secs} sec`;
+
+  useEffect(() => {
+    if (savedRef.current) return;
+    savedRef.current = true;
+    (async () => {
+      try {
+        await createToolSession({
+          toolSlug: "urge-surfing",
+          toolName: "Urge Surfing",
+          steps: [
+            ...(triggers.length
+              ? [{ heading: "What was pulling at me", prompt: "Named triggers", userAnswer: triggers.join("; ") }]
+              : []),
+            ...prompted.map((r) => ({
+              heading: "While I stayed with it",
+              prompt: r.q ?? "Reflection",
+              userAnswer: r.a,
+            })),
+            ...own.map((r) => ({ heading: "In my own words", prompt: "Note", userAnswer: r.a })),
+          ],
+          summary: `Rode out the urge for ${durText} on the ${path === "catholic" ? "faith" : "wisdom"} path. It crested and passed without acting.`,
+        });
+      } catch (err) {
+        console.error("journal save failed", err);
+      }
+      await saveUrgeSurfSession({
+        durationSeconds: Math.round(durationMs / 1000),
+        path,
+        triggerCount: triggers.length,
+        reflectionCount: reflections.length,
+      });
+      setStats(await getUrgeSurfStats());
+    })();
+  }, [durationMs, path, triggers, reflections, prompted, own, durText]);
+
+  return (
+    <div className="min-h-screen px-6 py-12 max-w-xl mx-auto">
+      <h1 className="font-serif text-3xl font-light mb-1 text-center">You stayed.</h1>
+      <p className="text-white/60 text-sm text-center mb-8">
+        {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+      </p>
+
+      <div className="rounded-2xl bg-white/5 border border-white/15 p-6 space-y-5 leading-relaxed">
+        <Section title="What was pulling at me">
+          {triggers.length ? (
+            <ul className="list-disc pl-5 space-y-1 text-white/85 font-light">
+              {triggers.map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-white/85 font-light">
+              I came to the water without naming it — and that&rsquo;s okay too.
+            </p>
+          )}
+        </Section>
+
+        {prompted.length > 0 && (
+          <Section title="While I stayed with it, I noticed">
+            <ul className="list-disc pl-5 space-y-1 text-white/85 font-light">
+              {prompted.map((r, i) => (
+                <li key={i}>
+                  {r.q && <span className="text-white/60">{r.q} — </span>}
+                  <em>{r.a}</em>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+
+        {own.length > 0 && (
+          <Section title="In my own words">
+            <ul className="list-disc pl-5 space-y-1 text-white/85 font-light">
+              {own.map((r, i) => (
+                <li key={i}>
+                  <em>{r.a}</em>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+
+        <Section title="What happened">
+          <p className="text-white/85 font-light">
+            The urge crested, and then it eased. I stayed on the board for{" "}
+            <strong className="text-white">{durText}</strong> — and it passed without me
+            having to act on it.
+          </p>
+        </Section>
+
+        <Section title="A word to carry">
+          <p className="font-serif italic text-lg text-white/90">
+            &ldquo;{closing.text}&rdquo;
+            <span className="block not-italic text-sm text-btf-gold-light mt-1">
+              — {closing.src}
+            </span>
+          </p>
+        </Section>
+      </div>
+
+      {stats && stats.wavesRidden > 0 && (
+        <div className="mt-6 rounded-2xl bg-white/5 border border-white/15 p-5 text-center">
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3">
+            You&rsquo;ve done this before
+          </p>
+          <p className="text-white/85 font-light leading-relaxed">
+            That&rsquo;s <span className="text-btf-gold-light font-medium">{stats.wavesRidden}</span>{" "}
+            {stats.wavesRidden === 1 ? "urge" : "urges"} you&rsquo;ve ridden out — a total of{" "}
+            <span className="text-btf-gold-light font-medium">
+              {Math.max(1, Math.round(stats.totalSecondsStayed / 60))} minutes
+            </span>{" "}
+            staying on the board. Every one is proof you don&rsquo;t have to act to make an
+            urge end.
+          </p>
+        </div>
+      )}
+
+      <button
+        onClick={onRestart}
+        className="mt-8 w-full bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep font-medium px-8 py-3.5 rounded-full shadow-lg shadow-btf-gold/30 transition-all hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+      >
+        Done
+      </button>
+      <div className="mt-3 text-center">
+        <Link href="/tools" className="text-white/65 hover:text-white text-sm underline underline-offset-2">
+          Back to all tools
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-[11px] tracking-[0.2em] uppercase text-btf-gold-light/80 font-semibold mb-2">
+        {title}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+/* ─── Brand cross ─── */
+function Cross({ className = "" }: { className?: string }) {
+  return (
+    <div className={"relative w-12 h-12 " + className} aria-hidden>
+      <div className="absolute left-1/2 top-0 -translate-x-1/2 w-1.5 h-12 bg-btf-gold rounded-sm shadow-[0_0_24px_rgba(201,168,76,0.6)]" />
+      <div className="absolute left-1/2 top-3 -translate-x-1/2 w-9 h-1.5 bg-btf-gold rounded-sm shadow-[0_0_24px_rgba(201,168,76,0.6)]" />
+    </div>
+  );
 }

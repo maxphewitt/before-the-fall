@@ -113,7 +113,19 @@ export default function HomeCarousel({ articles }: { articles: Article[] }) {
             onClick={() => go(index - 1)}
             className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-colors cursor-pointer"
           >
-            <span aria-hidden>‹</span>
+            <svg
+              aria-hidden
+              width={18}
+              height={18}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
           </button>
           <button
             type="button"
@@ -121,7 +133,19 @@ export default function HomeCarousel({ articles }: { articles: Article[] }) {
             onClick={() => go(index + 1)}
             className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-colors cursor-pointer"
           >
-            <span aria-hidden>›</span>
+            <svg
+              aria-hidden
+              width={18}
+              height={18}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
           </button>
 
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5">

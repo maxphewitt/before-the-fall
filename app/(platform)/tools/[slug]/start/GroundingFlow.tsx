@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import {
   Shell,
@@ -10,13 +10,25 @@ import {
   type NextStep,
 } from "./_shared";
 import { createToolSession } from "../../../../actions/journal";
+import { timeOfDayBucket } from "../../../../lib/journalTypes";
 
 /**
- * 5-4-3-2-1 Grounding.
+ * 5-4-3-2-1 Grounding — acute layer.
  *
- * One sense per screen, revealed sequentially. Each sense has a text
- * input with a specific real-example placeholder. At the end, show
- * everything they typed back with the closing line.
+ * Design rule (from the build spec): gamify the meta-layer, never the
+ * moment. The drill itself is calm, slow, and self-paced — no timers, no
+ * scores, no failure, no quotas. Reward and pattern-surfacing live in the
+ * grove (the meta layer), which the user meets only after they've come
+ * down.
+ *
+ * Science framing (verified): 5-4-3-2-1 is a widely used grounding
+ * exercise, not a validated standalone protocol. Its defensible mechanism
+ * is ATTENTIONAL — redirecting attention to present-moment sensory input
+ * can interrupt anxious or intrusive thought loops. We do NOT claim it
+ * activates the parasympathetic system, and the optional 0–10 check is a
+ * personal self-monitoring rating (SUDS-style), never presented as proof.
+ * Authoritative guidance also notes grounding can be counterproductive
+ * for some, so a calm "this isn't helping" off-ramp is always available.
  */
 
 type SenseStep = {
@@ -25,6 +37,8 @@ type SenseStep = {
   verb: string;
   prompt: string;
   example: string;
+  /** Sight uses a tap-the-real-room field; the rest take optional words. */
+  field?: boolean;
 };
 
 const SENSES: SenseStep[] = [
@@ -33,112 +47,248 @@ const SENSES: SenseStep[] = [
     sense: "See",
     verb: "see",
     prompt:
-      "Look away from your screen. What's in the room with you? Name them — even just one word each.",
-    example: "lamp, window, my dog, a cup, the corner of the rug",
+      "Look at the real room, not the screen. Each time you notice something you can see, tap the space below.",
+    example: "",
+    field: true,
   },
   {
     count: 4,
     sense: "Feel",
     verb: "feel",
     prompt:
-      "What's touching your skin or what can you touch? Name the texture or temperature.",
-    example: "the chair under my legs, my hoodie sleeve, cold floor, my phone case",
+      "What can you feel touching your skin? Name one if you want — a texture, a temperature. A word is plenty.",
+    example: "the chair, my sleeve, cool floor",
   },
   {
     count: 3,
     sense: "Hear",
     verb: "hear",
     prompt:
-      "Listen for three sounds. Name them. Close ones, far ones, both.",
-    example: "the fan, traffic outside, my own breathing",
+      "Close your eyes if you like. What can you hear — close, or far away?",
+    example: "the fan, traffic, my own breath",
   },
   {
     count: 2,
     sense: "Smell",
     verb: "smell",
     prompt:
-      "Two scents. If nothing is obvious, smell your own arm or a nearby object.",
-    example: "coffee on my desk, the soap on my hands",
+      "Take a slow breath in. Anything you can smell? If nothing's obvious, your own sleeve counts.",
+    example: "coffee, soap",
   },
   {
     count: 1,
     sense: "Taste",
     verb: "taste",
-    prompt:
-      "One thing you can taste right now. The lingering taste in your mouth counts.",
-    example: "the mint from earlier",
+    prompt: "One last thing — anything you can taste? The lingering taste counts.",
+    example: "mint, tea",
   },
 ];
 
-export default function GroundingFlow() {
-  const [stepIdx, setStepIdx] = useState(0); // 0..4 = senses; 5 = closing
-  const [answers, setAnswers] = useState<string[]>(SENSES.map(() => ""));
+type Phase = "before" | "drill" | "after" | "closing";
 
-  const isClosing = stepIdx === SENSES.length;
+export default function GroundingFlow() {
+  const [phase, setPhase] = useState<Phase>("before");
+  const [stepIdx, setStepIdx] = useState(0);
+  const [beforeCharge, setBeforeCharge] = useState<number | null>(null);
+  const [afterCharge, setAfterCharge] = useState<number | null>(null);
+
+  // Per-sense words (chips). Sight (index 0) uses taps, not words.
+  const [words, setWords] = useState<string[][]>(SENSES.map(() => []));
+  const [sightTaps, setSightTaps] = useState(0);
+  const [draft, setDraft] = useState("");
+
+  // Brief settle between steps — the pacing does the breathing work.
+  const [settling, setSettling] = useState(false);
+
+  const totalDrill = SENSES.length;
+
+  function addWord() {
+    const v = draft.trim();
+    if (!v) return;
+    setWords((prev) => {
+      const next = prev.map((arr) => [...arr]);
+      next[stepIdx].push(v);
+      return next;
+    });
+    setDraft("");
+  }
+
+  function advance() {
+    setDraft("");
+    if (stepIdx < totalDrill - 1) {
+      setSettling(true);
+      window.setTimeout(() => {
+        setStepIdx((i) => i + 1);
+        setSettling(false);
+      }, 750);
+    } else {
+      setPhase("after");
+    }
+  }
+
+  /* ── Build the save payload (used on the closing screen) ─────────── */
+  const sightAnswer =
+    sightTaps > 0
+      ? `${sightTaps} ${sightTaps === 1 ? "thing" : "things"} noticed`
+      : "";
+  const stepAnswers = SENSES.map((s, i) =>
+    i === 0 ? sightAnswer : words[i].join(", ")
+  );
+  const hasContent =
+    sightTaps > 0 || words.some((arr, i) => i !== 0 && arr.length > 0);
 
   const { saving, saveError } = useAutoSave(
-    isClosing && answers.some((a) => a.trim().length > 0),
+    phase === "closing" && hasContent,
     async () => {
       const res = await createToolSession({
         toolSlug: "grounding",
         toolName: "5-4-3-2-1 Grounding",
         steps: SENSES.map((s, i) => ({
-          heading: `${s.count} things I can ${s.verb}`,
+          heading: `${s.count} ${s.sense.toLowerCase()}`,
           prompt: s.prompt,
-          userAnswer: answers[i],
+          userAnswer: stepAnswers[i],
         })),
+        stateCheck: { before: beforeCharge, after: afterCharge },
+        timeOfDay: timeOfDayBucket(),
       });
       if (!res.success) throw new Error(res.error);
       return res;
     }
   );
 
-  function updateAnswer(value: string) {
-    setAnswers((prev) => {
-      const next = [...prev];
-      next[stepIdx] = value;
-      return next;
-    });
+  /* ─── BEFORE check (optional, prominent skip) ────────────────────── */
+  if (phase === "before") {
+    return (
+      <GroundShell toolName="5-4-3-2-1" progress={null}>
+        <div className="text-center">
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-5">
+            before we begin · optional
+          </p>
+          <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-2">
+            How charged do you feel right now?
+          </h1>
+          <p className="text-sm text-white/60 font-light mb-8">
+            Just a private note to yourself, so you can notice any change after.
+          </p>
+
+          <ChargeScale value={beforeCharge} onChange={setBeforeCharge} />
+
+          <div className="mt-10 space-y-3">
+            <PrimaryButton
+              onClick={() => setPhase("drill")}
+              disabled={beforeCharge === null}
+            >
+              Begin &rarr;
+            </PrimaryButton>
+            <button
+              type="button"
+              onClick={() => setPhase("drill")}
+              className="block w-full text-sm text-white/55 hover:text-white/80 font-light py-2 transition-colors"
+            >
+              Skip — just take me there
+            </button>
+          </div>
+        </div>
+      </GroundShell>
+    );
   }
 
-  if (isClosing) {
+  /* ─── AFTER check (optional) ─────────────────────────────────────── */
+  if (phase === "after") {
     return (
-      <Shell
+      <GroundShell toolName="5-4-3-2-1" progress={null}>
+        <div className="text-center">
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-5">
+            you made it through · optional
+          </p>
+          <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-8">
+            And now — how charged do you feel?
+          </h1>
+
+          <ChargeScale value={afterCharge} onChange={setAfterCharge} />
+
+          <div className="mt-10 space-y-3">
+            <PrimaryButton onClick={() => setPhase("closing")}>
+              Keep this moment
+            </PrimaryButton>
+            <button
+              type="button"
+              onClick={() => setPhase("closing")}
+              className="block w-full text-sm text-white/55 hover:text-white/80 font-light py-2 transition-colors"
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      </GroundShell>
+    );
+  }
+
+  /* ─── CLOSING (meta-layer handoff) ───────────────────────────────── */
+  if (phase === "closing") {
+    const showDelta = beforeCharge !== null && afterCharge !== null;
+    const eased = showDelta && afterCharge! < beforeCharge!;
+    return (
+      <GroundShell
         toolName="5-4-3-2-1"
-        toolSlug="grounding"
-        progress={{ current: SENSES.length + 1, total: SENSES.length + 1 }}
+        progress={{ current: totalDrill + 1, total: totalDrill + 1 }}
       >
         <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 text-center">
-          You named the room
+          you named the room
         </p>
         <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-3 text-center">
           This is where you are.
         </h1>
         <p className="font-serif italic text-lg text-white/85 font-light leading-relaxed mb-8 text-center max-w-md mx-auto">
-          This moment is real. Whatever pulled you out of it, this is what you came back to.
+          This moment is real. Whatever pulled you out of it, this is what you
+          came back to.
         </p>
 
-        <ul className="space-y-3 mb-10">
-          {SENSES.map((s, i) => (
-            <li
-              key={s.sense}
-              className="bg-white/10 border border-white/15 rounded-2xl px-5 py-4"
-            >
-              <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2">
-                {s.count} {s.sense}
-              </p>
-              <p className="text-white font-light leading-relaxed whitespace-pre-line">
-                {answers[i] || (
-                  <span className="italic text-white/40">(skipped)</span>
-                )}
-              </p>
-            </li>
-          ))}
+        {showDelta && (
+          <div className="rounded-2xl bg-white/[0.07] border border-white/15 px-5 py-4 mb-6 text-center">
+            <p className="text-white/85 font-light">
+              You went from{" "}
+              <span className="font-serif text-btf-gold-light text-xl">
+                {beforeCharge}
+              </span>{" "}
+              to{" "}
+              <span className="font-serif text-btf-gold-light text-xl">
+                {afterCharge}
+              </span>
+              .
+            </p>
+            <p className="text-xs text-white/55 font-light mt-1">
+              {eased
+                ? "That's your own note that it eased a little — worth remembering."
+                : "However it moved, you stayed and came back. That's the part that counts."}
+            </p>
+          </div>
+        )}
+
+        <ul className="space-y-3 mb-8">
+          {SENSES.map((s, i) => {
+            const answer = stepAnswers[i];
+            return (
+              <li
+                key={s.sense}
+                className="bg-white/10 border border-white/15 rounded-2xl px-5 py-4"
+              >
+                <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2">
+                  {s.count} {s.sense}
+                </p>
+                <p className="text-white font-light leading-relaxed">
+                  {answer || (
+                    <span className="italic text-white/40">(let it pass)</span>
+                  )}
+                </p>
+              </li>
+            );
+          })}
         </ul>
 
         {saving && (
           <p className="text-xs text-white/55 text-center mb-4">
-            Saving to your journal…
+            Saving to your grove…
           </p>
         )}
         {saveError && (
@@ -153,65 +303,272 @@ export default function GroundingFlow() {
         <NextStepsList
           steps={[
             {
+              label: "See your grove →",
+              href: "/today/grove",
+              description:
+                "Every time you came back, kept in your own words. No streaks, no scores.",
+            },
+            {
               label: "Continue to Box Breathing →",
               href: "/tools/box-breathing/start",
               description:
-                "Pace your breath now that you&rsquo;re back in the room. Often the natural next move.",
-            },
-            {
-              label: "Back to all tools",
-              href: "/tools",
-              description: "See the other Tier 1 exercises.",
+                "Pace your breath now that you're back in the room. Often the natural next move.",
             },
             CRISIS_NEXT_STEP,
           ]}
         />
-      </Shell>
+      </GroundShell>
     );
   }
 
-  /* ─── Sense screens ─── */
+  /* ─── DRILL — one sense per screen, self-paced, no quota ─────────── */
   const step = SENSES[stepIdx];
   return (
-    <Shell
+    <GroundShell
       toolName="5-4-3-2-1"
-      toolSlug="grounding"
-      progress={{ current: stepIdx + 1, total: SENSES.length + 1 }}
+      progress={{ current: stepIdx + 1, total: totalDrill + 1 }}
     >
-      <div className="text-center mb-6">
-        <div className="font-serif font-light text-7xl text-btf-gold mb-2">
-          {step.count}
-        </div>
-        <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
-          things you can {step.verb}
-        </p>
-      </div>
-
-      <p className="text-white/85 font-light leading-relaxed mb-6 text-base">
-        {step.prompt}
-      </p>
-
-      <label className="block mb-8">
-        <textarea
-          value={answers[stepIdx]}
-          onChange={(e) => updateAnswer(e.target.value)}
-          autoFocus
-          rows={4}
-          placeholder={step.example}
-          aria-label={`${step.count} things you can ${step.verb}`}
-          className="w-full rounded-2xl bg-white/10 border-2 border-white/20 focus:border-btf-gold focus:outline-none px-5 py-4 text-base text-white font-light leading-relaxed resize-y placeholder:text-white/40 placeholder:italic transition-colors"
-        />
-      </label>
-
-      <PrimaryButton
-        onClick={() => setStepIdx(stepIdx + 1)}
-        disabled={answers[stepIdx].trim().length === 0}
+      <div
+        className={
+          "transition-opacity duration-700 " +
+          (settling ? "opacity-0" : "opacity-100")
+        }
       >
-        {stepIdx === SENSES.length - 1 ? "Finish →" : "Next →"}
-      </PrimaryButton>
+        <div className="text-center mb-6">
+          <div className="font-serif font-light text-7xl text-btf-gold mb-2 leading-none">
+            {step.count}
+          </div>
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
+            things you can {step.verb}
+          </p>
+        </div>
+
+        <p className="text-white/85 font-light leading-relaxed mb-6 text-base text-center max-w-md mx-auto">
+          {step.prompt}
+        </p>
+
+        {step.field ? (
+          <SightField taps={sightTaps} onTap={() => setSightTaps((n) => n + 1)} />
+        ) : (
+          <WordCapture
+            words={words[stepIdx]}
+            draft={draft}
+            example={step.example}
+            verb={step.verb}
+            onDraft={setDraft}
+            onAdd={addWord}
+          />
+        )}
+
+        <div className="mt-8">
+          <PrimaryButton onClick={advance}>
+            {stepIdx === totalDrill - 1 ? "I'm ready →" : "Move on →"}
+          </PrimaryButton>
+          <p className="text-xs text-white/45 font-light text-center mt-4">
+            However many you find is enough. There&rsquo;s no wrong number.
+          </p>
+          <Link
+            href="/tools"
+            className="block text-center text-xs text-white/45 hover:text-white/70 font-light underline underline-offset-2 mt-3 transition-colors"
+          >
+            If this isn&rsquo;t helping, that&rsquo;s okay — see other tools
+          </Link>
+        </div>
+      </div>
+    </GroundShell>
+  );
+}
+
+/* ─── Ambient shell: Shell + the slow breathing glow ──────────────── */
+
+function GroundShell({
+  toolName,
+  progress,
+  children,
+}: {
+  toolName: string;
+  progress: { current: number; total: number } | null;
+  children: React.ReactNode;
+}) {
+  return (
+    <Shell toolName={toolName} toolSlug="grounding" progress={progress}>
+      <div className="relative isolate">
+        <div
+          aria-hidden
+          className="grounding-breath pointer-events-none absolute left-1/2 top-[34%] -z-10 h-[26rem] w-[26rem] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(201,168,76,0.20), transparent 70%)",
+          }}
+        />
+        <div className="relative z-10">{children}</div>
+      </div>
     </Shell>
   );
 }
+
+/* ─── 0–10 charge scale (discrete, tappable, keyboard-friendly) ───── */
+
+function ChargeScale({
+  value,
+  onChange,
+}: {
+  value: number | null;
+  onChange: (n: number) => void;
+}) {
+  return (
+    <div>
+      <div
+        role="group"
+        aria-label="How charged do you feel, 0 calm to 10 overwhelmed"
+        className="flex justify-center gap-[6px]"
+      >
+        {Array.from({ length: 11 }, (_, i) => {
+          const lit = value !== null && i <= value;
+          return (
+            <button
+              key={i}
+              type="button"
+              aria-label={`${i} of 10`}
+              aria-pressed={value === i}
+              onClick={() => onChange(i)}
+              className={
+                "h-12 w-[22px] rounded-md transition-all duration-300 hover:-translate-y-0.5 " +
+                (lit
+                  ? "bg-gradient-to-b from-btf-gold to-btf-gold-light"
+                  : "bg-white/10 hover:bg-white/20")
+              }
+            />
+          );
+        })}
+      </div>
+      <div className="flex justify-between max-w-[240px] mx-auto mt-3 px-1">
+        <span className="text-xs text-white/45 font-light">calm</span>
+        <span className="text-xs text-white/45 font-light">overwhelmed</span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Sight: tap the real room (calm viewfinder substitute) ───────── */
+
+type Bloom = { id: number; x: number; y: number };
+
+function SightField({ taps, onTap }: { taps: number; onTap: () => void }) {
+  const [blooms, setBlooms] = useState<Bloom[]>([]);
+  const nextId = useRef(0);
+
+  function handleTap(e: React.MouseEvent<HTMLButtonElement>) {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * 100;
+    const y = ((e.clientY - r.top) / r.height) * 100;
+    const id = nextId.current++;
+    setBlooms((prev) => [...prev, { id, x, y }]);
+    window.setTimeout(
+      () => setBlooms((prev) => prev.filter((b) => b.id !== id)),
+      1100
+    );
+    onTap();
+  }
+
+  return (
+    <div className="space-y-3">
+      <button
+        type="button"
+        onClick={handleTap}
+        aria-label="Tap each time you notice something you can see"
+        className="relative block w-full h-44 rounded-3xl overflow-hidden border border-white/15 bg-white/[0.04] hover:bg-white/[0.06] transition-colors cursor-pointer"
+      >
+        {taps === 0 && (
+          <span className="absolute inset-0 flex items-center justify-center text-center px-8 text-sm text-white/45 font-light leading-relaxed pointer-events-none">
+            Eyes on the real room — not the screen.
+            <br />
+            Tap here as you spot each thing.
+          </span>
+        )}
+        {blooms.map((b) => (
+          <span
+            key={b.id}
+            className="grounding-bloom absolute h-5 w-5 rounded-full pointer-events-none"
+            style={{
+              left: `${b.x}%`,
+              top: `${b.y}%`,
+              background:
+                "radial-gradient(circle, rgba(232,204,122,0.9), transparent 72%)",
+            }}
+          />
+        ))}
+      </button>
+      {taps > 0 && (
+        <p className="text-center text-sm text-btf-gold-light font-light">
+          {taps} {taps === 1 ? "thing" : "things"} noticed
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ─── Word capture for the other four senses (optional chips) ─────── */
+
+function WordCapture({
+  words,
+  draft,
+  example,
+  verb,
+  onDraft,
+  onAdd,
+}: {
+  words: string[];
+  draft: string;
+  example: string;
+  verb: string;
+  onDraft: (v: string) => void;
+  onAdd: () => void;
+}) {
+  return (
+    <div>
+      <div className="flex gap-2">
+        <input
+          value={draft}
+          onChange={(e) => onDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onAdd();
+            }
+          }}
+          autoFocus
+          placeholder={example ? `e.g. ${example}` : "one word, if you want…"}
+          aria-label={`Something you can ${verb}`}
+          className="flex-1 rounded-2xl bg-white/10 border-2 border-white/20 focus:border-btf-gold focus:outline-none px-5 py-3.5 text-base text-white font-light placeholder:text-white/35 placeholder:italic transition-colors"
+        />
+        <button
+          type="button"
+          onClick={onAdd}
+          disabled={draft.trim().length === 0}
+          aria-label="Add"
+          className="rounded-2xl border-2 border-white/20 bg-white/10 px-5 text-white font-light disabled:opacity-30 hover:bg-white/15 transition-colors"
+        >
+          Add
+        </button>
+      </div>
+      {words.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-4">
+          {words.map((w, i) => (
+            <span
+              key={`${w}-${i}`}
+              className="rounded-full bg-btf-gold/15 text-btf-gold-light text-sm font-light px-4 py-1.5"
+            >
+              {w}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Next-steps list (closing) ───────────────────────────────────── */
 
 function NextStepsList({ steps }: { steps: NextStep[] }) {
   return (
@@ -224,10 +581,9 @@ function NextStepsList({ steps }: { steps: NextStep[] }) {
           <>
             <p className="font-medium text-white">{step.label}</p>
             {step.description && (
-              <p
-                className="text-xs text-white/65 font-light mt-1 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: step.description }}
-              />
+              <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
+                {step.description}
+              </p>
             )}
           </>
         );

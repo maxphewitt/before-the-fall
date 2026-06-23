@@ -73,7 +73,16 @@ export default function MysteryPicker({
             <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-2 max-w-xl mx-auto text-sm text-btf-text-mid font-light">
               {today.decades.map((d) => (
                 <li key={d.number} className="flex gap-2">
-                  <span aria-hidden className="text-btf-gold">✦</span>
+                  <svg
+                    aria-hidden
+                    className="text-btf-gold flex-shrink-0 mt-1"
+                    width={11}
+                    height={11}
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z" />
+                  </svg>
                   <span>{d.name}</span>
                 </li>
               ))}

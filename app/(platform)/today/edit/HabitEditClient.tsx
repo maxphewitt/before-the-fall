@@ -120,7 +120,21 @@ export default function HabitEditClient({
                           : "bg-white border-btf-text-light/40 hover:border-btf-sky-light")
                       }
                     >
-                      {isActive && <span aria-hidden>✓</span>}
+                      {isActive && (
+                        <svg
+                          aria-hidden
+                          width={16}
+                          height={16}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                      )}
                     </button>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-btf-sky-deep">

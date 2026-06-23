@@ -64,6 +64,7 @@ const GATED_PREFIXES = [
   "/today",
   "/tools",
   "/journal",
+  "/field-journal",
   "/catholic-path",
   "/loved-one/quiz",
   "/loved-one/result",

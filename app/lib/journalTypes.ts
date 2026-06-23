@@ -40,6 +40,25 @@ export type ToolSessionStep = {
   userAnswer: string;
 };
 
+/**
+ * Optional before/after self-rating attached to a tool session.
+ *
+ * This is a Subjective Units of Distress (SUDS)-style 0–10 self-report:
+ * a personal self-monitoring signal that lets someone notice their own
+ * change. It is NOT a clinical outcome measure and aggregate deltas are
+ * NOT evidence the tool "works" (self-report before/after is prone to
+ * demand effects). Copy shown to the user must frame it that way.
+ *
+ * `before` / `after` are integers 0–10 (0 = calm, 10 = overwhelmed).
+ * Either may be omitted — the check is always skippable, because even a
+ * single question can be too much in acute distress.
+ */
+export type ToolStateCheck = {
+  scale: "charge-0-10";
+  before?: number;
+  after?: number;
+};
+
 export type ToolSessionPayload = {
   kind: "tool_session";
   version: "v1";
@@ -48,6 +67,59 @@ export type ToolSessionPayload = {
   completedAt: string;
   steps: ToolSessionStep[];
   summary?: string;
+  /** Optional 0–10 before/after self-rating (see ToolStateCheck). */
+  stateCheck?: ToolStateCheck;
+};
+
+/**
+ * Coarse, privacy-preserving local time-of-day bucket for a state check.
+ * Computed on the device from the local clock so cross-tool insights
+ * ("you tend to ground late at night") never require storing a precise
+ * timestamp or location. Intentionally low-resolution.
+ */
+export type TimeOfDayBucket =
+  | "early-morning" // 5–8
+  | "morning" // 8–12
+  | "afternoon" // 12–17
+  | "evening" // 17–21
+  | "night" // 21–24
+  | "late-night"; // 0–5
+
+export const TIME_OF_DAY_BUCKETS: readonly TimeOfDayBucket[] = [
+  "early-morning",
+  "morning",
+  "afternoon",
+  "evening",
+  "night",
+  "late-night",
+] as const;
+
+/** Compute the coarse local time-of-day bucket from a Date (default now). */
+export function timeOfDayBucket(d: Date = new Date()): TimeOfDayBucket {
+  const h = d.getHours();
+  if (h < 5) return "late-night";
+  if (h < 8) return "early-morning";
+  if (h < 12) return "morning";
+  if (h < 17) return "afternoon";
+  if (h < 21) return "evening";
+  return "night";
+}
+
+/**
+ * A single decrypted grounding/tool moment, shaped for the grove archive.
+ * Words come from the encrypted journal payload; before/after come from
+ * its stateCheck. Never includes anything not already in the user's own
+ * entry.
+ */
+export type ToolMoment = {
+  id: string;
+  toolSlug: string;
+  toolName: string;
+  completedAt: string;
+  /** Non-empty user answers, in step order. */
+  words: string[];
+  before?: number;
+  after?: number;
 };
 
 export type JournalEntry = {

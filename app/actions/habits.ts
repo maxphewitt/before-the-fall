@@ -124,6 +124,11 @@ export async function removeUserHabit(slug: HabitSlug): Promise<ServerResult> {
     const userId = await getCurrentUserId();
     if (!userId) return { success: false, error: NOT_SIGNED_IN };
 
+    // Field Journal is mandatory and cannot be removed.
+    if (slug === "field-journal") {
+      return { success: false, error: "The Field Journal is part of the platform and can't be removed." };
+    }
+
     const supabase = supabaseServer();
     const { error } = await supabase
       .from("user_habits")

@@ -16,9 +16,13 @@ import {
   type JournalActionResult,
   type ToolSessionStep,
   type ToolSessionPayload,
+  type ToolStateCheck,
+  type ToolMoment,
+  type TimeOfDayBucket,
 } from "../lib/journalTypes";
 import { journalTypeCompletesHabit, type HabitSlug } from "../lib/habits";
 import { recordHabitCompletion } from "./habits";
+import { recordStateCheck } from "./stateChecks";
 
 /** Cheap word count for journal_entries.word_count metadata. */
 function countWords(text: string): number {
@@ -133,14 +137,14 @@ export async function createEntry(
     // encrypted entry. See [[Task #14 Dev Note]].
     await runSafetyScan(supabase, trimmed, userId, data.id);
 
-    // Best-effort habit completion. The 'journal' habit fires for any
-    // non-activity entry type (daily / reflection / note / intention).
-    // Activity entries are recorded via createToolSession with their
-    // specific tool slug.
+    // Best-effort habit completion. A freeform entry (daily / reflection /
+    // note / intention) completes the mandatory Field Journal habit — the
+    // freeform journal now lives inside the Field Journal. Activity entries
+    // are recorded via createToolSession with their specific tool slug.
     if (journalTypeCompletesHabit(journalType)) {
       await recordHabitCompletion({
         userId,
-        habitSlug: "journal",
+        habitSlug: "field-journal",
         sourceJournalId: data.id as string,
       });
     }
@@ -445,6 +449,14 @@ export async function createToolSession(input: {
   toolName: string;
   steps: ToolSessionStep[];
   summary?: string;
+  /**
+   * Optional 0–10 before/after self-rating. Stored inside the encrypted
+   * payload AND mirrored (numbers only) to the shared state_checks table
+   * for cross-tool insight. See ToolStateCheck.
+   */
+  stateCheck?: { before?: number | null; after?: number | null };
+  /** Coarse local time-of-day bucket, computed on the device. */
+  timeOfDay?: TimeOfDayBucket;
 }): Promise<JournalActionResult<{ id: string }>> {
   try {
     const userId = await getCurrentUserId();
@@ -475,6 +487,18 @@ export async function createToolSession(input: {
       };
     }
 
+    // Build the optional 0–10 self-rating envelope, clamped to range.
+    const clampCharge = (n: number | null | undefined): number | undefined => {
+      if (n === null || n === undefined || Number.isNaN(n)) return undefined;
+      return Math.max(0, Math.min(10, Math.round(n)));
+    };
+    const before = clampCharge(input.stateCheck?.before);
+    const after = clampCharge(input.stateCheck?.after);
+    const stateCheck: ToolStateCheck | undefined =
+      before !== undefined || after !== undefined
+        ? { scale: "charge-0-10", before, after }
+        : undefined;
+
     const payload: ToolSessionPayload = {
       kind: "tool_session",
       version: "v1",
@@ -483,6 +507,7 @@ export async function createToolSession(input: {
       completedAt: new Date().toISOString(),
       steps: normalizedSteps,
       summary: input.summary?.trim() || undefined,
+      stateCheck,
     };
 
     const plaintextPayload = JSON.stringify(payload);
@@ -531,11 +556,91 @@ export async function createToolSession(input: {
       sourceJournalId: data.id as string,
     });
 
+    // Best-effort: mirror the 0–10 self-rating (numbers only) to the
+    // shared state_checks table so cross-tool insight can be computed
+    // without decrypting journals. Never blocks the save.
+    if (stateCheck) {
+      await recordStateCheck({
+        toolSlug: input.toolSlug,
+        before: stateCheck.before ?? null,
+        after: stateCheck.after ?? null,
+        timeOfDay: input.timeOfDay ?? null,
+        sourceJournalId: data.id as string,
+      });
+    }
+
     revalidatePath("/journal");
     revalidatePath("/today");
+    revalidatePath("/today/grove");
     return { success: true, data: { id: data.id as string } };
   } catch (err) {
     console.error("createToolSession exception:", err);
+    return { success: false, error: GENERIC };
+  }
+}
+
+/**
+ * Read the current user's tool-session moments for a given tool, newest
+ * first, shaped for the grove archive. Decrypts server-side and returns
+ * only the user's own words + their optional before/after rating — never
+ * anything they didn't enter themselves.
+ */
+export async function getToolMoments(
+  toolSlug: string,
+  limit = 60
+): Promise<JournalActionResult<ToolMoment[]>> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return { success: false, error: NOT_SIGNED_IN };
+
+    const supabase = supabaseServer();
+    const { data, error } = await supabase
+      .from("journal_entries")
+      .select("id, ciphertext, iv, auth_tag, created_at")
+      .eq("user_id", userId)
+      .eq("journal_type", "activity")
+      .eq("tool_slug", toolSlug)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error("getToolMoments DB error:", error);
+      return { success: false, error: GENERIC };
+    }
+
+    const moments: ToolMoment[] = [];
+    for (const row of data ?? []) {
+      try {
+        const plaintext = decryptJournalText({
+          ciphertext: row.ciphertext as string,
+          iv: row.iv as string,
+          authTag: row.auth_tag as string,
+        });
+        const parsed = parseDecryptedBody(plaintext);
+        const session = parsed.toolSession;
+        if (!session) continue;
+        const words = session.steps
+          .map((s) => s.userAnswer.trim())
+          .filter((a) => a.length > 0);
+        moments.push({
+          id: row.id as string,
+          toolSlug: session.toolSlug,
+          toolName: session.toolName,
+          completedAt: (session.completedAt as string) ?? (row.created_at as string),
+          words,
+          before: session.stateCheck?.before,
+          after: session.stateCheck?.after,
+        });
+      } catch (err) {
+        console.error("getToolMoments decrypt error:", err);
+        // Skip an unreadable row rather than failing the whole archive.
+      }
+    }
+
+    return { success: true, data: moments };
+  } catch (err) {
+    console.error("getToolMoments exception:", err);
     return { success: false, error: GENERIC };
   }
 }

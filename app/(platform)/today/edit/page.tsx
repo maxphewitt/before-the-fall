@@ -29,14 +29,12 @@ export default async function EditHabitsPage() {
       slugs: HABIT_SLUGS.filter((s) => HABITS[s].category === "tier-1"),
     },
     {
-      category: "Journal",
-      slugs: HABIT_SLUGS.filter((s) => HABITS[s].category === "journal"),
-    },
-    {
       category: "Catholic Path",
       slugs: HABIT_SLUGS.filter((s) => HABITS[s].category === "catholic-path"),
     },
   ];
+  // Field Journal (category "mandatory") is intentionally omitted — it's a
+  // required habit for every user and can't be toggled off here.
 
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">

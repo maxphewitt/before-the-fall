@@ -43,6 +43,32 @@ export default async function ToolsIndex() {
 
         <BetaDisclaimerBanner />
 
+        {/* Field Journal — self-monitoring, the tool that makes the rest smarter */}
+        <Link
+          href="/field-journal"
+          className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-btf-sky/30 bg-gradient-to-br from-btf-sky-pale/50 to-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-btf-sky hover:shadow-lg mb-6"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] tracking-[0.2em] uppercase text-btf-sky font-semibold">
+              Field Journal · the daily habit
+            </span>
+            <span className="text-[10px] tracking-[0.18em] uppercase text-btf-text-light font-medium">
+              ~10 sec
+            </span>
+          </div>
+          <h2 className="font-serif text-xl text-btf-sky-deep font-light leading-snug mb-1">
+            Log an urge — naming it is the work.
+          </h2>
+          <p className="text-sm text-btf-text-mid font-light leading-relaxed">
+            A sub-ten-second log that earns the same whether you stood firm or gave
+            in. Honesty over outcome. Over time it shows you your patterns &mdash; and
+            makes the other tools smarter.
+          </p>
+          <span className="mt-3 text-[10px] uppercase tracking-[0.25em] text-btf-sky font-semibold group-hover:translate-x-1 transition-transform">
+            Open the Field Journal →
+          </span>
+        </Link>
+
         <ul className="grid sm:grid-cols-2 gap-4">
           {EXERCISES.map((ex, i) => (
             <li key={ex.slug}>

@@ -127,9 +127,9 @@ export const EXERCISES: Exercise[] = [
       { heading: "1", body: "Find one thing you can TASTE." },
     ],
     mechanism:
-      "Sensory grounding interrupts the brain's rumination loop by redirecting attention to external present-moment input. Effective in early stages of dissociation, panic, or intrusive memory.",
+      "Grounding redirects attention to present-moment sensory input, which can help interrupt anxious or intrusive thought loops. It's commonly used in the early stages of dissociation, panic, or an intrusive memory. It's a widely taught coping skill rather than a clinically validated standalone protocol — and if it isn't helping in the moment, it's completely fine to stop and try something else.",
     source:
-      "Trauma-informed therapeutic practice; commonly attributed to Yale clinician Betty Erickson and codified in dozens of clinical manuals. Endorsed by the U.S. Department of Veterans Affairs PTSD self-help materials and SAMHSA trauma-informed care guidelines.",
+      "A widely used variant of sensory grounding from trauma-informed practice. The sensory-questioning approach is published by the U.S. Department of Veterans Affairs' National Center for PTSD; the specific 5-4-3-2-1 count is a clinical mnemonic rather than the product of a single primary study.",
     related: ["box-breathing", "tipp"],
   },
   {
@@ -191,4 +191,103 @@ export const EXERCISES: Exercise[] = [
 
 export function getExerciseBySlug(slug: string): Exercise | undefined {
   return EXERCISES.find((e) => e.slug === slug);
+}
+
+/**
+ * Per-tool research citations, surfaced as "Research behind this method"
+ * on each tool page. Every DOI/link here was verified against publisher
+ * records (CrossRef) and confirmed to resolve (2026-06-16). Where a tool
+ * rests on a foundational textbook rather than a single trial, the book
+ * is cited without implying a peer-reviewed efficacy trial exists for
+ * that specific acronym. See docs/TOOL-RESEARCH-VERIFICATION.md.
+ */
+export type ResearchRef = {
+  citation: string;
+  url?: string;
+  note: string;
+};
+
+export const TOOL_RESEARCH: Record<string, ResearchRef[]> = {
+  stop: [
+    {
+      citation: "Linehan, M. M. (2015). DBT Skills Training Manual (2nd ed.). Guilford Press.",
+      url: "https://www.guilford.com/books/DBT-Skills-Training-Manual/Marsha-Linehan/9781462516995",
+      note: "STOP is a crisis-survival skill within the DBT distress-tolerance module.",
+    },
+  ],
+  "urge-surfing": [
+    {
+      citation:
+        "Bowen, S., et al. (2009). Mindfulness-Based Relapse Prevention for Substance Use Disorders: A Pilot Efficacy Trial. Substance Abuse, 30(4), 295–305.",
+      url: "https://doi.org/10.1080/08897070903250084",
+      note: "First RCT of MBRP; urge surfing changed the relationship to cravings and reduced relapse vs. standard care.",
+    },
+    {
+      citation:
+        "Marlatt, G. A., & Donovan, D. M. (Eds.). (2005). Relapse Prevention (2nd ed.). Guilford Press.",
+      url: "https://www.guilford.com/books/Relapse-Prevention/Marlatt-Donovan/9781593856410",
+      note: "Foundational relapse-prevention text where urge surfing originates.",
+    },
+  ],
+  "box-breathing": [
+    {
+      citation:
+        "Zaccaro, A., et al. (2018). How breath-control can change your life: A systematic review on psycho-physiological correlates of slow breathing. Frontiers in Human Neuroscience, 12, 353.",
+      url: "https://doi.org/10.3389/fnhum.2018.00353",
+      note: "Systematic review: slow, paced breathing shifts the autonomic system toward calm (vagal tone).",
+    },
+    {
+      citation:
+        "Ma, X., et al. (2017). The effect of diaphragmatic breathing on attention, negative affect and stress in healthy adults. Frontiers in Psychology, 8, 874.",
+      url: "https://doi.org/10.3389/fpsyg.2017.00874",
+      note: "Randomized trial: slow diaphragmatic breathing lowered cortisol and negative affect.",
+    },
+  ],
+  grounding: [
+    {
+      citation:
+        "U.S. Department of Veterans Affairs, National Center for PTSD — grounding guidance ('Strategies: PTSD in Others').",
+      url: "https://www.ptsd.va.gov/professional/treat/care/toolkits/police/managingStrategies.asp",
+      note: "Authoritative clinical description of sensory grounding: redirecting attention to the present to override intrusive internal stimuli. Also notes grounding can be counterproductive for some — stop if distress worsens.",
+    },
+    {
+      citation:
+        "Brand, B. L., et al. (2025). A randomized controlled trial assists individuals with complex trauma and dissociation in Finding Solid Ground. Psychological Trauma (APA).",
+      url: "https://pubmed.ncbi.nlm.nih.gov/40014495/",
+      note: "RCT support for a program teaching grounding and emotion-regulation skills in trauma-related dissociation — at the program level, not for 5-4-3-2-1 used alone or as a one-off.",
+    },
+    {
+      citation:
+        "Wolpe, J. (1969). The Practice of Behavior Therapy. (Subjective Units of Distress Scale.)",
+      url: "https://en.wikipedia.org/wiki/Subjective_units_of_distress_scale",
+      note: "Origin of the 0–10 distress rating behind the optional before/after check — a self-monitoring aid, not a clinical outcome measure.",
+    },
+  ],
+  tipp: [
+    {
+      citation: "Linehan, M. M. (2015). DBT Skills Training Manual (2nd ed.). Guilford Press.",
+      url: "https://www.guilford.com/books/DBT-Skills-Training-Manual/Marsha-Linehan/9781462516995",
+      note: "TIPP (Temperature, Intense exercise, Paced breathing, Paired muscle relaxation) is the DBT distress-tolerance skill set for high arousal.",
+    },
+    {
+      citation:
+        "Zaccaro, A., et al. (2018). Slow breathing and psycho-physiological state. Frontiers in Human Neuroscience, 12, 353.",
+      url: "https://doi.org/10.3389/fnhum.2018.00353",
+      note: "Evidence base for the paced-breathing component of TIPP.",
+    },
+  ],
+  "thought-record": [
+    {
+      citation: "Beck, A. T. (1979). Cognitive Therapy of Depression. Guilford Press.",
+      note: "Origin of the cognitive-restructuring method the thought record operationalizes.",
+    },
+    {
+      citation: "Burns, D. D. (1980). Feeling Good: The New Mood Therapy. William Morrow.",
+      note: "Popularized the daily thought record / seven-column format in self-help practice.",
+    },
+  ],
+};
+
+export function getResearchForSlug(slug: string): ResearchRef[] {
+  return TOOL_RESEARCH[slug] ?? [];
 }

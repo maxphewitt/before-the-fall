@@ -26,12 +26,12 @@ export type HabitSlug =
   | "grounding"
   | "tipp"
   | "thought-record"
-  | "journal"
+  | "field-journal"
   | "prayer"
   | "rosary"
   | "scripture";
 
-export type HabitCategory = "tier-1" | "journal" | "catholic-path";
+export type HabitCategory = "tier-1" | "journal" | "catholic-path" | "mandatory";
 
 export type HabitDefinition = {
   slug: HabitSlug;
@@ -94,13 +94,13 @@ export const HABITS: Record<HabitSlug, HabitDefinition> = {
     beginHref: "/tools/thought-record/start",
     category: "tier-1",
   },
-  journal: {
-    slug: "journal",
-    label: "Journal",
-    description: "Write whatever you need to. Encrypted at rest.",
-    why: "Expressive writing has 30+ years of research support for reducing depressive symptoms and improving immune function (Pennebaker). The act of naming the thing matters.",
-    beginHref: "/journal/new",
-    category: "journal",
+  "field-journal": {
+    slug: "field-journal",
+    label: "Field Journal",
+    description: "Log an urge, or write the day out. Naming it is the work.",
+    why: "Self-monitoring is one of the most consistently effective behavior-change techniques (Harkin et al., 2016), and expressive writing aids emotional processing (Pennebaker). Logging earns the same whether you stood firm or gave in — honesty over outcome. (The freeform daily journal lives inside here too.)",
+    beginHref: "/field-journal",
+    category: "mandatory",
   },
   prayer: {
     slug: "prayer",
@@ -148,13 +148,13 @@ export type PopulationSlug =
   | "general-distress";
 
 const SECULAR_DEFAULTS: Record<PopulationSlug, HabitSlug[]> = {
-  "sexual-compulsion": ["stop", "urge-surfing", "journal"],
-  "dv-survivor": ["grounding", "tipp", "journal"],
-  "dv-perpetrator": ["stop", "thought-record", "journal"],
-  substance: ["urge-surfing", "thought-record", "journal"],
-  "self-harm-si": ["tipp", "grounding", "box-breathing", "journal"],
-  "depression-anxiety": ["thought-record", "grounding", "journal"],
-  "general-distress": ["box-breathing", "journal"],
+  "sexual-compulsion": ["stop", "urge-surfing"],
+  "dv-survivor": ["grounding", "tipp"],
+  "dv-perpetrator": ["stop", "thought-record"],
+  substance: ["urge-surfing", "thought-record"],
+  "self-harm-si": ["tipp", "grounding", "box-breathing"],
+  "depression-anxiety": ["thought-record", "grounding"],
+  "general-distress": ["box-breathing"],
 };
 
 /**
@@ -185,23 +185,27 @@ export function defaultHabitsForUser(
   catholicPath: boolean
 ): HabitSlug[] {
   const set = new Set<HabitSlug>();
+  // Field Journal is mandatory for every user (self-monitoring is the
+  // habit that makes the rest smarter). It can't be removed.
+  set.add("field-journal");
+  let populationHabits = 0;
   for (const p of populations) {
     const secular = SECULAR_DEFAULTS[p];
-    if (secular) for (const h of secular) set.add(h);
+    if (secular) for (const h of secular) { set.add(h); populationHabits++; }
     if (catholicPath) {
       const faith = CATHOLIC_PATH_ADDITIONS[p];
       if (faith) for (const h of faith) set.add(h);
     }
   }
-  // Empty-input fallback so newly-created users always get something
-  // workable.
-  if (set.size === 0) {
-    set.add("journal");
+  // Fallback so users with no recognized population still get something
+  // workable alongside the mandatory Field Journal.
+  if (populationHabits === 0) {
     set.add("box-breathing");
     if (catholicPath) set.add("prayer");
   }
-  // Stable display order: tools first, journal middle, Catholic Path last.
+  // Stable display order: mandatory first, then tools, then Catholic Path.
   const order: Record<HabitCategory, number> = {
+    mandatory: -1,
     "tier-1": 0,
     journal: 1,
     "catholic-path": 2,

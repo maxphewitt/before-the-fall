@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { EXERCISES, getExerciseBySlug } from "../../../lib/tools";
+import { EXERCISES, getExerciseBySlug, getResearchForSlug } from "../../../lib/tools";
 import { getCurrentUserId } from "../../../lib/session";
 import OnboardingRequired from "../../../components/OnboardingRequired";
 
@@ -28,6 +28,8 @@ export default async function ExercisePage({
   const relatedExercises = ex.related
     .map((s) => getExerciseBySlug(s))
     .filter((e): e is NonNullable<typeof e> => e !== undefined);
+
+  const research = getResearchForSlug(slug);
 
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
@@ -88,14 +90,39 @@ export default async function ExercisePage({
           </p>
         </div>
 
-        {/* Source — small print at bottom */}
-        <section className="rounded-2xl bg-btf-off-white border border-btf-text-light/15 p-5 mb-6">
-          <p className="text-[10px] tracking-[0.2em] uppercase text-btf-text-light font-semibold mb-2">
-            Source
+        {/* Research behind this method — verified, linked citations */}
+        <section className="rounded-2xl bg-white border border-btf-sky-pale p-6 mb-6">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky font-semibold mb-4">
+            Research behind this method
           </p>
-          <p className="text-xs text-btf-text-mid font-light leading-relaxed">
-            {ex.source}
-          </p>
+          {research.length > 0 ? (
+            <ul className="space-y-4">
+              {research.map((ref) => (
+                <li key={ref.citation} className="text-sm">
+                  {ref.url ? (
+                    <a
+                      href={ref.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-btf-sky-deep font-medium underline underline-offset-2 hover:text-btf-sky inline-flex items-start gap-1"
+                    >
+                      {ref.citation}
+                      <span aria-hidden className="text-btf-text-light">↗</span>
+                    </a>
+                  ) : (
+                    <span className="text-btf-text-dark font-medium">{ref.citation}</span>
+                  )}
+                  <p className="text-btf-text-mid font-light leading-relaxed mt-1">
+                    {ref.note}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-btf-text-mid font-light leading-relaxed">
+              {ex.source}
+            </p>
+          )}
         </section>
 
         {/* DRAFT v1 disclaimer */}

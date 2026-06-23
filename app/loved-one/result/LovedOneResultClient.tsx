@@ -126,14 +126,14 @@ export default function LovedOneResultClient() {
               onClick={() => copy(code, "code")}
               className="flex-1 bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep font-medium px-6 py-3 rounded-full shadow-lg transition-colors"
             >
-              {copied === "code" ? "Copied ✓" : "Copy code"}
+              {copied === "code" ? "Copied" : "Copy code"}
             </button>
             <button
               type="button"
               onClick={() => copy(shareUrl, "link")}
               className="flex-1 bg-white/10 hover:bg-white/15 text-white border border-white/25 font-medium px-6 py-3 rounded-full transition-colors"
             >
-              {copied === "link" ? "Link copied ✓" : "Copy share link"}
+              {copied === "link" ? "Link copied" : "Copy share link"}
             </button>
           </div>
 

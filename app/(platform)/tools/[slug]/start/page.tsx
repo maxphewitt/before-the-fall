@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getExerciseBySlug } from "../../../../lib/tools";
 import { getCurrentUserId } from "../../../../lib/session";
+import { getCurrentUserFaithRole } from "../../../../lib/profile";
 import StopFlow from "./StopFlow";
 import UrgeSurfingFlow from "./UrgeSurfingFlow";
 import BoxBreathingFlow from "./BoxBreathingFlow";
@@ -46,8 +47,15 @@ export default async function ToolStartPage({
   switch (slug) {
     case "stop":
       return <StopFlow />;
-    case "urge-surfing":
-      return <UrgeSurfingFlow />;
+    case "urge-surfing": {
+      // Default the narration voice from the faith preference set at
+      // onboarding, so we don't ask every session. growing_closer / open
+      // → faith path; secular → wisdom path; unknown → let them choose once.
+      const faith = await getCurrentUserFaithRole();
+      const initialPath =
+        faith === "secular" ? "secular" : faith ? "catholic" : undefined;
+      return <UrgeSurfingFlow initialPath={initialPath} />;
+    }
     case "box-breathing":
       return <BoxBreathingFlow />;
     case "grounding":

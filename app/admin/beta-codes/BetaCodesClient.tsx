@@ -188,7 +188,7 @@ export default function BetaCodesClient({
                 onClick={copyFreshCode}
                 className="bg-btf-sky-deep hover:bg-btf-sky text-white text-sm font-medium px-4 py-2 rounded-full"
               >
-                {copied ? "Copied ✓" : "Copy"}
+                {copied ? "Copied" : "Copy"}
               </button>
               <button
                 type="button"

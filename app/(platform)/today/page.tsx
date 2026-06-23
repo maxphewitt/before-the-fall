@@ -38,12 +38,20 @@ export default async function TodayPage() {
           >
             <span aria-hidden>&larr;</span> Home
           </Link>
-          <Link
-            href="/today/edit"
-            className="text-xs text-btf-sky-deep underline underline-offset-4 hover:text-btf-sky"
-          >
-            Manage habits
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/today/grove"
+              className="text-xs text-btf-sky-deep underline underline-offset-4 hover:text-btf-sky"
+            >
+              Your grove
+            </Link>
+            <Link
+              href="/today/edit"
+              className="text-xs text-btf-sky-deep underline underline-offset-4 hover:text-btf-sky"
+            >
+              Manage habits
+            </Link>
+          </div>
         </div>
 
         <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3">
@@ -223,9 +231,20 @@ function HabitRow({
       <div className="rounded-2xl bg-btf-sky-pale/40 border-2 border-btf-sky-pale p-5 flex items-center gap-4">
         <span
           aria-hidden
-          className="flex-shrink-0 w-8 h-8 rounded-full bg-btf-sky-deep text-white flex items-center justify-center text-base"
+          className="flex-shrink-0 w-8 h-8 rounded-full bg-btf-sky-deep text-white flex items-center justify-center"
         >
-          ✓
+          <svg
+            width={18}
+            height={18}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={3}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
         </span>
         <div className="flex-1 min-w-0">
           <p className="font-medium text-btf-sky-deep">{label}</p>

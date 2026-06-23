@@ -80,7 +80,20 @@ export default function CrisisExitRamp() {
         aria-label="Open crisis resources"
         className="fixed bottom-5 right-5 z-40 bg-[#8b1a1a] hover:bg-[#a02020] text-white font-medium px-5 py-3 rounded-full shadow-xl shadow-red-950/30 flex items-center gap-2 transition-colors text-sm tracking-wide"
       >
-        <span aria-hidden>⚠</span>
+        <svg
+          aria-hidden
+          width={16}
+          height={16}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M10.3 3.3 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.3a2 2 0 0 0-3.4 0z" />
+          <path d="M12 9v4M12 17h.01" />
+        </svg>
         <span>I&rsquo;m in crisis</span>
       </button>
 

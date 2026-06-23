@@ -213,6 +213,26 @@
   50%      { opacity: 1; transform: scale(1.06); }
 }
 
+/* Grounding tool — slower ambient anchor (~11s ≈ 5 breaths/min).
+   Intentionally slower than .btf-breathe; pacing entrains calmer
+   breathing without ever instructing it. Do not speed up. */
+.grounding-breath {
+  animation: grounding-breath 11s cubic-bezier(0.4, 0.1, 0.2, 1) infinite;
+}
+@keyframes grounding-breath {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 0.9; transform: translate(-50%, -50%) scale(1.12); }
+}
+/* A quiet bloom where the user taps the sight field. */
+.grounding-bloom {
+  animation: grounding-bloom 1.1s cubic-bezier(0.4, 0.1, 0.2, 1) forwards;
+}
+@keyframes grounding-bloom {
+  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
+}
+
 /* Consistent, visible keyboard focus (focus-states rule) */
 :where(a, button, input, textarea, select, [tabindex]):focus-visible {
   outline: 2px solid var(--color-btf-gold);
@@ -225,6 +245,8 @@
   .btf-orb,
   .btf-shimmer,
   .btf-breathe { animation: none !important; }
+  .grounding-breath { animation: none !important; }
+  .grounding-bloom { animation: none !important; opacity: 0 !important; }
   .btf-fade-up {
     animation: none !important;
     opacity: 1 !important;
