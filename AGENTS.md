@@ -28,6 +28,10 @@ time, and feed the future "what helps you, when" recommendation layer.
   `06 - Operations`.
 - Every tool's meta layer (grove / "waves you rode" / etc.) is strengths-based
   and **explicitly non-clinical**. No streaks, no scores, no intensity charts.
+- **Not every surface needs a charge.** Passive surfaces (e.g. freeform
+  journaling) are tracked as **background usage only — when and how often**,
+  which `journal_entries.created_at` already captures. Do NOT bolt a before/after
+  mood check onto open-ended writing; that's over-engineering.
 - Claims shown to users must stay within the verified, defensible set (see the
   vault science notes); pending clinician sign-off.
 
