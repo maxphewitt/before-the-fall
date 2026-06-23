@@ -60,16 +60,32 @@ export default function StreakChip({
   );
 }
 
-/** Brand cross, gold, rendered as inline SVG (no emoji/dingbats). */
 function GoldCross() {
+  return <GoldCrossIcon width={22} />;
+}
+
+/**
+ * Brand cross, gold, inline SVG (no emoji/dingbats). Shared placeholder
+ * marker for every milestone we track — the advertising team will swap in
+ * bespoke per-milestone icons later, so for now they're all this cross.
+ * `width` drives the size; height keeps the cross proportions.
+ */
+export function GoldCrossIcon({
+  width = 22,
+  glow = true,
+}: {
+  width?: number;
+  glow?: boolean;
+}) {
+  const height = Math.round((width * 28) / 22);
   return (
     <svg
-      width={22}
-      height={28}
+      width={width}
+      height={height}
       viewBox="0 0 22 28"
       fill="none"
       aria-hidden
-      className="drop-shadow-[0_0_10px_rgba(201,168,76,0.55)]"
+      className={glow ? "drop-shadow-[0_0_10px_rgba(201,168,76,0.55)]" : ""}
     >
       <rect x="9" y="0" width="4" height="28" rx="1.5" fill="var(--color-btf-gold, #c9a84c)" />
       <rect x="0" y="7" width="22" height="4" rx="1.5" fill="var(--color-btf-gold, #c9a84c)" />

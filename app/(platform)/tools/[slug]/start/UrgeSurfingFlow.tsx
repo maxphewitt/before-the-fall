@@ -4,6 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createToolSession } from "../../../../actions/journal";
 import type { UrgeOutcome } from "../../../../lib/journalTypes";
+import { getDisplayStreak } from "../../../../actions/streaks";
+import type { DisplayStreak } from "../../../../lib/streakTypes";
+import StreakChip from "../../../../components/StreakChip";
 import {
   saveUrgeSurfSession,
   getUrgeSurfStats,
@@ -750,6 +753,7 @@ function JournalScreen({
   onRestart: () => void;
 }) {
   const [stats, setStats] = useState<UrgeSurfStats | null>(null);
+  const [streak, setStreak] = useState<DisplayStreak | null>(null);
   const [phase, setPhase] = useState<"checkin" | "summary">("checkin");
   const [confidence, setConfidence] = useState<number | null>(null);
   const [outcome, setOutcome] = useState<UrgeOutcome | null>(null);
@@ -809,6 +813,7 @@ function JournalScreen({
         outcome,
       });
       setStats(await getUrgeSurfStats());
+      setStreak(await getDisplayStreak());
     })();
   }, [durationMs, path, triggers, reflections, prompted, own, durText, note, outcome, confidence]);
 
@@ -925,6 +930,11 @@ function JournalScreen({
 
   return (
     <div className="min-h-screen px-6 py-12 max-w-xl mx-auto">
+      {streak && (
+        <div className="flex justify-center mb-8">
+          <StreakChip streak={streak} tone="dark" />
+        </div>
+      )}
       <h1 className="font-serif text-3xl font-light mb-1 text-center">You stayed.</h1>
       <p className="text-white/60 text-sm text-center mb-8">
         {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}

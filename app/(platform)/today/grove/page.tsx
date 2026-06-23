@@ -4,10 +4,10 @@ import { getCurrentUserId } from "../../../lib/session";
 import { getToolMoments } from "../../../actions/journal";
 import { getStateCheckSummary } from "../../../actions/stateChecks";
 import { getUrgeSurfStats } from "../../../actions/urgeSurf";
-import { getJourney } from "../../../actions/habits";
+import { getJourney, getTodaySummary } from "../../../actions/habits";
 import { getDisplayStreak } from "../../../actions/streaks";
 import type { TimeOfDayBucket } from "../../../lib/journalTypes";
-import StreakChip from "../../../components/StreakChip";
+import StreakChip, { GoldCrossIcon } from "../../../components/StreakChip";
 import GroveTabs from "./GroveTabs";
 
 /**
@@ -37,15 +37,23 @@ export default async function GrovePage() {
   const userId = await getCurrentUserId();
   if (!userId) redirect("/return");
 
-  const [streak, journeyRes, grounding, groundingSummary, waves, urgeStats] =
-    await Promise.all([
-      getDisplayStreak(),
-      getJourney(90),
-      getToolMoments("grounding"),
-      getStateCheckSummary("grounding"),
-      getToolMoments("urge-surfing"),
-      getUrgeSurfStats(),
-    ]);
+  const [
+    streak,
+    journeyRes,
+    grounding,
+    groundingSummary,
+    waves,
+    urgeStats,
+    todayRes,
+  ] = await Promise.all([
+    getDisplayStreak(),
+    getJourney(90),
+    getToolMoments("grounding"),
+    getStateCheckSummary("grounding"),
+    getToolMoments("urge-surfing"),
+    getUrgeSurfStats(),
+    getTodaySummary(),
+  ]);
 
   const journeyDays = journeyRes.success ? journeyRes.data : [];
   const groundingMoments = grounding.success ? grounding.data : [];
@@ -67,6 +75,15 @@ export default async function GrovePage() {
     ? Math.max(0, Math.round(urgeStats.totalSecondsStayed / 60))
     : 0;
 
+  const today = todayRes.success ? todayRes.data : null;
+  // Milestones we track, shown as little buttons. Every one carries the gold
+  // cross for now — the advertising team swaps in bespoke per-milestone icons later.
+  const milestones: { value: string; label: string }[] = [
+    { value: String(today?.timesCameBack ?? 0), label: "times back" },
+    { value: String(groundingMoments.length), label: "grounded" },
+    { value: String(waveMoments.length), label: "waves ridden" },
+  ];
+
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
       <div className="max-w-2xl mx-auto">
@@ -85,10 +102,27 @@ export default async function GrovePage() {
         </h1>
 
         {streak && (
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-6">
             <StreakChip streak={streak} href={null} tone="light" />
           </div>
         )}
+
+        <div className="flex flex-wrap justify-center gap-3 mb-8">
+          {milestones.map((m) => (
+            <div
+              key={m.label}
+              className="flex flex-col items-center rounded-2xl bg-white border border-btf-sky-deep/10 shadow-sm px-5 py-3 min-w-[6.5rem]"
+            >
+              <GoldCrossIcon width={11} glow={false} />
+              <div className="font-serif text-2xl text-btf-sky-deep font-light leading-none mt-2">
+                {m.value}
+              </div>
+              <div className="text-[10px] tracking-[0.2em] uppercase text-btf-text-light font-semibold mt-1.5">
+                {m.label}
+              </div>
+            </div>
+          ))}
+        </div>
 
         <GroveTabs
           journeyDays={journeyDays}

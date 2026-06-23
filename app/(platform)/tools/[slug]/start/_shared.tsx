@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import StreakChip from "../../../../components/StreakChip";
+import StreakChip, { GoldCrossIcon } from "../../../../components/StreakChip";
 import { getDisplayStreak } from "../../../../actions/streaks";
 import type { DisplayStreak } from "../../../../lib/streakTypes";
 
@@ -576,9 +576,10 @@ export function ActivityComplete({
           {stats.map((s) => (
             <div
               key={s.label}
-              className="rounded-2xl bg-white/[0.07] border border-white/15 px-5 py-3 min-w-[7rem]"
+              className="flex flex-col items-center rounded-2xl bg-white/[0.07] border border-white/15 px-5 py-3 min-w-[7rem]"
             >
-              <div className="font-serif text-2xl text-btf-gold-light font-light leading-none">
+              <GoldCrossIcon width={11} glow={false} />
+              <div className="font-serif text-2xl text-btf-gold-light font-light leading-none mt-2">
                 {s.value}
               </div>
               <div className="text-[10px] tracking-[0.2em] uppercase text-white/55 font-semibold mt-1.5">
