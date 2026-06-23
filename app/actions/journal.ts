@@ -19,6 +19,7 @@ import {
   type ToolStateCheck,
   type ToolMoment,
   type TimeOfDayBucket,
+  type UrgeOutcome,
 } from "../lib/journalTypes";
 import { journalTypeCompletesHabit, type HabitSlug } from "../lib/habits";
 import { recordHabitCompletion } from "./habits";
@@ -457,6 +458,10 @@ export async function createToolSession(input: {
   stateCheck?: { before?: number | null; after?: number | null };
   /** Coarse local time-of-day bucket, computed on the device. */
   timeOfDay?: TimeOfDayBucket;
+  /** Acceptance-based outcome category (urge surfing). */
+  outcome?: UrgeOutcome | null;
+  /** 0–100 coping self-efficacy (urge surfing). */
+  confidence?: number | null;
 }): Promise<JournalActionResult<{ id: string }>> {
   try {
     const userId = await getCurrentUserId();
@@ -499,6 +504,11 @@ export async function createToolSession(input: {
         ? { scale: "charge-0-10", before, after }
         : undefined;
 
+    const confidence =
+      input.confidence === null || input.confidence === undefined
+        ? undefined
+        : Math.max(0, Math.min(100, Math.round(input.confidence)));
+
     const payload: ToolSessionPayload = {
       kind: "tool_session",
       version: "v1",
@@ -508,6 +518,8 @@ export async function createToolSession(input: {
       steps: normalizedSteps,
       summary: input.summary?.trim() || undefined,
       stateCheck,
+      outcome: input.outcome ?? undefined,
+      confidence,
     };
 
     const plaintextPayload = JSON.stringify(payload);
@@ -631,6 +643,8 @@ export async function getToolMoments(
           words,
           before: session.stateCheck?.before,
           after: session.stateCheck?.after,
+          outcome: session.outcome,
+          confidence: session.confidence,
         });
       } catch (err) {
         console.error("getToolMoments decrypt error:", err);

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createToolSession } from "../../../../actions/journal";
+import type { UrgeOutcome } from "../../../../lib/journalTypes";
 import {
   saveUrgeSurfSession,
   getUrgeSurfStats,
@@ -749,6 +750,10 @@ function JournalScreen({
   onRestart: () => void;
 }) {
   const [stats, setStats] = useState<UrgeSurfStats | null>(null);
+  const [phase, setPhase] = useState<"checkin" | "summary">("checkin");
+  const [confidence, setConfidence] = useState<number | null>(null);
+  const [outcome, setOutcome] = useState<UrgeOutcome | null>(null);
+  const [note, setNote] = useState("");
   const savedRef = useRef(false);
   const closing = QUOTES[path].closing[0];
   const prompted = reflections.filter((r) => !r.own);
@@ -757,9 +762,18 @@ function JournalScreen({
   const secs = Math.round((durationMs % 60000) / 1000);
   const durText = `${mins} min ${secs} sec`;
 
-  useEffect(() => {
+  // Save once, when leaving the (optional) check-in for the summary — so the
+  // coping-confidence and outcome the user just gave are part of the record.
+  const commit = useCallback(() => {
     if (savedRef.current) return;
     savedRef.current = true;
+    const trimmedNote = note.trim();
+    const summaryByOutcome =
+      outcome === "acted_on_it"
+        ? `Logged this one honestly after ${durText} on the ${path === "catholic" ? "faith" : "wisdom"} path — showing up is the work.`
+        : outcome === "stepped_away"
+          ? `Stepped away and changed the situation after ${durText} on the ${path === "catholic" ? "faith" : "wisdom"} path.`
+          : `Stayed with the urge for ${durText} on the ${path === "catholic" ? "faith" : "wisdom"} path. It crested and passed without acting.`;
     (async () => {
       try {
         await createToolSession({
@@ -775,8 +789,13 @@ function JournalScreen({
               userAnswer: r.a,
             })),
             ...own.map((r) => ({ heading: "In my own words", prompt: "Note", userAnswer: r.a })),
+            ...(trimmedNote
+              ? [{ heading: "A note before I went", prompt: "Closing reflection", userAnswer: trimmedNote }]
+              : []),
           ],
-          summary: `Rode out the urge for ${durText} on the ${path === "catholic" ? "faith" : "wisdom"} path. It crested and passed without acting.`,
+          summary: summaryByOutcome,
+          outcome: outcome ?? undefined,
+          confidence: confidence ?? undefined,
         });
       } catch (err) {
         console.error("journal save failed", err);
@@ -786,10 +805,123 @@ function JournalScreen({
         path,
         triggerCount: triggers.length,
         reflectionCount: reflections.length,
+        copingConfidence: confidence,
+        outcome,
       });
       setStats(await getUrgeSurfStats());
     })();
-  }, [durationMs, path, triggers, reflections, prompted, own, durText]);
+  }, [durationMs, path, triggers, reflections, prompted, own, durText, note, outcome, confidence]);
+
+  function finishCheckin() {
+    setPhase("summary");
+    commit();
+  }
+
+  /* ─── Optional check-in (acceptance-based: no intensity) ─── */
+  if (phase === "checkin") {
+    const OUTCOMES: { value: UrgeOutcome; label: string; sub: string }[] = [
+      { value: "rode_it_out", label: "Rode it out", sub: "stayed with it, didn't act" },
+      { value: "stepped_away", label: "Stepped away", sub: "changed my situation" },
+      { value: "acted_on_it", label: "Acted on it", sub: "and naming it is the work" },
+    ];
+    return (
+      <div className="min-h-screen px-6 py-12 max-w-xl mx-auto">
+        <h1 className="font-serif text-3xl font-light mb-1 text-center">You stayed.</h1>
+        <p className="text-white/60 text-sm text-center mb-8">
+          Two quick, optional notes — just for you.
+        </p>
+
+        <div className="rounded-2xl bg-white/5 border border-white/15 p-6 space-y-8">
+          <div>
+            <p className="text-[11px] tracking-[0.2em] uppercase text-btf-gold-light/80 font-semibold mb-2">
+              How able do you feel to handle urges like this?
+            </p>
+            <p className="text-xs text-white/55 font-light mb-4">
+              Not how strong it was — how able <em>you</em> feel. This is the number
+              that&rsquo;s good to see grow.
+            </p>
+            <div className="text-center font-serif text-5xl text-white font-light mb-3">
+              {confidence === null ? "—" : confidence}
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={confidence ?? 50}
+              onChange={(e) => setConfidence(Number(e.target.value))}
+              aria-label="How able do you feel to handle urges like this, 0 to 100"
+              className="w-full h-2 bg-white/15 rounded-full appearance-none accent-btf-gold cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-white/50 font-light mt-2">
+              <span>not yet</span>
+              <span>very able</span>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[11px] tracking-[0.2em] uppercase text-btf-gold-light/80 font-semibold mb-3">
+              What happened this time?
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {OUTCOMES.map((o) => {
+                const active = outcome === o.value;
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setOutcome(active ? null : o.value)}
+                    aria-pressed={active}
+                    className={
+                      "rounded-2xl border-2 px-4 py-4 text-left transition-all " +
+                      (active
+                        ? "border-btf-gold bg-btf-gold/15 text-white"
+                        : "border-white/15 bg-white/5 text-white/85 hover:border-white/30 hover:bg-white/10")
+                    }
+                  >
+                    <span className="block font-medium">{o.label}</span>
+                    <span className="block text-[11px] text-white/60 font-light mt-1 leading-snug">
+                      {o.sub}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-white/45 font-light mt-3">
+              Every answer counts the same. Showing up and logging it is the skill.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-[11px] tracking-[0.2em] uppercase text-btf-gold-light/80 font-semibold mb-2">
+              Anything to carry forward? <span className="text-white/40">(optional)</span>
+            </p>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              placeholder="what helped, what you noticed…"
+              aria-label="An optional closing reflection"
+              className="w-full rounded-2xl bg-white/10 border-2 border-white/20 focus:border-btf-gold focus:outline-none px-4 py-3 text-base text-white font-light placeholder:text-white/35 placeholder:italic transition-colors"
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={finishCheckin}
+          className="mt-8 w-full bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep font-medium px-8 py-3.5 rounded-full shadow-lg shadow-btf-gold/30 transition-all hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+        >
+          Keep this
+        </button>
+        <button
+          onClick={finishCheckin}
+          className="mt-3 w-full text-sm text-white/55 hover:text-white/80 font-light py-2 transition-colors cursor-pointer"
+        >
+          Skip — just take me through
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen px-6 py-12 max-w-xl mx-auto">
@@ -840,9 +972,26 @@ function JournalScreen({
 
         <Section title="What happened">
           <p className="text-white/85 font-light">
-            The urge crested, and then it eased. I stayed on the board for{" "}
-            <strong className="text-white">{durText}</strong> — and it passed without me
-            having to act on it.
+            {outcome === "acted_on_it" ? (
+              <>
+                I stayed with it for{" "}
+                <strong className="text-white">{durText}</strong>, and this time I acted
+                on it. I came back and logged it honestly — and that is its own kind of
+                courage.
+              </>
+            ) : outcome === "stepped_away" ? (
+              <>
+                I stayed with it for{" "}
+                <strong className="text-white">{durText}</strong>, then stepped away and
+                changed my situation. That counts.
+              </>
+            ) : (
+              <>
+                The urge crested, and then it eased. I stayed on the board for{" "}
+                <strong className="text-white">{durText}</strong> — and it passed without
+                me having to act on it.
+              </>
+            )}
           </p>
         </Section>
 
@@ -879,6 +1028,17 @@ function JournalScreen({
       >
         Done
       </button>
+      <div className="mt-4">
+        <Link
+          href="/today/waves"
+          className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all text-center"
+        >
+          <p className="font-medium text-white">See the waves you&rsquo;ve ridden &rarr;</p>
+          <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
+            Your own record of every urge you stayed with. No streaks, no scores.
+          </p>
+        </Link>
+      </div>
       <div className="mt-3 text-center">
         <Link href="/tools" className="text-white/65 hover:text-white text-sm underline underline-offset-2">
           Back to all tools

@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Shell,
   PrimaryButton,
+  ChargeScale,
   CRISIS_NEXT_STEP,
   useAutoSave,
   type NextStep,
@@ -404,49 +405,6 @@ function GroundShell({
         <div className="relative z-10">{children}</div>
       </div>
     </Shell>
-  );
-}
-
-/* ─── 0–10 charge scale (discrete, tappable, keyboard-friendly) ───── */
-
-function ChargeScale({
-  value,
-  onChange,
-}: {
-  value: number | null;
-  onChange: (n: number) => void;
-}) {
-  return (
-    <div>
-      <div
-        role="group"
-        aria-label="How charged do you feel, 0 calm to 10 overwhelmed"
-        className="flex justify-center gap-[6px]"
-      >
-        {Array.from({ length: 11 }, (_, i) => {
-          const lit = value !== null && i <= value;
-          return (
-            <button
-              key={i}
-              type="button"
-              aria-label={`${i} of 10`}
-              aria-pressed={value === i}
-              onClick={() => onChange(i)}
-              className={
-                "h-12 w-[22px] rounded-md transition-all duration-300 hover:-translate-y-0.5 " +
-                (lit
-                  ? "bg-gradient-to-b from-btf-gold to-btf-gold-light"
-                  : "bg-white/10 hover:bg-white/20")
-              }
-            />
-          );
-        })}
-      </div>
-      <div className="flex justify-between max-w-[240px] mx-auto mt-3 px-1">
-        <span className="text-xs text-white/45 font-light">calm</span>
-        <span className="text-xs text-white/45 font-light">overwhelmed</span>
-      </div>
-    </div>
   );
 }
 

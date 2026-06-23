@@ -181,6 +181,61 @@ export function IntensitySlider({
 }
 
 
+/* ─── Charge scale (optional 0–10 before/after self-rating) ───────── */
+
+/**
+ * Discrete, tappable 0–10 "how charged do you feel" scale (0 = calm,
+ * 10 = overwhelmed). This is the shared StateCheck input used across
+ * tools. It is a SUDS-style SELF-MONITORING rating — framed to the user as
+ * "notice your own change", never as proof a tool works. Always optional;
+ * `value` is null until the person picks.
+ */
+export function ChargeScale({
+  value,
+  onChange,
+  leftLabel = "calm",
+  rightLabel = "overwhelmed",
+}: {
+  value: number | null;
+  onChange: (n: number) => void;
+  leftLabel?: string;
+  rightLabel?: string;
+}) {
+  return (
+    <div>
+      <div
+        role="group"
+        aria-label="How charged do you feel, 0 calm to 10 overwhelmed"
+        className="flex justify-center gap-[6px]"
+      >
+        {Array.from({ length: 11 }, (_, i) => {
+          const lit = value !== null && i <= value;
+          return (
+            <button
+              key={i}
+              type="button"
+              aria-label={`${i} of 10`}
+              aria-pressed={value === i}
+              onClick={() => onChange(i)}
+              className={
+                "h-12 w-[22px] rounded-md transition-all duration-300 hover:-translate-y-0.5 " +
+                (lit
+                  ? "bg-gradient-to-b from-btf-gold to-btf-gold-light"
+                  : "bg-white/10 hover:bg-white/20")
+              }
+            />
+          );
+        })}
+      </div>
+      <div className="flex justify-between max-w-[240px] mx-auto mt-3 px-1">
+        <span className="text-xs text-white/45 font-light">{leftLabel}</span>
+        <span className="text-xs text-white/45 font-light">{rightLabel}</span>
+      </div>
+    </div>
+  );
+}
+
+
 /* ─── Countdown timer ─────────────────────────────────────────────── */
 
 /**

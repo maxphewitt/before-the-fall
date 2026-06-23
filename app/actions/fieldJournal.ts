@@ -4,6 +4,8 @@ import { supabaseServer } from "../lib/supabase";
 import { getCurrentUserId } from "../lib/session";
 import { getCurrentAdminId } from "../lib/adminSession";
 import { recordHabitCompletion } from "./habits";
+import { recordStateCheck } from "./stateChecks";
+import type { TimeOfDayBucket } from "../lib/journalTypes";
 import {
   XP_PER_LOG,
   ENDOWED_XP,
@@ -12,6 +14,16 @@ import {
   severity,
   type Outcome,
 } from "../lib/fieldJournalContent";
+
+/** Coarse local time-of-day bucket from a 0–23 hour (privacy-preserving). */
+function timeOfDayFromHour(h: number): TimeOfDayBucket {
+  if (h < 5) return "late-night";
+  if (h < 8) return "early-morning";
+  if (h < 12) return "morning";
+  if (h < 17) return "afternoon";
+  if (h < 21) return "evening";
+  return "night";
+}
 
 /**
  * Field Journal data layer. XP, the forgiving streak, and severity are
@@ -91,6 +103,16 @@ export async function logUrge(input: LogUrgeInput): Promise<LogUrgeResult> {
 
     // Logging an urge completes the mandatory Field Journal habit for today.
     await recordHabitCompletion({ userId, habitSlug: "field-journal" });
+
+    // Best-effort: emit the urge intensity as a shared StateCheck "charge"
+    // (before-only — a field log is a point-in-time note, not a before/after
+    // intervention) so it joins the cross-tool "what helps you, when" read.
+    await recordStateCheck({
+      toolSlug: "field-journal",
+      before: input.intensity,
+      after: null,
+      timeOfDay: timeOfDayFromHour(input.localHour),
+    });
 
     // how many entries from this context (for the recommend() if-then plan)
     const { count: ctxCount } = await supabase

@@ -38,12 +38,18 @@ export default async function TodayPage() {
           >
             <span aria-hidden>&larr;</span> Home
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center flex-wrap justify-end gap-x-4 gap-y-1">
             <Link
               href="/today/grove"
               className="text-xs text-btf-sky-deep underline underline-offset-4 hover:text-btf-sky"
             >
               Your grove
+            </Link>
+            <Link
+              href="/today/waves"
+              className="text-xs text-btf-sky-deep underline underline-offset-4 hover:text-btf-sky"
+            >
+              Waves you rode
             </Link>
             <Link
               href="/today/edit"

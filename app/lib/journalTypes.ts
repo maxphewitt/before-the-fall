@@ -59,6 +59,14 @@ export type ToolStateCheck = {
   after?: number;
 };
 
+/**
+ * Acceptance-based outcome category for tools where reducing intensity is
+ * NOT the goal (urge surfing). All three carry equal weight — a slip is a
+ * logged act of showing up, never a failure or a streak-break. This framing
+ * is grounded in the Abstinence Violation Effect literature.
+ */
+export type UrgeOutcome = "rode_it_out" | "stepped_away" | "acted_on_it";
+
 export type ToolSessionPayload = {
   kind: "tool_session";
   version: "v1";
@@ -69,6 +77,17 @@ export type ToolSessionPayload = {
   summary?: string;
   /** Optional 0–10 before/after self-rating (see ToolStateCheck). */
   stateCheck?: ToolStateCheck;
+  /**
+   * Optional acceptance-based outcome (e.g. urge surfing). Stored as the
+   * raw union value; the UI maps it to warm, equal-weight labels.
+   */
+  outcome?: UrgeOutcome;
+  /**
+   * Optional 0–100 coping self-efficacy ("how able do you feel to handle
+   * urges like this?"). A rising-is-good signal drawn from situational-
+   * confidence measures — never framed as a target to drop.
+   */
+  confidence?: number;
 };
 
 /**
@@ -120,6 +139,10 @@ export type ToolMoment = {
   words: string[];
   before?: number;
   after?: number;
+  /** Acceptance-based outcome (urge surfing). */
+  outcome?: UrgeOutcome;
+  /** 0–100 coping confidence. */
+  confidence?: number;
 };
 
 export type JournalEntry = {
