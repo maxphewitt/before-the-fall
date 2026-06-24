@@ -434,6 +434,88 @@ export function BreathingCircle({
 }
 
 
+/* ─── Paced breathing circle (inhale / exhale only) ───────────────── */
+
+/**
+ * Slow resonance-style paced breathing: inhale `inhale`s, exhale `exhale`s,
+ * no holds. Defaults to 4 in / 6 out (~6 breaths/min, gentle longer exhale)
+ * — the calming pace used for TIPP. Same gold-orb visual language as
+ * BreathingCircle so the tools feel uniform. Loops `rounds` then fires
+ * onComplete. Reduced-motion users still get the phase/seconds text.
+ */
+export function PacedBreathingCircle({
+  inhale = 4,
+  exhale = 6,
+  rounds = 5,
+  onComplete,
+}: {
+  inhale?: number;
+  exhale?: number;
+  rounds?: number;
+  onComplete: () => void;
+}) {
+  const [tick, setTick] = useState(0);
+  const fired = useRef(false);
+  const cycleSeconds = inhale + exhale;
+  const totalSeconds = cycleSeconds * rounds;
+
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (tick >= totalSeconds && !fired.current) {
+      fired.current = true;
+      onComplete();
+    }
+  }, [tick, totalSeconds, onComplete]);
+
+  const inCycle = tick % cycleSeconds;
+  const inhaling = inCycle < inhale;
+  const phase = inhaling ? "Breathe in" : "Breathe out";
+  const remainingInPhase = inhaling
+    ? inhale - inCycle
+    : cycleSeconds - inCycle;
+  const currentRound = Math.min(rounds, Math.floor(tick / cycleSeconds) + 1);
+
+  // Scale 0.55 → 1.0 across inhale, 1.0 → 0.55 across exhale.
+  const scale = inhaling
+    ? 0.55 + (0.45 * inCycle) / inhale
+    : 1.0 - (0.45 * (inCycle - inhale)) / exhale;
+
+  return (
+    <div className="text-center">
+      <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2">
+        Round {currentRound} of {rounds}
+      </p>
+
+      <div className="relative w-64 h-64 mx-auto my-8">
+        <div
+          className="absolute inset-0 rounded-full bg-btf-gold/25 blur-2xl transition-transform duration-1000"
+          style={{ transform: `scale(${scale + 0.1})` }}
+        />
+        <div
+          className="absolute inset-0 rounded-full bg-gradient-to-br from-btf-gold to-btf-gold-light transition-transform duration-1000"
+          style={{ transform: `scale(${scale})` }}
+          aria-hidden
+        />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-btf-sky-deep">
+          <span className="font-serif text-4xl font-light">{phase}</span>
+          <span className="font-serif text-5xl font-light mt-1">
+            {remainingInPhase}
+          </span>
+        </div>
+      </div>
+
+      <p className="text-sm text-white/70 font-light">
+        Let the out-breath be slow and gentle. {inhale} in, {exhale} out.
+      </p>
+    </div>
+  );
+}
+
+
 /* ─── Closing screen ──────────────────────────────────────────────── */
 
 export type NextStep = {
