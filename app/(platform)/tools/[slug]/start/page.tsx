@@ -45,8 +45,13 @@ export default async function ToolStartPage({
   }
 
   switch (slug) {
-    case "stop":
-      return <StopFlow />;
+    case "stop": {
+      // Path-aware encouragement: faith path → Christian (Christ was tempted
+      // too), otherwise the secular framing. Unknown defaults to secular.
+      const faith = await getCurrentUserFaithRole();
+      const path = faith && faith !== "secular" ? "christian" : "secular";
+      return <StopFlow path={path} />;
+    }
     case "urge-surfing": {
       // Default the narration voice from the faith preference set at
       // onboarding, so we don't ask every session. growing_closer / open

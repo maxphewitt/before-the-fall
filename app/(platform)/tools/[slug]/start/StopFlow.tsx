@@ -1,188 +1,274 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Shell,
   PrimaryButton,
+  PacedBreathingCircle,
+  ActivityComplete,
   CRISIS_NEXT_STEP,
   useAutoSave,
 } from "./_shared";
 import { createToolSession } from "../../../../actions/journal";
 
 /**
- * STOP — DBT crisis-survival skill.
+ * STOP — DBT crisis-survival skill: a deliberate pause between urge and
+ * action. Stop · Take a step back · Observe · Proceed mindfully.
  *
- * Flow:
- *   0. Title reveal — letters of "STOP." appear one at a time, then
- *      a single "I stopped." button.
- *   1. S — "Stop." Freeze. Single Next button.
- *   2. T — "Take a step back." Single Next button.
- *   3. O — "Observe." Required free-text: "What do you feel in your
- *      body right now?" with a real example in the placeholder so the
- *      first-time user knows what to put in.
- *   4. P — "Proceed mindfully." Closing screen with three choices:
- *      continue to Urge Surfing, return to /tools, or call 988.
+ * Rebuilt (calm-game craft, dialed to a whisper):
+ *   - Each step is single-focus with staged reveals and eased motion; every
+ *     tap is acknowledged; nothing auto-fires.
+ *   - "Take a step back" uses the best-evidenced lever — a few slow breaths
+ *     (the same paced circle as the other tools).
+ *   - "Observe" captures the user's own words; they're reflected back at the
+ *     end (real feedback, not hollow praise).
+ *   - A path-aware "you're not alone" beat (Christ was tempted too / a Stoic
+ *     framing) — common-humanity, shame-reducing.
+ *   - Closes on ActivityComplete (streak chip + mastery archive in the grove)
+ *     so return is driven by meaning, not streak-pressure.
+ *
+ * Claims kept defensible: STOP is a recognized DBT skill for putting a gap
+ * between urge and action — not a trial-proven, standalone cure, and not a
+ * substitute for crisis care.
  */
-export default function StopFlow() {
-  const router = useRouter();
-  const [stepIdx, setStepIdx] = useState(0);
-  const [bodyNote, setBodyNote] = useState("");
 
-  const TOTAL = 5;
+type Encouragement = {
+  eyebrow: string;
+  headline: string;
+  body: string;
+  quote: string;
+  source: string;
+};
 
-  // Auto-save on the closing screen.
-  const isClosing = stepIdx === 4;
-  const { saving, saveError } = useAutoSave(
-    isClosing && bodyNote.trim().length > 0,
-    async () => {
-      const res = await createToolSession({
-        toolSlug: "stop",
-        toolName: "STOP",
-        steps: [
-          {
-            heading: "Stop",
-            prompt: "Freeze. Don't move. Don't reach. Don't speak.",
-            userAnswer: "Completed.",
-          },
-          {
-            heading: "Take a step back",
-            prompt: "Mentally or literally. A foot of distance from whatever's in front of you.",
-            userAnswer: "Completed.",
-          },
-          {
-            heading: "Observe — body check",
-            prompt: "What do you feel in your body right now?",
-            userAnswer: bodyNote,
-          },
-          {
-            heading: "Proceed mindfully",
-            prompt: "Next move on purpose, not on autopilot.",
-            userAnswer: "Completed.",
-          },
-        ],
-      });
-      if (!res.success) throw new Error(res.error);
-      return res;
-    }
-  );
+const ENCOURAGEMENT: Record<"christian" | "secular", Encouragement> = {
+  christian: {
+    eyebrow: "You're not alone in this",
+    headline: "He stood here too.",
+    body: "Jesus was led into the wilderness and tempted — and met each temptation without giving in (Matthew 4:1–11). The pull you feel now, he felt. You don't stand in this gap alone.",
+    quote:
+      "There hath no temptation taken you but such as is common to man: but God is faithful, who will… with the temptation also make a way to escape.",
+    source: "1 Corinthians 10:13",
+  },
+  secular: {
+    eyebrow: "You're not alone in this",
+    headline: "You're not the first to stand here.",
+    body: "The pull you feel is human, and it passes. Between what you feel and what you do there's a space — and right now you're standing in it.",
+    quote: "Men are disturbed not by things, but by the views which they take of them.",
+    source: "Epictetus",
+  },
+};
 
-  /* ─── Step 0: title reveal ─── */
-  if (stepIdx === 0) return <TitleReveal onContinue={() => setStepIdx(1)} />;
+export default function StopFlow({
+  path = "secular",
+}: {
+  path?: "christian" | "secular";
+}) {
+  const [step, setStep] = useState(0); // 0 title,1 S,2 T,3 O,4 encouragement,5 closing
+  const [started, setStarted] = useState(false); // breath gate on T
+  const [observed, setObserved] = useState("");
 
-  /* ─── Step 1: S ─── */
-  if (stepIdx === 1) {
+  const enc = ENCOURAGEMENT[path];
+  const isClosing = step === 5;
+
+  const { saving, saveError } = useAutoSave(isClosing, async () => {
+    const res = await createToolSession({
+      toolSlug: "stop",
+      toolName: "STOP",
+      steps: [
+        {
+          heading: "Stop",
+          prompt: "Freeze. Don't move, reach, or speak.",
+          userAnswer: "Stopped.",
+        },
+        {
+          heading: "Take a step back",
+          prompt: "A few slow breaths; let the adrenaline settle.",
+          userAnswer: "Took a few slow breaths.",
+        },
+        {
+          heading: "Observe",
+          prompt: "What's happening inside and around you, without judgment.",
+          userAnswer: observed.trim() || "Took a moment to notice.",
+        },
+        {
+          heading: "Proceed mindfully",
+          prompt: "The next move chosen on purpose, not on autopilot.",
+          userAnswer: "Chose the next move on purpose.",
+        },
+      ],
+    });
+    if (!res.success) throw new Error(res.error);
+    return res;
+  });
+
+  /* ─── 0: title reveal ─── */
+  if (step === 0) return <TitleReveal onContinue={() => setStep(1)} />;
+
+  /* ─── 1: S — Stop ─── */
+  if (step === 1) {
     return (
-      <Shell toolName="STOP" toolSlug="stop" progress={{ current: 1, total: TOTAL }}>
-        <LetterCard letter="S" word="Stop" />
-        <p className="text-white/85 font-light leading-relaxed mb-10 text-center">
-          Freeze where you are. Don&rsquo;t move. Don&rsquo;t reach. Don&rsquo;t speak. Three seconds. That&rsquo;s the whole job right now.
+      <StopShell progress={{ current: 1, total: 5 }}>
+        <LetterMark letter="S" word="Stop" />
+        <p className="text-white/85 font-light leading-relaxed mb-10 text-center max-w-md mx-auto">
+          Freeze where you are. Don&rsquo;t move, don&rsquo;t reach, don&rsquo;t
+          speak. Just for a few seconds — that&rsquo;s the whole job right now.
         </p>
-        <PrimaryButton onClick={() => setStepIdx(2)}>I&rsquo;m frozen →</PrimaryButton>
-      </Shell>
+        <PrimaryButton onClick={() => setStep(2)}>I&rsquo;m still →</PrimaryButton>
+      </StopShell>
     );
   }
 
-  /* ─── Step 2: T ─── */
-  if (stepIdx === 2) {
+  /* ─── 2: T — Take a step back (guided breath) ─── */
+  if (step === 2) {
     return (
-      <Shell toolName="STOP" toolSlug="stop" progress={{ current: 2, total: TOTAL }}>
-        <LetterCard letter="T" word="Take a step back" />
-        <p className="text-white/85 font-light leading-relaxed mb-10 text-center">
-          Mentally or physically. Put a foot of distance between you and whatever&rsquo;s in front of you &mdash; the phone, the screen, the bottle, the person, the thought.
-        </p>
-        <PrimaryButton onClick={() => setStepIdx(3)}>I stepped back →</PrimaryButton>
-      </Shell>
+      <StopShell progress={{ current: 2, total: 5 }}>
+        <LetterMark letter="T" word="Take a step back" />
+        {!started ? (
+          <>
+            <p className="text-white/85 font-light leading-relaxed mb-10 text-center max-w-md mx-auto">
+              Step back — in your mind or with your feet — and breathe. A few
+              slow breaths let the rush settle enough to think. Follow the circle
+              when you&rsquo;re ready.
+            </p>
+            <PrimaryButton onClick={() => setStarted(true)}>
+              Breathe with me →
+            </PrimaryButton>
+          </>
+        ) : (
+          <PacedBreathingCircle
+            inhale={4}
+            exhale={6}
+            rounds={3}
+            onComplete={() => setStep(3)}
+          />
+        )}
+      </StopShell>
     );
   }
 
-  /* ─── Step 3: O — required body check ─── */
-  if (stepIdx === 3) {
+  /* ─── 3: O — Observe ─── */
+  if (step === 3) {
     return (
-      <Shell toolName="STOP" toolSlug="stop" progress={{ current: 3, total: TOTAL }}>
-        <LetterCard letter="O" word="Observe" />
-        <label className="block mb-6">
-          <span className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 block">
-            What do you feel in your body right now?
+      <StopShell progress={{ current: 3, total: 5 }}>
+        <LetterMark letter="O" word="Observe" />
+        <label className="block mb-4">
+          <span className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 block text-center">
+            What do you notice right now?
           </span>
           <textarea
-            value={bodyNote}
-            onChange={(e) => setBodyNote(e.target.value)}
+            value={observed}
+            onChange={(e) => setObserved(e.target.value)}
             autoFocus
             rows={5}
-            placeholder="My chest is tight. My hands want to reach for my phone. My jaw is clenched."
-            className="w-full rounded-2xl bg-white/10 border-2 border-white/20 focus:border-btf-gold focus:outline-none px-5 py-4 text-base text-white font-light leading-relaxed resize-y placeholder:text-white/40 placeholder:italic transition-colors"
+            placeholder="My chest is tight. My hand keeps reaching for my phone. The urge is loud but I haven't moved."
+            className="w-full rounded-2xl bg-white/10 border-2 border-white/20 focus:border-btf-gold focus:outline-none px-5 py-4 text-base text-white font-light leading-relaxed resize-y placeholder:text-white/35 placeholder:italic transition-colors"
           />
         </label>
-        <p className="text-xs text-white/55 font-light leading-relaxed mb-8">
-          No judgment. No action. Just notice. The body knows things the brain hasn&rsquo;t named yet.
+        <p className="text-xs text-white/55 font-light leading-relaxed mb-8 text-center">
+          No judgment, no action — just notice. Your body often knows what the
+          mind hasn&rsquo;t named yet. (You can leave this blank.)
         </p>
-        <PrimaryButton
-          onClick={() => setStepIdx(4)}
-          disabled={bodyNote.trim().length === 0}
-        >
-          Next →
-        </PrimaryButton>
-      </Shell>
+        <PrimaryButton onClick={() => setStep(4)}>I&rsquo;ve noticed →</PrimaryButton>
+      </StopShell>
     );
   }
 
-  /* ─── Step 4: P — closing + choices ─── */
-  return (
-    <Shell toolName="STOP" toolSlug="stop" progress={{ current: 5, total: TOTAL }}>
-      <LetterCard letter="P" word="Proceed mindfully" small />
-      <h1 className="font-serif text-2xl md:text-3xl text-white font-light leading-tight mb-4 text-center">
-        You created a gap.
-      </h1>
-      <p className="font-serif italic text-base text-white/85 font-light leading-relaxed mb-10 max-w-md mx-auto text-center">
-        Between the urge and the action. That gap is the whole skill. Your next move is the one you choose, not the one the urge picked for you.
-      </p>
-
-      {saving && (
-        <p className="text-xs text-white/55 text-center mb-4">Saving to your journal…</p>
-      )}
-      {saveError && (
-        <div role="alert" className="mb-6 rounded-xl bg-red-900/30 border border-red-400/30 text-red-100 text-sm p-4">
-          {saveError}
+  /* ─── 4: Encouragement — you're not alone ─── */
+  if (step === 4) {
+    return (
+      <StopShell progress={{ current: 4, total: 5 }}>
+        <div className="text-center">
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 btf-fade-up">
+            {enc.eyebrow}
+          </p>
+          <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-4 btf-fade-up btf-d-1">
+            {enc.headline}
+          </h1>
+          <p className="text-white/80 font-light leading-relaxed mb-8 max-w-md mx-auto btf-fade-up btf-d-2">
+            {enc.body}
+          </p>
+          <blockquote className="border-l-2 border-btf-gold/50 pl-5 py-1 text-left max-w-md mx-auto mb-10 btf-fade-up btf-d-3">
+            <p className="font-serif italic text-lg text-white/90 font-light leading-relaxed">
+              &ldquo;{enc.quote}&rdquo;
+            </p>
+            <p className="text-sm text-btf-gold-light font-medium mt-2">
+              — {enc.source}
+            </p>
+          </blockquote>
+          <PrimaryButton onClick={() => setStep(5)}>
+            Proceed mindfully →
+          </PrimaryButton>
         </div>
-      )}
+      </StopShell>
+    );
+  }
 
-      <div className="space-y-3">
-        <button
-          type="button"
-          onClick={() => router.push("/tools/urge-surfing/start")}
-          className="w-full text-left bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-        >
-          <p className="font-medium text-white">Continue to Urge Surfing →</p>
-          <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-            If the urge is still there, ride it until it falls. Often the natural next move after STOP.
-          </p>
-        </button>
-        <a
-          href={CRISIS_NEXT_STEP.href}
-          className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-        >
-          <p className="font-medium text-white">{CRISIS_NEXT_STEP.label}</p>
-          <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-            {CRISIS_NEXT_STEP.description}
-          </p>
-        </a>
-        <button
-          type="button"
-          onClick={() => router.push("/tools")}
-          className="w-full text-left bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-        >
-          <p className="font-medium text-white">Back to all tools</p>
-          <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-            See the other Tier 1 exercises.
-          </p>
-        </button>
+  /* ─── 5: P — closing ─── */
+  return (
+    <StopShell progress={{ current: 5, total: 5 }}>
+      <ActivityComplete
+        eyebrow="P — Proceed mindfully"
+        headline="You made a gap."
+        acknowledgment="You stopped, you breathed, you noticed — and you didn't act on autopilot. That gap between the urge and the action is the whole skill, and you just stood in it."
+        saving={saving}
+        saveError={saveError}
+        nextSteps={[
+          {
+            label: "Continue to Urge Surfing →",
+            href: "/tools/urge-surfing/start",
+            description:
+              "If the urge is still here, ride it out until it falls. Often the natural next move after STOP.",
+          },
+          {
+            label: "See your grove →",
+            href: "/today/grove",
+            description: "The times you came back, kept in one place.",
+          },
+          CRISIS_NEXT_STEP,
+        ]}
+      >
+        {observed.trim().length > 0 && (
+          <div className="rounded-2xl bg-white/[0.07] border border-white/15 px-5 py-4 mb-8 text-left">
+            <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2">
+              You noticed
+            </p>
+            <p className="text-white/85 font-light leading-relaxed whitespace-pre-line">
+              {observed.trim()}
+            </p>
+          </div>
+        )}
+      </ActivityComplete>
+    </StopShell>
+  );
+}
+
+/* ─── Ambient shell ───────────────────────────────────────────────── */
+
+function StopShell({
+  progress,
+  children,
+}: {
+  progress: { current: number; total: number } | null;
+  children: React.ReactNode;
+}) {
+  return (
+    <Shell toolName="STOP" toolSlug="stop" progress={progress}>
+      <div className="relative isolate">
+        <div
+          aria-hidden
+          className="grounding-breath pointer-events-none absolute left-1/2 top-[34%] -z-10 h-[26rem] w-[26rem] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(201,168,76,0.16), transparent 70%)",
+          }}
+        />
+        <div className="relative z-10">{children}</div>
       </div>
     </Shell>
   );
 }
 
-/* ─── Title reveal screen ───────────────────────────────────────── */
+/* ─── Title reveal ────────────────────────────────────────────────── */
 
 function TitleReveal({ onContinue }: { onContinue: () => void }) {
   const letters = ["S", "T", "O", "P"];
@@ -190,33 +276,30 @@ function TitleReveal({ onContinue }: { onContinue: () => void }) {
 
   useEffect(() => {
     if (revealed >= letters.length) return;
-    const id = setTimeout(() => setRevealed((r) => r + 1), 450);
+    const id = setTimeout(() => setRevealed((r) => r + 1), 480);
     return () => clearTimeout(id);
   }, [revealed, letters.length]);
 
   const ready = revealed >= letters.length;
 
   return (
-    <Shell toolName="STOP" toolSlug="stop" progress={null}>
-      <div className="min-h-[40vh] flex flex-col items-center justify-center">
-        <div className="flex gap-3 mb-4">
+    <StopShell progress={null}>
+      <div className="min-h-[44vh] flex flex-col items-center justify-center">
+        <div className="flex gap-3 mb-5">
           {letters.map((l, i) => (
             <span
               key={i}
               className={
-                "font-serif font-light text-6xl sm:text-7xl transition-all duration-500 " +
-                (i < revealed
-                  ? "text-btf-gold opacity-100 translate-y-0"
-                  : "text-btf-gold opacity-0 translate-y-3")
+                "font-serif font-light text-6xl sm:text-7xl text-btf-gold transition-all duration-700 ease-out " +
+                (i < revealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")
               }
-              style={{ transitionDelay: `${i * 100}ms` }}
             >
               {l}
             </span>
           ))}
           <span
             className={
-              "font-serif font-light text-6xl sm:text-7xl text-btf-gold transition-opacity duration-500 " +
+              "font-serif font-light text-6xl sm:text-7xl text-btf-gold transition-opacity duration-700 " +
               (ready ? "opacity-100" : "opacity-0")
             }
           >
@@ -225,42 +308,31 @@ function TitleReveal({ onContinue }: { onContinue: () => void }) {
         </div>
         <p
           className={
-            "font-serif italic text-base text-white/75 font-light max-w-xs text-center leading-relaxed transition-opacity duration-500 mb-12 " +
+            "font-serif italic text-base text-white/75 font-light max-w-xs text-center leading-relaxed transition-opacity duration-700 mb-12 " +
             (ready ? "opacity-100" : "opacity-0")
           }
         >
-          Before you do the next thing, stop.
+          Before you do the next thing — stop.
         </p>
         <div
           className={
-            "w-full transition-opacity duration-500 " +
+            "w-full transition-opacity duration-700 " +
             (ready ? "opacity-100" : "opacity-0 pointer-events-none")
           }
         >
           <PrimaryButton onClick={onContinue}>I stopped.</PrimaryButton>
         </div>
       </div>
-    </Shell>
+    </StopShell>
   );
 }
 
-function LetterCard({
-  letter,
-  word,
-  small,
-}: {
-  letter: string;
-  word: string;
-  small?: boolean;
-}) {
+/* ─── Letter mark ─────────────────────────────────────────────────── */
+
+function LetterMark({ letter, word }: { letter: string; word: string }) {
   return (
     <div className="text-center mb-8">
-      <div
-        className={
-          (small ? "text-5xl" : "text-7xl") +
-          " font-serif font-light text-btf-gold mb-2"
-        }
-      >
+      <div className="font-serif font-light text-7xl text-btf-gold mb-2 leading-none">
         {letter}
       </div>
       <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
