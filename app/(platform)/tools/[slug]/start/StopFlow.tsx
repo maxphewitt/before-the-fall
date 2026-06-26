@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Shell,
   PrimaryButton,
@@ -9,6 +9,7 @@ import {
   CRISIS_NEXT_STEP,
   useAutoSave,
 } from "./_shared";
+import { GoldCrossIcon } from "../../../../components/StreakChip";
 import { createToolSession } from "../../../../actions/journal";
 
 /**
@@ -101,8 +102,8 @@ export default function StopFlow({
     return res;
   });
 
-  /* ─── 0: title reveal ─── */
-  if (step === 0) return <TitleReveal onContinue={() => setStep(1)} />;
+  /* ─── 0: calm intro ─── */
+  if (step === 0) return <Intro onContinue={() => setStep(1)} />;
 
   /* ─── 1: S — Stop ─── */
   if (step === 1) {
@@ -268,59 +269,25 @@ function StopShell({
   );
 }
 
-/* ─── Title reveal ────────────────────────────────────────────────── */
+/* ─── Calm intro ──────────────────────────────────────────────────── */
 
-function TitleReveal({ onContinue }: { onContinue: () => void }) {
-  const letters = ["S", "T", "O", "P"];
-  const [revealed, setRevealed] = useState(0);
-
-  useEffect(() => {
-    if (revealed >= letters.length) return;
-    const id = setTimeout(() => setRevealed((r) => r + 1), 480);
-    return () => clearTimeout(id);
-  }, [revealed, letters.length]);
-
-  const ready = revealed >= letters.length;
-
+function Intro({ onContinue }: { onContinue: () => void }) {
   return (
     <StopShell progress={null}>
-      <div className="min-h-[44vh] flex flex-col items-center justify-center">
-        <div className="flex gap-3 mb-5">
-          {letters.map((l, i) => (
-            <span
-              key={i}
-              className={
-                "font-serif font-light text-6xl sm:text-7xl text-btf-gold transition-all duration-700 ease-out " +
-                (i < revealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3")
-              }
-            >
-              {l}
-            </span>
-          ))}
-          <span
-            className={
-              "font-serif font-light text-6xl sm:text-7xl text-btf-gold transition-opacity duration-700 " +
-              (ready ? "opacity-100" : "opacity-0")
-            }
-          >
-            .
-          </span>
-        </div>
-        <p
-          className={
-            "font-serif italic text-base text-white/75 font-light max-w-xs text-center leading-relaxed transition-opacity duration-700 mb-12 " +
-            (ready ? "opacity-100" : "opacity-0")
-          }
-        >
-          Before you do the next thing — stop.
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center btf-fade-up">
+        <GoldCrossIcon width={32} />
+        <h1 className="font-serif text-5xl md:text-6xl text-white font-light leading-none mt-7 mb-4">
+          Stop.
+        </h1>
+        <p className="text-white/75 font-light leading-relaxed max-w-sm mb-6">
+          A pause between the urge and what you do next. Four small moves — and
+          you set the pace.
         </p>
-        <div
-          className={
-            "w-full transition-opacity duration-700 " +
-            (ready ? "opacity-100" : "opacity-0 pointer-events-none")
-          }
-        >
-          <PrimaryButton onClick={onContinue}>I stopped.</PrimaryButton>
+        <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/70 font-semibold mb-12">
+          Stop &middot; Take a step back &middot; Observe &middot; Proceed
+        </p>
+        <div className="w-full max-w-xs">
+          <PrimaryButton onClick={onContinue}>Begin</PrimaryButton>
         </div>
       </div>
     </StopShell>
