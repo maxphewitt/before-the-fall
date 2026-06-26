@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Shell,
   PrimaryButton,
+  ChargeScale,
   PacedBreathingCircle,
   ActivityComplete,
   CRISIS_NEXT_STEP,
@@ -11,26 +12,25 @@ import {
 } from "./_shared";
 import { GoldCrossIcon } from "../../../../components/StreakChip";
 import { createToolSession } from "../../../../actions/journal";
+import { timeOfDayBucket } from "../../../../lib/journalTypes";
 
 /**
  * STOP — DBT crisis-survival skill: a deliberate pause between urge and
  * action. Stop · Take a step back · Observe · Proceed mindfully.
  *
- * Rebuilt (calm-game craft, dialed to a whisper):
- *   - Each step is single-focus with staged reveals and eased motion; every
- *     tap is acknowledged; nothing auto-fires.
- *   - "Take a step back" uses the best-evidenced lever — a few slow breaths
- *     (the same paced circle as the other tools).
- *   - "Observe" captures the user's own words; they're reflected back at the
- *     end (real feedback, not hollow praise).
- *   - A path-aware "you're not alone" beat (Christ was tempted too / a Stoic
- *     framing) — common-humanity, shame-reducing.
- *   - Closes on ActivityComplete (streak chip + mastery archive in the grove)
- *     so return is driven by meaning, not streak-pressure.
+ * Uses the SAME shared features as the other tools (no new tracking):
+ *   - StateCheck: optional 0–10 "how strong is the pull" before/after →
+ *     createToolSession({ stateCheck, timeOfDay }) → the state_checks table +
+ *     the grove. STOP now contributes to the cross-tool data like the rest.
+ *   - The journal: the user's own Observe words are saved + reflected back.
+ *   - Habit completion + streak + ActivityComplete grove archive → the return
+ *     loop (meaning/mastery, not streak-pressure).
  *
- * Claims kept defensible: STOP is a recognized DBT skill for putting a gap
- * between urge and action — not a trial-proven, standalone cure, and not a
- * substitute for crisis care.
+ * Calm-game craft dialed to a whisper: single-focus steps, staged reveals,
+ * eased motion, nothing auto-fires; the breath does the settling.
+ *
+ * Claims kept defensible: a recognized DBT skill for the urge-action gap —
+ * not a trial-proven cure, not a substitute for crisis care.
  */
 
 type Encouragement = {
@@ -64,12 +64,16 @@ export default function StopFlow({
 }: {
   path?: "christian" | "secular";
 }) {
-  const [step, setStep] = useState(0); // 0 title,1 S,2 T,3 O,4 encouragement,5 closing
+  // 0 intro · 1 before · 2 S · 3 T · 4 O · 5 encouragement · 6 after · 7 closing
+  const [step, setStep] = useState(0);
   const [started, setStarted] = useState(false); // breath gate on T
   const [observed, setObserved] = useState("");
+  const [before, setBefore] = useState<number | null>(null);
+  const [after, setAfter] = useState<number | null>(null);
 
   const enc = ENCOURAGEMENT[path];
-  const isClosing = step === 5;
+  const isClosing = step === 7;
+  const eased = before !== null && after !== null ? after < before : null;
 
   const { saving, saveError } = useAutoSave(isClosing, async () => {
     const res = await createToolSession({
@@ -97,32 +101,91 @@ export default function StopFlow({
           userAnswer: "Chose the next move on purpose.",
         },
       ],
+      stateCheck: { before, after },
+      timeOfDay: timeOfDayBucket(),
     });
     if (!res.success) throw new Error(res.error);
     return res;
   });
 
   /* ─── 0: calm intro ─── */
-  if (step === 0) return <Intro onContinue={() => setStep(1)} />;
+  if (step === 0) {
+    return (
+      <StopShell progress={null}>
+        <div className="min-h-[60vh] flex flex-col items-center justify-center text-center btf-fade-up">
+          <GoldCrossIcon width={32} />
+          <h1 className="font-serif text-5xl md:text-6xl text-white font-light leading-none mt-7 mb-4">
+            Stop.
+          </h1>
+          <p className="text-white/80 font-light leading-relaxed max-w-sm mb-6">
+            There&rsquo;s a small gap between the urge and the act. It&rsquo;s
+            easy to miss at full speed — so we&rsquo;ll slow down and stand in it
+            together. Four small moves; you set the pace.
+          </p>
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/70 font-semibold mb-12">
+            Stop &middot; Take a step back &middot; Observe &middot; Proceed
+          </p>
+          <div className="w-full max-w-xs">
+            <PrimaryButton onClick={() => setStep(1)}>Begin</PrimaryButton>
+          </div>
+        </div>
+      </StopShell>
+    );
+  }
 
-  /* ─── 1: S — Stop ─── */
+  /* ─── 1: before charge (optional) ─── */
   if (step === 1) {
     return (
-      <StopShell progress={{ current: 1, total: 5 }}>
+      <StopShell progress={{ current: 1, total: 6 }}>
+        <div className="text-center">
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-5">
+            before we begin · optional
+          </p>
+          <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-2">
+            How strong is the pull right now?
+          </h1>
+          <p className="text-sm text-white/60 font-light mb-8">
+            Just a private note to yourself, so you can see what shifts.
+          </p>
+          <ChargeScale
+            value={before}
+            onChange={setBefore}
+            leftLabel="barely there"
+            rightLabel="overwhelming"
+          />
+          <div className="mt-10 space-y-3">
+            <PrimaryButton onClick={() => setStep(2)}>Begin →</PrimaryButton>
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="block w-full text-sm text-white/55 hover:text-white/80 font-light py-2 transition-colors"
+            >
+              Skip — just take me there
+            </button>
+          </div>
+        </div>
+      </StopShell>
+    );
+  }
+
+  /* ─── 2: S — Stop ─── */
+  if (step === 2) {
+    return (
+      <StopShell progress={{ current: 2, total: 6 }}>
         <LetterMark letter="S" word="Stop" />
         <p className="text-white/85 font-light leading-relaxed mb-10 text-center max-w-md mx-auto">
           Freeze where you are. Don&rsquo;t move, don&rsquo;t reach, don&rsquo;t
           speak. Just for a few seconds — that&rsquo;s the whole job right now.
         </p>
-        <PrimaryButton onClick={() => setStep(2)}>I&rsquo;m still →</PrimaryButton>
+        <PrimaryButton onClick={() => setStep(3)}>I&rsquo;m still →</PrimaryButton>
       </StopShell>
     );
   }
 
-  /* ─── 2: T — Take a step back (guided breath) ─── */
-  if (step === 2) {
+  /* ─── 3: T — Take a step back (guided breath) ─── */
+  if (step === 3) {
     return (
-      <StopShell progress={{ current: 2, total: 5 }}>
+      <StopShell progress={{ current: 3, total: 6 }}>
         <LetterMark letter="T" word="Take a step back" />
         {!started ? (
           <>
@@ -140,17 +203,17 @@ export default function StopFlow({
             inhale={4}
             exhale={6}
             rounds={3}
-            onComplete={() => setStep(3)}
+            onComplete={() => setStep(4)}
           />
         )}
       </StopShell>
     );
   }
 
-  /* ─── 3: O — Observe ─── */
-  if (step === 3) {
+  /* ─── 4: O — Observe ─── */
+  if (step === 4) {
     return (
-      <StopShell progress={{ current: 3, total: 5 }}>
+      <StopShell progress={{ current: 4, total: 6 }}>
         <LetterMark letter="O" word="Observe" />
         <label className="block mb-4">
           <span className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 block text-center">
@@ -169,15 +232,15 @@ export default function StopFlow({
           No judgment, no action — just notice. Your body often knows what the
           mind hasn&rsquo;t named yet. (You can leave this blank.)
         </p>
-        <PrimaryButton onClick={() => setStep(4)}>I&rsquo;ve noticed →</PrimaryButton>
+        <PrimaryButton onClick={() => setStep(5)}>I&rsquo;ve noticed →</PrimaryButton>
       </StopShell>
     );
   }
 
-  /* ─── 4: Encouragement — you're not alone ─── */
-  if (step === 4) {
+  /* ─── 5: encouragement — you're not alone ─── */
+  if (step === 5) {
     return (
-      <StopShell progress={{ current: 4, total: 5 }}>
+      <StopShell progress={{ current: 5, total: 6 }}>
         <div className="text-center">
           <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 btf-fade-up">
             {enc.eyebrow}
@@ -196,21 +259,59 @@ export default function StopFlow({
               — {enc.source}
             </p>
           </blockquote>
-          <PrimaryButton onClick={() => setStep(5)}>
-            Proceed mindfully →
-          </PrimaryButton>
+          <PrimaryButton onClick={() => setStep(6)}>One last check →</PrimaryButton>
         </div>
       </StopShell>
     );
   }
 
-  /* ─── 5: P — closing ─── */
+  /* ─── 6: after charge (optional) ─── */
+  if (step === 6) {
+    return (
+      <StopShell progress={{ current: 6, total: 6 }}>
+        <div className="text-center">
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-5">
+            one more · optional
+          </p>
+          <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-8">
+            And now — how strong is the pull?
+          </h1>
+          <ChargeScale
+            value={after}
+            onChange={setAfter}
+            leftLabel="barely there"
+            rightLabel="overwhelming"
+          />
+          <div className="mt-10 space-y-3">
+            <PrimaryButton onClick={() => setStep(7)}>Keep this moment</PrimaryButton>
+            <button
+              type="button"
+              onClick={() => setStep(7)}
+              className="block w-full text-sm text-white/55 hover:text-white/80 font-light py-2 transition-colors"
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      </StopShell>
+    );
+  }
+
+  /* ─── 7: P — closing ─── */
   return (
-    <StopShell progress={{ current: 5, total: 5 }}>
+    <StopShell progress={null}>
       <ActivityComplete
         eyebrow="P — Proceed mindfully"
-        headline="You made a gap."
+        headline={eased ? "The pull is already easing." : "You made a gap."}
         acknowledgment="You stopped, you breathed, you noticed — and you didn't act on autopilot. That gap between the urge and the action is the whole skill, and you just stood in it."
+        stats={
+          before !== null || after !== null
+            ? [
+                { label: "pull before", value: String(before ?? "—") },
+                { label: "pull after", value: String(after ?? "—") },
+              ]
+            : []
+        }
         saving={saving}
         saveError={saveError}
         nextSteps={[
@@ -266,31 +367,6 @@ function StopShell({
         <div className="relative z-10">{children}</div>
       </div>
     </Shell>
-  );
-}
-
-/* ─── Calm intro ──────────────────────────────────────────────────── */
-
-function Intro({ onContinue }: { onContinue: () => void }) {
-  return (
-    <StopShell progress={null}>
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center btf-fade-up">
-        <GoldCrossIcon width={32} />
-        <h1 className="font-serif text-5xl md:text-6xl text-white font-light leading-none mt-7 mb-4">
-          Stop.
-        </h1>
-        <p className="text-white/75 font-light leading-relaxed max-w-sm mb-6">
-          A pause between the urge and what you do next. Four small moves — and
-          you set the pace.
-        </p>
-        <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/70 font-semibold mb-12">
-          Stop &middot; Take a step back &middot; Observe &middot; Proceed
-        </p>
-        <div className="w-full max-w-xs">
-          <PrimaryButton onClick={onContinue}>Begin</PrimaryButton>
-        </div>
-      </div>
-    </StopShell>
   );
 }
 
