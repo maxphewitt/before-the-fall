@@ -6,6 +6,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Project rules
 
+## Building / rebuilding a self-help tool ("game")
+Before touching any tool flow in `app/(platform)/tools/[slug]/start/`, read the
+playbook at `app/(platform)/tools/[slug]/start/INSTRUCTIONS.md` and follow it
+(research-first, the uniform WelcomeScreen → optional StateCheck page → guided
+steps → ActivityComplete skeleton, the shared-component inventory, and the
+match-the-measure tracking rule). It is the repeatable process for "update tool X."
+
 ## Every tool emits a StateCheck (benefit-over-time tracking)
 
 As we build or update any self-help tool, it MUST emit the shared before/after

@@ -22,6 +22,34 @@ import type { DisplayStreak } from "../../../../lib/streakTypes";
    ──────────────────────────────────────────────────────────────────── */
 
 
+/* ─── Tool header (Exit + tool name) ──────────────────────────────── */
+
+/** The shared top bar every tool flow shows: an Exit link back to the
+ *  tool's detail page, and the tool name. Extracted so non-Shell flows
+ *  (e.g. the full-screen Urge Surfing engine) can render the same header. */
+export function ToolHeader({
+  toolName,
+  toolSlug,
+}: {
+  toolName: string;
+  toolSlug: string;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <Link
+        href={`/tools/${toolSlug}`}
+        className="text-white/60 hover:text-white text-xs inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
+      >
+        <span aria-hidden>&larr;</span> Exit
+      </Link>
+      <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
+        {toolName}
+      </p>
+    </div>
+  );
+}
+
+
 /* ─── Shell ───────────────────────────────────────────────────────── */
 
 export function Shell({
@@ -38,16 +66,8 @@ export function Shell({
   return (
     <main className="min-h-screen bg-gradient-to-b from-btf-deep-night via-btf-sky-deep to-btf-sky text-white">
       <div className="max-w-xl mx-auto px-6 py-8 sm:py-12">
-        <div className="flex items-center justify-between mb-8">
-          <Link
-            href={`/tools/${toolSlug}`}
-            className="text-white/60 hover:text-white text-xs inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
-          >
-            <span aria-hidden>&larr;</span> Exit
-          </Link>
-          <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
-            {toolName}
-          </p>
+        <div className="mb-8">
+          <ToolHeader toolName={toolName} toolSlug={toolSlug} />
         </div>
 
         {progress && (

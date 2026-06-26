@@ -7,6 +7,7 @@ import type { UrgeOutcome } from "../../../../lib/journalTypes";
 import { getDisplayStreak } from "../../../../actions/streaks";
 import type { DisplayStreak } from "../../../../lib/streakTypes";
 import StreakChip from "../../../../components/StreakChip";
+import { ToolHeader } from "./_shared";
 import {
   saveUrgeSurfSession,
   getUrgeSurfStats,
@@ -67,7 +68,16 @@ export default function UrgeSurfingFlow({ initialPath }: { initialPath?: Path })
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-btf-deep-night via-btf-sky-deep to-btf-sky text-white overflow-hidden">
+    <main className="relative min-h-screen bg-gradient-to-b from-btf-deep-night via-btf-sky-deep to-btf-sky text-white overflow-hidden">
+      {/* Shared Exit + title header (hidden during the full-immersive wave,
+          which carries its own controls). */}
+      {screen !== "wave" && (
+        <div className="absolute top-0 inset-x-0 z-30">
+          <div className="max-w-xl mx-auto px-6 py-8">
+            <ToolHeader toolName="Urge Surfing" toolSlug="urge-surfing" />
+          </div>
+        </div>
+      )}
       {screen === "path" && (
         <PathScreen
           onPick={(p) => {

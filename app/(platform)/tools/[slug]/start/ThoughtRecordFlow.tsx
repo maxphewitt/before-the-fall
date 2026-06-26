@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   Shell,
   PrimaryButton,
   IntensitySlider,
+  ActivityComplete,
+  WelcomeScreen,
   CRISIS_NEXT_STEP,
   useAutoSave,
 } from "./_shared";
 import { createToolSession } from "../../../../actions/journal";
+import { timeOfDayBucket } from "../../../../lib/journalTypes";
 
 /**
  * CBT Thought Record — Beck's seven-column structure, one field per
@@ -33,6 +35,7 @@ const EXAMPLES = {
 } as const;
 
 export default function ThoughtRecordFlow() {
+  const [welcomed, setWelcomed] = useState(false);
   const [stepIdx, setStepIdx] = useState(0); // 0..7, then 8 = closing
 
   const [situation, setSituation] = useState("");
@@ -66,10 +69,28 @@ export default function ThoughtRecordFlow() {
           userAnswer: `${emotionEnd}/100 (${delta > 0 ? `down ${delta}` : delta < 0 ? `up ${Math.abs(delta)}` : "no change"})`,
         },
       ],
+      stateCheck: {
+        before: Math.round(emotionStart / 10),
+        after: Math.round(emotionEnd / 10),
+      },
+      timeOfDay: timeOfDayBucket(),
     });
     if (!res.success) throw new Error(res.error);
     return res;
   });
+
+  /* ─── Welcome (shared opening) ─── */
+  if (!welcomed) {
+    return (
+      <WelcomeScreen
+        toolName="Thought Record"
+        toolSlug="thought-record"
+        headline="Put the thought on trial."
+        body="One sticky thought, seven short columns. We'll make it face the evidence — for and against — and see if a truer version is waiting underneath. Go at your own pace."
+        onBegin={() => setWelcomed(true)}
+      />
+    );
+  }
 
   /* ─── Closing ─── */
   if (isClosing) {
@@ -79,70 +100,52 @@ export default function ThoughtRecordFlow() {
         toolSlug="thought-record"
         progress={{ current: TOTAL + 1, total: TOTAL + 1 }}
       >
-        <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 text-center">
-          The tool working
-        </p>
-        <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-3 text-center">
-          {delta >= 20
-            ? `You dropped ${delta} points.`
-            : delta > 0
-              ? `You moved ${delta} points.`
-              : delta === 0
-                ? "The number didn't move — and that's information too."
-                : "The number went up."}
-        </h1>
-        <p className="font-serif italic text-base text-white/85 font-light leading-relaxed mb-10 text-center max-w-md mx-auto">
-          {delta >= 20
-            ? "That's the tool working. Forcing the thought to defend itself with evidence changed how loud it was."
-            : delta > 0
-              ? "Even a 10-point drop is real. Run the columns again if you have time — the second pass usually goes further."
-              : delta === 0
-                ? "Sometimes the thought really is sticky. The honest move is to bring it to a person — a therapist, a sponsor, a priest, someone who can sit with it longer than a journal entry."
-                : "Sometimes naming a thought makes it heavier before it gets lighter. The work isn't finished; this session caught something live."}
-        </p>
-
-        <BeforeAfterChart start={emotionStart} end={emotionEnd} label={emotionLabel} />
-
-        {saving && (
-          <p className="text-xs text-white/55 text-center mt-6 mb-4">
-            Saving to your journal…
-          </p>
-        )}
-        {saveError && (
-          <div
-            role="alert"
-            className="mt-6 mb-6 rounded-xl bg-red-900/30 border border-red-400/30 text-red-100 text-sm p-4"
-          >
-            {saveError}
+        <ActivityComplete
+          eyebrow="The tool working"
+          headline={
+            delta >= 20
+              ? `You dropped ${delta} points.`
+              : delta > 0
+                ? `You moved ${delta} points.`
+                : delta === 0
+                  ? "The number didn't move — and that's information too."
+                  : "The number went up."
+          }
+          acknowledgment={
+            delta >= 20
+              ? "That's the tool working. Forcing the thought to defend itself with evidence changed how loud it was."
+              : delta > 0
+                ? "Even a 10-point drop is real. Run the columns again if you have time — the second pass usually goes further."
+                : delta === 0
+                  ? "Sometimes the thought really is sticky. The honest move is to bring it to a person — a therapist, a sponsor, a priest, someone who can sit with it longer than a journal entry."
+                  : "Sometimes naming a thought makes it heavier before it gets lighter. The work isn't finished; this session caught something live."
+          }
+          saving={saving}
+          saveError={saveError}
+          nextSteps={[
+            {
+              label: "STOP →",
+              href: "/tools/stop/start",
+              description:
+                "Lock in the gap. The thought just had to defend itself; the next one will too.",
+            },
+            {
+              label: "See your grove →",
+              href: "/today/grove",
+              description: "Your progress and the times you came back, all in one place.",
+            },
+            CRISIS_NEXT_STEP,
+            {
+              label: "Back to all tools",
+              href: "/tools",
+              description: "See the other Tier 1 exercises.",
+            },
+          ]}
+        >
+          <div className="mb-2">
+            <BeforeAfterChart start={emotionStart} end={emotionEnd} label={emotionLabel} />
           </div>
-        )}
-
-        <div className="space-y-3 mt-10">
-          <Link
-            href="/tools/stop/start"
-            className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-          >
-            <p className="font-medium text-white">STOP →</p>
-            <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-              Lock in the gap. The thought just had to defend itself; the next one will too.
-            </p>
-          </Link>
-          <a
-            href={CRISIS_NEXT_STEP.href}
-            className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-          >
-            <p className="font-medium text-white">{CRISIS_NEXT_STEP.label}</p>
-            <p className="text-xs text-white/65 font-light mt-1 leading-relaxed">
-              {CRISIS_NEXT_STEP.description}
-            </p>
-          </a>
-          <Link
-            href="/tools"
-            className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all"
-          >
-            <p className="font-medium text-white">Back to all tools</p>
-          </Link>
-        </div>
+        </ActivityComplete>
       </Shell>
     );
   }
