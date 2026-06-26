@@ -7,10 +7,10 @@ import {
   ChargeScale,
   PacedBreathingCircle,
   ActivityComplete,
+  WelcomeScreen,
   CRISIS_NEXT_STEP,
   useAutoSave,
 } from "./_shared";
-import { GoldCrossIcon } from "../../../../components/StreakChip";
 import { createToolSession } from "../../../../actions/journal";
 import { timeOfDayBucket } from "../../../../lib/journalTypes";
 
@@ -108,28 +108,16 @@ export default function StopFlow({
     return res;
   });
 
-  /* ─── 0: calm intro ─── */
+  /* ─── 0: welcome (shared format) ─── */
   if (step === 0) {
     return (
-      <StopShell progress={null}>
-        <div className="min-h-[60vh] flex flex-col items-center justify-center text-center btf-fade-up">
-          <GoldCrossIcon width={32} />
-          <h1 className="font-serif text-5xl md:text-6xl text-white font-light leading-none mt-7 mb-4">
-            Stop.
-          </h1>
-          <p className="text-white/80 font-light leading-relaxed max-w-sm mb-6">
-            There&rsquo;s a small gap between the urge and the act. It&rsquo;s
-            easy to miss at full speed — so we&rsquo;ll slow down and stand in it
-            together. Four small moves; you set the pace.
-          </p>
-          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/70 font-semibold mb-12">
-            Stop &middot; Take a step back &middot; Observe &middot; Proceed
-          </p>
-          <div className="w-full max-w-xs">
-            <PrimaryButton onClick={() => setStep(1)}>Begin</PrimaryButton>
-          </div>
-        </div>
-      </StopShell>
+      <WelcomeScreen
+        toolName="STOP"
+        toolSlug="stop"
+        headline="There's a gap."
+        body="A small space sits between the urge and the act — easy to miss at full speed. We'll slow down and stand in it together: four small moves, at your pace."
+        onBegin={() => setStep(1)}
+      />
     );
   }
 

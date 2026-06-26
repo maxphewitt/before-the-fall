@@ -77,6 +77,55 @@ export function Shell({
 }
 
 
+/* ─── Welcome screen (shared opening for every tool) ──────────────── */
+
+/**
+ * The consistent first screen for every tool: a slow breathing brand cross,
+ * a serif headline, an evocative line, and a single gold call-to-action —
+ * the format we standardized from Urge Surfing. Any data/charge check is a
+ * SEPARATE screen that follows this one (never the opening).
+ *
+ * `footer` is for an optional sub-link (e.g. the faith/wisdom path switch).
+ */
+export function WelcomeScreen({
+  toolName,
+  toolSlug,
+  headline,
+  body,
+  ctaLabel = "I'm ready to begin",
+  onBegin,
+  footer,
+}: {
+  toolName: string;
+  toolSlug: string;
+  headline: string;
+  body: string;
+  ctaLabel?: string;
+  onBegin: () => void;
+  footer?: React.ReactNode;
+}) {
+  return (
+    <Shell toolName={toolName} toolSlug={toolSlug} progress={null}>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
+        <div className="btf-breathe mb-8">
+          <GoldCrossIcon width={34} />
+        </div>
+        <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-4">
+          {headline}
+        </h1>
+        <p className="text-white/80 font-light leading-relaxed mb-10 max-w-md mx-auto">
+          {body}
+        </p>
+        <div className="w-full max-w-xs">
+          <PrimaryButton onClick={onBegin}>{ctaLabel}</PrimaryButton>
+        </div>
+        {footer && <div className="mt-5 text-sm">{footer}</div>}
+      </div>
+    </Shell>
+  );
+}
+
+
 /* ─── Primary button ──────────────────────────────────────────────── */
 
 export function PrimaryButton({

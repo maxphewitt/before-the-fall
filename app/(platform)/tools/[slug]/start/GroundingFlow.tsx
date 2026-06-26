@@ -7,6 +7,7 @@ import {
   PrimaryButton,
   ChargeScale,
   ActivityComplete,
+  WelcomeScreen,
   CRISIS_NEXT_STEP,
   useAutoSave,
 } from "./_shared";
@@ -85,10 +86,10 @@ const SENSES: SenseStep[] = [
   },
 ];
 
-type Phase = "before" | "drill" | "after" | "closing";
+type Phase = "welcome" | "before" | "drill" | "after" | "closing";
 
 export default function GroundingFlow() {
-  const [phase, setPhase] = useState<Phase>("before");
+  const [phase, setPhase] = useState<Phase>("welcome");
   const [stepIdx, setStepIdx] = useState(0);
   const [beforeCharge, setBeforeCharge] = useState<number | null>(null);
   const [afterCharge, setAfterCharge] = useState<number | null>(null);
@@ -156,6 +157,19 @@ export default function GroundingFlow() {
       return res;
     }
   );
+
+  /* ─── WELCOME (shared opening format) ────────────────────────────── */
+  if (phase === "welcome") {
+    return (
+      <WelcomeScreen
+        toolName="5-4-3-2-1"
+        toolSlug="grounding"
+        headline="When the ground feels far away."
+        body="We'll find a few things that are real and here, right now — one sense at a time. There's no wrong number, and you set the pace."
+        onBegin={() => setPhase("before")}
+      />
+    );
+  }
 
   /* ─── BEFORE check (optional, prominent skip) ────────────────────── */
   if (phase === "before") {
