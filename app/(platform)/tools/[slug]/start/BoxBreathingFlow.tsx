@@ -8,6 +8,7 @@ import {
   ChargeScale,
   ChoiceGrid,
   ActivityComplete,
+  WelcomeScreen,
   CRISIS_NEXT_STEP,
   useAutoSave,
   type CompletionStat,
@@ -19,27 +20,27 @@ import { timeOfDayBucket } from "../../../../lib/journalTypes";
 /**
  * Box Breathing — 4-count inhale / hold / exhale / hold.
  *
- * Screens:
- *   0. Pick 4 or 8 rounds + an optional 0–10 "before" charge.
- *   1. Breathing circle animates. Auto-advances on completion.
- *   2. Optional 0–10 "after" charge.
- *   3. Closing — message derived from the before/after delta.
+ * Flow (uniform with the other tools):
+ *   0. Welcome (shared format) — with a gentle "how long?" choice by the CTA.
+ *   1. Optional 0–10 "before" charge (the data check is its own page).
+ *   2. Breathing circle (auto-advances on completion).
+ *   3. Optional 0–10 "after" charge.
+ *   4. Closing — message derived from the before/after delta.
  *
- * The 0–10 check is the shared StateCheck (a SUDS-style self-monitoring
- * rating, not proof). Slow paced breathing is the one tool where the
- * parasympathetic framing is defensible (Zaccaro 2018), so the "eased"
- * message keeps it — but only when the person's own numbers show it.
+ * The 0–10 check is the shared StateCheck (self-monitoring, not proof). Slow
+ * paced breathing is the one tool where the parasympathetic framing is
+ * defensible (Zaccaro 2018), so the "eased" message keeps it — only when the
+ * person's own numbers show it.
  */
 
 export default function BoxBreathingFlow() {
-  const [stepIdx, setStepIdx] = useState(0); // 0 picker, 1 breathing, 2 after, 3 closing
+  const [stepIdx, setStepIdx] = useState(0); // 0 welcome,1 before,2 breathing,3 after,4 closing
   const [rounds, setRounds] = useState<4 | 8>(4);
   const [before, setBefore] = useState<number | null>(null);
   const [after, setAfter] = useState<number | null>(null);
 
-  const isClosing = stepIdx === 3;
-  const eased =
-    before !== null && after !== null ? after < before : null;
+  const isClosing = stepIdx === 4;
+  const eased = before !== null && after !== null ? after < before : null;
 
   const { saving, saveError } = useAutoSave(isClosing, async () => {
     const res = await createToolSession({
@@ -74,105 +75,97 @@ export default function BoxBreathingFlow() {
     return res;
   });
 
-  /* ─── Step 0: pick rounds + optional before charge ─── */
+  /* ─── 0: welcome + gentle "how long?" ─── */
   if (stepIdx === 0) {
     return (
-      <Shell
+      <WelcomeScreen
         toolName="Box Breathing"
         toolSlug="box-breathing"
-        progress={{ current: 1, total: 4 }}
+        headline="Steady the breath."
+        body="Four counts in, hold, four out, hold — a simple square that paces your breathing back down. Follow the circle; you don't have to count."
+        ctaLabel="I'm ready to begin"
+        onBegin={() => setStepIdx(1)}
       >
-        <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-3 text-center">
+        <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/80 font-semibold mb-3">
           How long?
-        </h1>
-        <p className="text-white/75 font-light leading-relaxed mb-8 text-center text-sm">
-          Four rounds is about a minute, enough to interrupt a spike. Eight rounds is closer to two minutes, enough to actually settle.
         </p>
-
         <ChoiceGrid
           columns={2}
           value={String(rounds)}
           onChange={(v) => setRounds(v === "8" ? 8 : 4)}
           options={[
-            {
-              value: "4",
-              label: "4 rounds",
-              description: "About 1 minute. For interrupting.",
-            },
-            {
-              value: "8",
-              label: "8 rounds",
-              description: "About 2 minutes. For settling.",
-            },
+            { value: "4", label: "4 rounds", description: "About 1 minute. For interrupting." },
+            { value: "8", label: "8 rounds", description: "About 2 minutes. For settling." },
           ]}
         />
-
-        <div className="mt-10">
-          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2 text-center">
-            Before we start · optional
-          </p>
-          <p className="text-sm text-white/60 font-light mb-5 text-center">
-            How charged do you feel right now? Just a note to yourself.
-          </p>
-          <ChargeScale value={before} onChange={setBefore} />
-        </div>
-
-        <div className="mt-10">
-          <PrimaryButton onClick={() => setStepIdx(1)}>Start →</PrimaryButton>
-        </div>
-      </Shell>
+      </WelcomeScreen>
     );
   }
 
-  /* ─── Step 1: breathing circle ─── */
+  /* ─── 1: before charge (optional) ─── */
   if (stepIdx === 1) {
     return (
-      <Shell
-        toolName="Box Breathing"
-        toolSlug="box-breathing"
-        progress={{ current: 2, total: 4 }}
-      >
-        <BreathingCircle
-          secondsPerPhase={4}
-          rounds={rounds}
-          onComplete={() => setStepIdx(2)}
-        />
-      </Shell>
-    );
-  }
-
-  /* ─── Step 2: optional after charge ─── */
-  if (stepIdx === 2) {
-    return (
-      <Shell
-        toolName="Box Breathing"
-        toolSlug="box-breathing"
-        progress={{ current: 3, total: 4 }}
-      >
-        <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-3 text-center">
-          Check in.
-        </h1>
-        <p className="text-white/75 font-light leading-relaxed mb-8 text-center text-sm">
-          How charged do you feel now?
-        </p>
-
-        <ChargeScale value={after} onChange={setAfter} />
-
-        <div className="mt-10 space-y-3">
-          <PrimaryButton onClick={() => setStepIdx(3)}>Done</PrimaryButton>
-          <button
-            type="button"
-            onClick={() => setStepIdx(3)}
-            className="block w-full text-sm text-white/55 hover:text-white/80 font-light py-2 transition-colors"
-          >
-            Skip
-          </button>
+      <Shell toolName="Box Breathing" toolSlug="box-breathing" progress={{ current: 1, total: 4 }}>
+        <div className="text-center">
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-5">
+            before we begin · optional
+          </p>
+          <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-2">
+            How charged do you feel right now?
+          </h1>
+          <p className="text-sm text-white/60 font-light mb-8">
+            Just a private note to yourself, so you can see what shifts.
+          </p>
+          <ChargeScale value={before} onChange={setBefore} />
+          <div className="mt-10 space-y-3">
+            <PrimaryButton onClick={() => setStepIdx(2)}>Start →</PrimaryButton>
+            <button
+              type="button"
+              onClick={() => setStepIdx(2)}
+              className="block w-full text-sm text-white/55 hover:text-white/80 font-light py-2 transition-colors"
+            >
+              Skip — just take me there
+            </button>
+          </div>
         </div>
       </Shell>
     );
   }
 
-  /* ─── Step 3: closing ─── */
+  /* ─── 2: breathing circle ─── */
+  if (stepIdx === 2) {
+    return (
+      <Shell toolName="Box Breathing" toolSlug="box-breathing" progress={{ current: 2, total: 4 }}>
+        <BreathingCircle secondsPerPhase={4} rounds={rounds} onComplete={() => setStepIdx(3)} />
+      </Shell>
+    );
+  }
+
+  /* ─── 3: after charge (optional) ─── */
+  if (stepIdx === 3) {
+    return (
+      <Shell toolName="Box Breathing" toolSlug="box-breathing" progress={{ current: 3, total: 4 }}>
+        <div className="text-center">
+          <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-8">
+            How charged do you feel now?
+          </h1>
+          <ChargeScale value={after} onChange={setAfter} />
+          <div className="mt-10 space-y-3">
+            <PrimaryButton onClick={() => setStepIdx(4)}>Done</PrimaryButton>
+            <button
+              type="button"
+              onClick={() => setStepIdx(4)}
+              className="block w-full text-sm text-white/55 hover:text-white/80 font-light py-2 transition-colors"
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      </Shell>
+    );
+  }
+
+  /* ─── 4: closing ─── */
   const stats: CompletionStat[] = [
     { label: "rounds", value: String(rounds) },
     ...(before !== null || after !== null
@@ -204,11 +197,7 @@ export default function BoxBreathingFlow() {
   ];
 
   return (
-    <Shell
-      toolName="Box Breathing"
-      toolSlug="box-breathing"
-      progress={{ current: 4, total: 4 }}
-    >
+    <Shell toolName="Box Breathing" toolSlug="box-breathing" progress={{ current: 4, total: 4 }}>
       <ActivityComplete
         eyebrow="Done"
         headline={eased ? "You brought it down." : "You paced your breath."}

@@ -8,6 +8,7 @@ import {
   PacedBreathingCircle,
   ChargeScale,
   ActivityComplete,
+  WelcomeScreen,
   CRISIS_NEXT_STEP,
   useAutoSave,
 } from "./_shared";
@@ -15,23 +16,20 @@ import { createToolSession } from "../../../../actions/journal";
 import { timeOfDayBucket } from "../../../../lib/journalTypes";
 
 /**
- * TIPP — physical-first distress tolerance (DBT). Brings high arousal
- * DOWN fast: Temperature, Intense exercise, Paced breathing, Paired
- * muscle relaxation.
+ * TIPP — physical-first distress tolerance (DBT). Brings high arousal DOWN
+ * fast: Temperature, Intense exercise, Paced breathing, Paired muscle
+ * relaxation.
  *
- * Design (calm, not stimulating — TIPP is a crisis down-regulator):
- *   - Nothing auto-starts. Every step EXPLAINS first, then the user taps
- *     Begin, then the guided pacing runs. (Fixes the old auto-start timers.)
- *   - One safety caution up front; the two physical steps (cold, exercise)
- *     can be skipped.
- *   - Uniform with 5-4-3-2-1 / breathing: dark Shell, slow ambient glow,
- *     gold circular pacers.
- *   - Optional 0–10 before/after charge (TIPP's goal IS lowering arousal,
- *     so a SUDS-style self-rating fits) → reflected in the grove.
+ * Flow (uniform with the other tools):
+ *   0. Welcome (shared format) — the four moves + a safety caution note below.
+ *   1. Optional 0–10 "before" charge (the data check on its own page).
+ *   2–5. T / I / paced breathing / PMR — each EXPLAINS first, then the user
+ *        taps Begin, then the guided pacing runs (nothing auto-starts).
+ *   6. Optional 0–10 "after" charge.
+ *   7. Closing (ActivityComplete → streak chip + grove).
  *
- * Claims kept defensible: TIPP is a clinically-taught crisis skill, not a
- * trial-proven package; it works on the body's physiology to bring arousal
- * down in the moment — not a cure or a substitute for crisis care.
+ * Calm, not stimulating. Claims kept defensible (crisis skill, not a
+ * trial-proven package or a cure).
  */
 
 type PmrGroup = { name: string; instruction: string };
@@ -53,7 +51,7 @@ const PMR_GROUPS: PmrGroup[] = [
   },
 ];
 
-type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6; // intro, T, I, Pbreath, PMR, after, closing
+type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export default function TippFlow() {
   const [step, setStep] = useState<Step>(0);
@@ -68,7 +66,7 @@ export default function TippFlow() {
     setStep(next);
   }
 
-  const isClosing = step === 6;
+  const isClosing = step === 7;
   const eased = before !== null && after !== null ? after < before : null;
 
   const { saving, saveError } = useAutoSave(isClosing, async () => {
@@ -99,30 +97,29 @@ export default function TippFlow() {
     return res;
   });
 
-  /* ─── 0: intro + safety caution + optional before charge ─── */
+  /* ─── 0: welcome — four moves + safety caution below ─── */
   if (step === 0) {
     return (
-      <TippShell progress={{ current: 1, total: 7 }}>
-        <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-3 text-center">
-          Four moves for the body.
-        </h1>
-        <p className="text-white/75 font-light leading-relaxed mb-6 text-center text-sm">
-          When intensity is too high for thinking-based tools, TIPP works on
-          your body first to bring it down. It&rsquo;s a short-term reset for the
-          moment — go at your own pace.
-        </p>
-
-        <div className="rounded-2xl bg-white/[0.06] border border-btf-gold/40 px-5 py-4 mb-8 flex gap-3">
-          <CautionTriangle />
-          <p className="text-white/80 font-light text-sm leading-relaxed">
-            <span className="text-btf-gold-light font-medium">Before you start:</span>{" "}
-            the cold-water and intense-exercise steps can be hard on the body. If
-            you have a heart condition, an eating disorder, or faint easily, skip
-            those two steps or check with a doctor first.
-          </p>
-        </div>
-
-        <ul className="space-y-3 mb-8 text-left">
+      <WelcomeScreen
+        toolName="TIPP"
+        toolSlug="tipp"
+        headline="Four moves for the body."
+        body="When intensity is too high for thinking-based tools, TIPP works on your body first to bring it down. A short reset for the moment — go at your own pace."
+        ctaLabel="I'm ready to begin"
+        onBegin={() => go(1)}
+        footer={
+          <div className="rounded-2xl bg-white/[0.06] border border-btf-gold/40 px-5 py-4 flex gap-3 text-left">
+            <CautionTriangle />
+            <p className="text-white/80 font-light text-sm leading-relaxed">
+              <span className="text-btf-gold-light font-medium">Before you start:</span>{" "}
+              the cold-water and intense-exercise steps can be hard on the body.
+              If you have a heart condition, an eating disorder, or faint easily,
+              skip those two steps or check with a doctor first.
+            </p>
+          </div>
+        }
+      >
+        <ul className="space-y-3 text-left">
           {[
             { letter: "T", what: "Cold on the face — slows the heart in seconds." },
             { letter: "I", what: "A burst of movement — spends the adrenaline." },
@@ -140,24 +137,39 @@ export default function TippFlow() {
             </li>
           ))}
         </ul>
+      </WelcomeScreen>
+    );
+  }
 
-        <div className="mb-8">
-          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-2 text-center">
-            Before we start · optional
+  /* ─── 1: before charge (optional) ─── */
+  if (step === 1) {
+    return (
+      <TippShell progress={{ current: 1, total: 7 }}>
+        <div className="text-center">
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-5">
+            before we begin · optional
           </p>
-          <p className="text-sm text-white/60 font-light mb-5 text-center">
+          <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-8">
             How charged do you feel right now?
-          </p>
+          </h1>
           <ChargeScale value={before} onChange={setBefore} />
+          <div className="mt-10 space-y-3">
+            <PrimaryButton onClick={() => go(2)}>Begin →</PrimaryButton>
+            <button
+              type="button"
+              onClick={() => go(2)}
+              className="block w-full text-sm text-white/55 hover:text-white/80 font-light py-2 transition-colors"
+            >
+              Skip — just take me there
+            </button>
+          </div>
         </div>
-
-        <PrimaryButton onClick={() => go(1)}>I&rsquo;m ready →</PrimaryButton>
       </TippShell>
     );
   }
 
-  /* ─── 1: T — Temperature (read → Begin → 30s) ─── */
-  if (step === 1) {
+  /* ─── 2: T — Temperature (read → Begin → 30s) ─── */
+  if (step === 2) {
     return (
       <TippShell progress={{ current: 2, total: 7 }}>
         <StepEyebrow>T — Temperature</StepEyebrow>
@@ -166,22 +178,17 @@ export default function TippFlow() {
             title="Cold on the face."
             body="Splash cold water on your face, or hold a cold pack or cool cloth to your forehead and around your eyes for about 30 seconds. Don't hold your breath or submerge — just the cold. It triggers a reflex that slows your heart."
             onBegin={() => setStarted(true)}
-            onSkip={() => go(2)}
+            onSkip={() => go(3)}
           />
         ) : (
-          <Timer
-            seconds={30}
-            label="Hold the cold"
-            allowEarly={false}
-            onComplete={() => go(2)}
-          />
+          <Timer seconds={30} label="Hold the cold" allowEarly={false} onComplete={() => go(3)} />
         )}
       </TippShell>
     );
   }
 
-  /* ─── 2: I — Intense exercise (read → Begin → soft 60s timer, done early) ─── */
-  if (step === 2) {
+  /* ─── 3: I — Intense exercise (read → Begin → soft 60s timer) ─── */
+  if (step === 3) {
     return (
       <TippShell progress={{ current: 3, total: 7 }}>
         <StepEyebrow>I — Intense exercise</StepEyebrow>
@@ -191,7 +198,7 @@ export default function TippFlow() {
             body="Jumping jacks, a brisk walk on the spot, push-ups — whatever you have room for. Move to comfortable exertion to spend the adrenaline; don't overdo it. If a racing heart tends to feed panic for you, skip this and go to the breathing."
             beginLabel="Begin — start the timer"
             onBegin={() => setStarted(true)}
-            onSkip={() => go(3)}
+            onSkip={() => go(4)}
           />
         ) : (
           <Timer
@@ -199,15 +206,15 @@ export default function TippFlow() {
             label="Move"
             allowEarly={true}
             earlyLabel="I&rsquo;m done"
-            onComplete={() => go(3)}
+            onComplete={() => go(4)}
           />
         )}
       </TippShell>
     );
   }
 
-  /* ─── 3: P — Paced breathing (read → Begin → paced circle) ─── */
-  if (step === 3) {
+  /* ─── 4: P — Paced breathing (read → Begin → paced circle) ─── */
+  if (step === 4) {
     return (
       <TippShell progress={{ current: 4, total: 7 }}>
         <StepEyebrow>P — Paced breathing</StepEyebrow>
@@ -218,19 +225,14 @@ export default function TippFlow() {
             onBegin={() => setStarted(true)}
           />
         ) : (
-          <PacedBreathingCircle
-            inhale={4}
-            exhale={6}
-            rounds={5}
-            onComplete={() => go(4)}
-          />
+          <PacedBreathingCircle inhale={4} exhale={6} rounds={5} onComplete={() => go(5)} />
         )}
       </TippShell>
     );
   }
 
-  /* ─── 4: P — Paired muscle relaxation (per group: read → tense → release) ─── */
-  if (step === 4) {
+  /* ─── 5: P — Paired muscle relaxation ─── */
+  if (step === 5) {
     const group = PMR_GROUPS[pmrRound];
     return (
       <TippShell progress={{ current: 5, total: 7 }}>
@@ -276,7 +278,7 @@ export default function TippFlow() {
                   setPmrRound(pmrRound + 1);
                   setPmrPhase("ready");
                 } else {
-                  go(5);
+                  go(6);
                 }
               }}
             >
@@ -288,8 +290,8 @@ export default function TippFlow() {
     );
   }
 
-  /* ─── 5: after charge (optional) ─── */
-  if (step === 5) {
+  /* ─── 6: after charge (optional) ─── */
+  if (step === 6) {
     return (
       <TippShell progress={{ current: 6, total: 7 }}>
         <div className="text-center">
@@ -301,10 +303,10 @@ export default function TippFlow() {
           </h1>
           <ChargeScale value={after} onChange={setAfter} />
           <div className="mt-10 space-y-3">
-            <PrimaryButton onClick={() => go(6)}>Keep this</PrimaryButton>
+            <PrimaryButton onClick={() => go(7)}>Keep this</PrimaryButton>
             <button
               type="button"
-              onClick={() => go(6)}
+              onClick={() => go(7)}
               className="block w-full text-sm text-white/55 hover:text-white/80 font-light py-2 transition-colors"
             >
               Skip
@@ -315,7 +317,7 @@ export default function TippFlow() {
     );
   }
 
-  /* ─── 6: closing ─── */
+  /* ─── 7: closing ─── */
   return (
     <TippShell progress={{ current: 7, total: 7 }}>
       <ActivityComplete

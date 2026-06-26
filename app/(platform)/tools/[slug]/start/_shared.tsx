@@ -36,7 +36,7 @@ export function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white">
+    <main className="min-h-screen bg-gradient-to-b from-btf-deep-night via-btf-sky-deep to-btf-sky text-white">
       <div className="max-w-xl mx-auto px-6 py-8 sm:py-12">
         <div className="flex items-center justify-between mb-8">
           <Link
@@ -94,6 +94,7 @@ export function WelcomeScreen({
   body,
   ctaLabel = "I'm ready to begin",
   onBegin,
+  children,
   footer,
 }: {
   toolName: string;
@@ -102,24 +103,28 @@ export function WelcomeScreen({
   body: string;
   ctaLabel?: string;
   onBegin: () => void;
+  /** Optional content rendered just above the CTA (e.g. a gentle choice). */
+  children?: React.ReactNode;
+  /** Optional content below the CTA (e.g. a path link or a cautionary note). */
   footer?: React.ReactNode;
 }) {
   return (
     <Shell toolName={toolName} toolSlug={toolSlug} progress={null}>
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center py-10">
         <div className="btf-breathe mb-8">
           <GoldCrossIcon width={34} />
         </div>
         <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-4">
           {headline}
         </h1>
-        <p className="text-white/80 font-light leading-relaxed mb-10 max-w-md mx-auto">
+        <p className="text-white/80 font-light leading-relaxed mb-8 max-w-md mx-auto">
           {body}
         </p>
+        {children && <div className="w-full max-w-md mb-8">{children}</div>}
         <div className="w-full max-w-xs">
           <PrimaryButton onClick={onBegin}>{ctaLabel}</PrimaryButton>
         </div>
-        {footer && <div className="mt-5 text-sm">{footer}</div>}
+        {footer && <div className="mt-6 w-full max-w-md">{footer}</div>}
       </div>
     </Shell>
   );
