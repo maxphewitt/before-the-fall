@@ -110,7 +110,7 @@ export async function addUserHabit(slug: HabitSlug): Promise<ServerResult> {
       }
     }
 
-    revalidatePath("/today");
+    revalidatePath("/home");
     revalidatePath("/today/edit");
     return { success: true };
   } catch (err) {
@@ -142,7 +142,7 @@ export async function removeUserHabit(slug: HabitSlug): Promise<ServerResult> {
       return { success: false, error: GENERIC };
     }
 
-    revalidatePath("/today");
+    revalidatePath("/home");
     revalidatePath("/today/edit");
     return { success: true };
   } catch (err) {
@@ -232,7 +232,7 @@ export async function recordHabitCompletionForCurrentUser(
     const userId = await getCurrentUserId();
     if (!userId) return { success: false, error: NOT_SIGNED_IN };
     await recordHabitCompletion({ userId, habitSlug, sourceJournalId });
-    revalidatePath("/today");
+    revalidatePath("/home");
     return { success: true };
   } catch (err) {
     console.error("recordHabitCompletionForCurrentUser exception:", err);

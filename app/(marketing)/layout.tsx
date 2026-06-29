@@ -90,7 +90,7 @@ export default async function MarketingLayout({
           <div className="order-2 sm:order-3 ml-auto flex items-center gap-2 flex-shrink-0">
             {signedIn ? (
               <Link
-                href="/today"
+                href="/home"
                 className="text-btf-sky-deep bg-btf-gold hover:bg-btf-gold-light text-xs sm:text-sm font-medium px-4 py-2 rounded-full transition-colors shadow-sm whitespace-nowrap"
               >
                 Enter platform →
@@ -162,7 +162,7 @@ export default async function MarketingLayout({
               </p>
               <ul className="space-y-2.5 text-sm font-light">
                 {signedIn ? (
-                  <li><Link href="/today" className="hover:text-white transition-colors">Enter platform</Link></li>
+                  <li><Link href="/home" className="hover:text-white transition-colors">Enter platform</Link></li>
                 ) : (
                   <>
                     <li><Link href="/onboard" className="hover:text-white transition-colors">Create account</Link></li>

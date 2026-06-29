@@ -151,7 +151,7 @@ export async function createEntry(
     }
 
     revalidatePath("/journal");
-    revalidatePath("/today");
+    revalidatePath("/home");
     return { success: true, data: { id: data.id } };
   } catch (err) {
     console.error("createEntry exception:", err);
@@ -582,7 +582,7 @@ export async function createToolSession(input: {
     }
 
     revalidatePath("/journal");
-    revalidatePath("/today");
+    revalidatePath("/home");
     revalidatePath("/today/grove");
     return { success: true, data: { id: data.id as string } };
   } catch (err) {

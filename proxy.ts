@@ -61,7 +61,10 @@ const STATIC_EXT = /\.(png|jpg|jpeg|svg|gif|webp|ico|woff2?|ttf|css|js|map|txt|x
  * of these or starts with it followed by `/`.
  */
 const GATED_PREFIXES = [
+  "/home",
   "/today",
+  "/explore",
+  "/you",
   "/tools",
   "/journal",
   "/field-journal",
@@ -118,7 +121,7 @@ export function proxy(request: NextRequest) {
     LOGGED_IN_REDIRECT_PATHS.has(pathname) &&
     request.nextUrl.searchParams.get("stay") !== "1"
   ) {
-    return redirectTo(request, "/today");
+    return redirectTo(request, "/home");
   }
 
   // Gated platform routes require a session. Logged-out → landing.

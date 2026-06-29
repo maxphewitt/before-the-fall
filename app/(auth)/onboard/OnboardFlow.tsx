@@ -409,7 +409,7 @@ function OnboardFlow() {
         {step === 10 && recoveryCode && (
           <CodeReveal
             code={recoveryCode}
-            onDone={() => router.push("/today")}
+            onDone={() => router.push("/home")}
           />
         )}
       </div>

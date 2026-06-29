@@ -36,7 +36,7 @@ export default function ReturnPage() {
       if (res.success) {
         // Straight into the platform. (A logged-in visitor hitting `/`
         // is soft-redirected here anyway; go direct to skip the hop.)
-        router.push("/today");
+        router.push("/home");
         router.refresh();
       } else {
         setError(res.error);

@@ -35,6 +35,7 @@ export const ALLOWED_FROM_PREFIXES: readonly string[] = [
   "/tools",
   "/journal", // for re-entry from a journal detail page
   "/who-we-are", // renamed from /about in the 2026-06-15 restructure
+  "/home",
   "/today",
 ];
 

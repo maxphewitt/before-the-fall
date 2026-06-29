@@ -64,7 +64,7 @@ self.addEventListener("fetch", (event) => {
   // Skip dynamic routes — they need fresh data.
   const dynamicPrefixes = [
     "/journal",
-    "/today",
+    "/home",
     "/admin",
     "/tools/",
     "/catholic-path/",
