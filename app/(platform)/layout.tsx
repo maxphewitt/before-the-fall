@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import PlatformNav from "./_nav/PlatformNav";
+import { getCurrentUserFaithRole } from "../lib/profile";
 
 /**
  * Platform (gated) shell.
@@ -28,11 +29,20 @@ export default async function PlatformLayout({
   const signedIn = !!(await cookies()).get("btf_user_id");
   if (!signedIn) redirect("/");
 
+  // Secular users get the olive-branch brand mark instead of the cross.
+  const faithRole = await getCurrentUserFaithRole();
+  const secular = faithRole === "secular";
+
   return (
     <div className="relative min-h-screen text-[#e9f1f8] md:pl-[236px] bg-[radial-gradient(1200px_600px_at_50%_-10%,rgba(61,143,196,0.35),transparent_60%),linear-gradient(180deg,#0a1a2a_0%,#0d2238_38%,#103453_100%)]">
-      <PlatformNav />
-      {/* Bottom padding clears the mobile dock; desktop clears via sidebar pad. */}
-      <div className="pb-32 md:pb-0">{children}</div>
+      <PlatformNav secular={secular} />
+      {/* Bottom padding clears the mobile dock and, on desktop, keeps the last
+          section off the viewport edge / clear of the fixed crisis button.
+          pt-px stops the first child's top margin (e.g. Home's pinned cards,
+          all `mt-6`) from collapsing through this wrapper and shoving the
+          whole dark shell down — which exposed a sliver of the off-white
+          body background above the app (Max, 2026-08-09). */}
+      <div className="pt-px pb-32 md:pb-24">{children}</div>
     </div>
   );
 }

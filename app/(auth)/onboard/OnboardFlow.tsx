@@ -116,6 +116,7 @@ function OnboardFlow() {
     support_level: "",
     duration: "",
     discovery: "",
+    display_name: "",
   });
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -403,6 +404,10 @@ function OnboardFlow() {
             error={error}
             keepLoggedIn={keepLoggedIn}
             onKeepLoggedInChange={setKeepLoggedIn}
+            displayName={profile.display_name ?? ""}
+            onDisplayNameChange={(v) =>
+              setProfile((p) => ({ ...p, display_name: v }))
+            }
           />
         )}
 
@@ -665,12 +670,16 @@ function PrivacyDisclosure({
   error,
   keepLoggedIn,
   onKeepLoggedInChange,
+  displayName,
+  onDisplayNameChange,
 }: {
   onContinue: () => void;
   submitting: boolean;
   error: string | null;
   keepLoggedIn: boolean;
   onKeepLoggedInChange: (v: boolean) => void;
+  displayName: string;
+  onDisplayNameChange: (v: string) => void;
 }) {
   return (
     <div>
@@ -699,6 +708,30 @@ function PrivacyDisclosure({
           </li>
         </ul>
       </div>
+      {/* Optional chosen nickname. Framed carefully so it doesn't undercut
+          the anonymity promise above — it's a name to be greeted by, not
+          identity, and it's skippable + editable later. */}
+      <div className="rounded-2xl bg-white border border-btf-sky-pale/70 p-4 mb-6">
+        <label htmlFor="display_name" className="block text-sm font-medium text-btf-sky-deep mb-1">
+          What should we call you?{" "}
+          <span className="font-light text-btf-text-light">(optional)</span>
+        </label>
+        <p className="text-xs text-btf-text-light font-light leading-relaxed mb-3">
+          A first name or nickname — whatever you like. Not your real name, and
+          you can change or remove it any time.
+        </p>
+        <input
+          id="display_name"
+          type="text"
+          value={displayName}
+          maxLength={40}
+          onChange={(e) => onDisplayNameChange(e.target.value)}
+          disabled={submitting}
+          placeholder="e.g. a nickname"
+          className="w-full rounded-xl border-2 border-btf-sky-pale px-4 py-2.5 text-btf-sky-deep placeholder:text-btf-text-light/70 focus:border-btf-sky focus:outline-none"
+        />
+      </div>
+
       {/* Keep-me-logged-in choice. Off = session-only cookie, so a new
           window lands back on the home page to log in again. */}
       <label className="flex items-start gap-3 cursor-pointer select-none mb-6 rounded-2xl bg-white border border-btf-sky-pale/70 p-4">

@@ -658,3 +658,54 @@ export async function getToolMoments(
     return { success: false, error: GENERIC };
   }
 }
+
+/**
+ * List the user's saved prayer Intentions (journal_type='intention'),
+ * decrypted, newest first. Used by the pre-prayer intention picker so a
+ * user can pray for something they've already written down. Returns a slim
+ * shape (id, text, createdAt) — never the full journal payload.
+ */
+export async function listIntentions(): Promise<
+  JournalActionResult<{ id: string; text: string; createdAt: string }[]>
+> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return { success: false, error: NOT_SIGNED_IN };
+
+    const supabase = supabaseServer();
+    const { data, error } = await supabase
+      .from("journal_entries")
+      .select("id, ciphertext, iv, auth_tag, created_at")
+      .eq("user_id", userId)
+      .eq("journal_type", "intention")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error("listIntentions DB error:", error);
+      return { success: false, error: GENERIC };
+    }
+
+    const intentions = (data ?? [])
+      .map((row) => {
+        const plaintext = decryptJournalText({
+          ciphertext: row.ciphertext as string,
+          iv: row.iv as string,
+          authTag: row.auth_tag as string,
+        });
+        const parsed = parseDecryptedBody(plaintext);
+        return {
+          id: row.id as string,
+          text: parsed.text.trim(),
+          createdAt: row.created_at as string,
+        };
+      })
+      .filter((i) => i.text.length > 0);
+
+    return { success: true, data: intentions };
+  } catch (err) {
+    console.error("listIntentions exception:", err);
+    return { success: false, error: GENERIC };
+  }
+}

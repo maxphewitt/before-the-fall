@@ -1,4 +1,4 @@
-import Link from "next/link";
+import BackLink from "../_nav/BackLink";
 
 /**
  * Shared layout for Catholic Path module pages that are stubbed for now.
@@ -15,26 +15,25 @@ export default function ModuleStub({
   whatItWillOffer: string[];
 }) {
   return (
-    <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
+    <main className="min-h-screen px-6 py-10 sm:py-14">
       <div className="max-w-2xl mx-auto">
-        <Link
-          href="/catholic-path"
-          className="text-btf-text-light hover:text-btf-sky-deep text-sm mb-6 inline-flex items-center gap-2 transition-colors"
-        >
-          <span aria-hidden>&larr;</span> Catholic Path
-        </Link>
+        <BackLink
+          fallbackHref="/catholic-path"
+          label="Catholic Path"
+          className="text-white/70 hover:text-white text-sm mb-6 inline-flex items-center gap-2 transition-colors"
+        />
 
         <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3">
           Catholic Path
         </p>
-        <h1 className="font-serif text-3xl md:text-4xl text-btf-sky-deep font-light leading-tight mb-3">
+        <h1 className="font-serif text-3xl md:text-4xl text-[#e9f1f8] font-light leading-tight mb-3">
           {title}
         </h1>
-        <p className="text-btf-text-mid font-light leading-relaxed mb-8">
+        <p className="text-white/70 font-light leading-relaxed mb-8">
           {description}
         </p>
 
-        <section className="rounded-2xl bg-white border-2 border-btf-gold/30 p-6 mb-6">
+        <section className="rounded-2xl bg-white/[0.055] border border-white/[0.09] p-6 mb-6">
           <p className="text-[10px] tracking-[0.2em] uppercase text-btf-gold font-semibold mb-4">
             What this will offer
           </p>
@@ -42,7 +41,7 @@ export default function ModuleStub({
             {whatItWillOffer.map((line, i) => (
               <li
                 key={i}
-                className="flex gap-3 text-sm text-btf-text-mid font-light leading-relaxed"
+                className="flex gap-3 text-sm text-white/70 font-light leading-relaxed"
               >
                 <svg
                   aria-hidden
@@ -60,8 +59,8 @@ export default function ModuleStub({
           </ul>
         </section>
 
-        <div className="rounded-xl bg-btf-gold-pale/60 border border-btf-gold/30 text-btf-text-mid text-xs font-light p-4 leading-relaxed">
-          <span className="font-medium text-btf-sky-deep">Coming soon:</span>{" "}
+        <div className="rounded-xl bg-white/[0.04] border border-btf-gold/25 text-white/70 text-xs font-light p-4 leading-relaxed">
+          <span className="font-medium text-[#e9f1f8]">Coming soon:</span>{" "}
           content for this module is being prepared and reviewed by Father
           Murphy before going live. If you came here looking for help right
           now, the crisis button at the bottom of the screen stays available

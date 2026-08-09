@@ -29,7 +29,9 @@ export type HabitSlug =
   | "field-journal"
   | "prayer"
   | "rosary"
-  | "scripture";
+  | "seven-sorrows"
+  | "scripture"
+  | "liturgy-of-hours";
 
 export type HabitCategory = "tier-1" | "journal" | "catholic-path" | "mandatory";
 
@@ -118,12 +120,28 @@ export const HABITS: Record<HabitSlug, HabitDefinition> = {
     beginHref: "/catholic-path/rosary",
     category: "catholic-path",
   },
+  "seven-sorrows": {
+    slug: "seven-sorrows",
+    label: "Seven Sorrows Rosary",
+    description: "Walk Our Lady's seven sorrows, paced bead by bead.",
+    why: "A devotion built for grief: staying with the Mother who stood through the worst of it, one sorrow at a time. Especially fitting for anyone mourning, or carrying someone who is.",
+    beginHref: "/catholic-path/rosary/seven-sorrows",
+    category: "catholic-path",
+  },
   scripture: {
     slug: "scripture",
     label: "Daily Scripture",
     description: "One Gospel passage, read slowly.",
     why: "Lectio divina — the Church's centuries-old practice of slow scripture reading with reflection. Different from study; closer to listening.",
     beginHref: "/catholic-path/scripture",
+    category: "catholic-path",
+  },
+  "liturgy-of-hours": {
+    slug: "liturgy-of-hours",
+    label: "Liturgy of the Hours",
+    description: "Pray one hour — psalms, a canticle, a reading.",
+    why: "The Church's oldest daily rhythm of prayer, punctuating the day instead of bookending it. Praying even one hour joins the same prayer being prayed around the world right now.",
+    beginHref: "/catholic-path/liturgy-of-the-hours",
     category: "catholic-path",
   },
 };

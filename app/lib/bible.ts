@@ -1,0 +1,227 @@
+/**
+ * Full-Bible reader data + fetcher (2026-07-28).
+ *
+ * Translation: Douay-Rheims, Challoner revision (public domain — the
+ * Catholic translation this app standardized on).
+ *
+ * PRIMARY SOURCE: self-hosted JSON generated from Project Gutenberg
+ * ebook #1581 by scripts/build-bible-dr.mjs into public/bible/dra/.
+ * One file per book: { name, chapters: string[][] }. This covers the
+ * full 73-book Catholic canon including the deuterocanon.
+ *
+ * FALLBACK: bible-api.com via ?translation=dra, used only when a book's
+ * local JSON is absent (e.g. before the build script has been run).
+ * That API serves the 66-book set only, has OCR errors, and misaligns
+ * some Psalms — hence the local-first design. The static `available`
+ * flags below describe the FALLBACK world and are intentionally left
+ * as-is; use isBookAvailable() / getBookChapterCount() instead of the
+ * raw fields so the local text wins when present.
+ *
+ * Chapter counts below are the fallback API's; the DR text differs for
+ * Esther (16 chapters incl. Greek additions vs 10) and Daniel (14 incl.
+ * Susanna and Bel and the Dragon vs 12). getBookChapterCount() returns
+ * the local text's real count when the file exists.
+ */
+
+import fs from "node:fs";
+import path from "node:path";
+
+export type BibleBook = {
+  slug: string;
+  name: string;
+  chapters: number;
+  testament: "old" | "new";
+  /** false = deuterocanonical book not yet served by our source. */
+  available: boolean;
+};
+
+const b = (slug: string, name: string, chapters: number, testament: "old" | "new", available = true): BibleBook => ({
+  slug, name, chapters, testament, available,
+});
+
+/** Catholic canon order (73 books; deuterocanon flagged). */
+export const BIBLE_BOOKS: BibleBook[] = [
+  b("genesis", "Genesis", 50, "old"),
+  b("exodus", "Exodus", 40, "old"),
+  b("leviticus", "Leviticus", 27, "old"),
+  b("numbers", "Numbers", 36, "old"),
+  b("deuteronomy", "Deuteronomy", 34, "old"),
+  b("joshua", "Joshua", 24, "old"),
+  b("judges", "Judges", 21, "old"),
+  b("ruth", "Ruth", 4, "old"),
+  b("1-samuel", "1 Samuel", 31, "old"),
+  b("2-samuel", "2 Samuel", 24, "old"),
+  b("1-kings", "1 Kings", 22, "old"),
+  b("2-kings", "2 Kings", 25, "old"),
+  b("1-chronicles", "1 Chronicles", 29, "old"),
+  b("2-chronicles", "2 Chronicles", 36, "old"),
+  b("ezra", "Ezra", 10, "old"),
+  b("nehemiah", "Nehemiah", 13, "old"),
+  b("tobit", "Tobit", 14, "old", false),
+  b("judith", "Judith", 16, "old", false),
+  b("esther", "Esther", 10, "old"),
+  b("1-maccabees", "1 Maccabees", 16, "old", false),
+  b("2-maccabees", "2 Maccabees", 15, "old", false),
+  b("job", "Job", 42, "old"),
+  b("psalms", "Psalms", 150, "old"),
+  b("proverbs", "Proverbs", 31, "old"),
+  b("ecclesiastes", "Ecclesiastes", 12, "old"),
+  b("song-of-solomon", "Song of Solomon", 8, "old"),
+  b("wisdom", "Wisdom", 19, "old", false),
+  b("sirach", "Sirach", 51, "old", false),
+  b("isaiah", "Isaiah", 66, "old"),
+  b("jeremiah", "Jeremiah", 52, "old"),
+  b("lamentations", "Lamentations", 5, "old"),
+  b("baruch", "Baruch", 6, "old", false),
+  b("ezekiel", "Ezekiel", 48, "old"),
+  b("daniel", "Daniel", 12, "old"),
+  b("hosea", "Hosea", 14, "old"),
+  b("joel", "Joel", 3, "old"),
+  b("amos", "Amos", 9, "old"),
+  b("obadiah", "Obadiah", 1, "old"),
+  b("jonah", "Jonah", 4, "old"),
+  b("micah", "Micah", 7, "old"),
+  b("nahum", "Nahum", 3, "old"),
+  b("habakkuk", "Habakkuk", 3, "old"),
+  b("zephaniah", "Zephaniah", 3, "old"),
+  b("haggai", "Haggai", 2, "old"),
+  b("zechariah", "Zechariah", 14, "old"),
+  b("malachi", "Malachi", 4, "old"),
+  b("matthew", "Matthew", 28, "new"),
+  b("mark", "Mark", 16, "new"),
+  b("luke", "Luke", 24, "new"),
+  b("john", "John", 21, "new"),
+  b("acts", "Acts", 28, "new"),
+  b("romans", "Romans", 16, "new"),
+  b("1-corinthians", "1 Corinthians", 16, "new"),
+  b("2-corinthians", "2 Corinthians", 13, "new"),
+  b("galatians", "Galatians", 6, "new"),
+  b("ephesians", "Ephesians", 6, "new"),
+  b("philippians", "Philippians", 4, "new"),
+  b("colossians", "Colossians", 4, "new"),
+  b("1-thessalonians", "1 Thessalonians", 5, "new"),
+  b("2-thessalonians", "2 Thessalonians", 3, "new"),
+  b("1-timothy", "1 Timothy", 6, "new"),
+  b("2-timothy", "2 Timothy", 4, "new"),
+  b("titus", "Titus", 3, "new"),
+  b("philemon", "Philemon", 1, "new"),
+  b("hebrews", "Hebrews", 13, "new"),
+  b("james", "James", 5, "new"),
+  b("1-peter", "1 Peter", 5, "new"),
+  b("2-peter", "2 Peter", 3, "new"),
+  b("1-john", "1 John", 5, "new"),
+  b("2-john", "2 John", 1, "new"),
+  b("3-john", "3 John", 1, "new"),
+  b("jude", "Jude", 1, "new"),
+  b("revelation", "Revelation", 22, "new"),
+];
+
+export function getBookBySlug(slug: string): BibleBook | undefined {
+  return BIBLE_BOOKS.find((x) => x.slug === slug);
+}
+
+export type ChapterVerse = { verse: number; text: string };
+
+/* ------------------------------------------------------------------ *
+ * Self-hosted Douay-Rheims text (public/bible/dra/<slug>.json)
+ * Generated by scripts/build-bible-dr.mjs from Gutenberg ebook #1581.
+ * ------------------------------------------------------------------ */
+
+type LocalBook = { name: string; chapters: string[][] };
+
+/**
+ * Module-level cache: the text is immutable, so each book file is read
+ * from disk at most once per server process. `null` = checked, absent.
+ */
+const localBookCache = new Map<string, LocalBook | null>();
+
+function readLocalBook(slug: string): LocalBook | null {
+  const cached = localBookCache.get(slug);
+  if (cached !== undefined) return cached;
+  let book: LocalBook | null = null;
+  try {
+    const file = path.join(process.cwd(), "public", "bible", "dra", `${slug}.json`);
+    if (fs.existsSync(file)) {
+      const parsed = JSON.parse(fs.readFileSync(file, "utf8")) as LocalBook;
+      // Minimal shape check so a corrupt/truncated file degrades to the
+      // API fallback instead of crashing the reader.
+      if (parsed && Array.isArray(parsed.chapters) && parsed.chapters.length > 0) {
+        book = parsed;
+      }
+    }
+  } catch {
+    book = null; // unreadable file -> behave as absent
+  }
+  localBookCache.set(slug, book);
+  return book;
+}
+
+/**
+ * Read-only access to a book's local DR text. Used by the Bible keyword
+ * search (app/actions/bibleReader.ts) to scan verses server-side without
+ * re-implementing the cached file reader. Returns null when the local
+ * JSON hasn't been built for this book.
+ */
+export function getLocalBook(slug: string): LocalBook | null {
+  return readLocalBook(slug);
+}
+
+/**
+ * True when we can actually serve this book: either its self-hosted DR
+ * text exists, or the fallback API carries it (static `available` flag).
+ */
+export function isBookAvailable(book: BibleBook): boolean {
+  return readLocalBook(book.slug) !== null || book.available;
+}
+
+/**
+ * Real chapter count for navigation. When the local DR text exists its
+ * chapter count is authoritative (e.g. Daniel 14, Esther 16); otherwise
+ * fall back to the static table that matches the API's 66-book text.
+ */
+export function getBookChapterCount(book: BibleBook): number {
+  const local = readLocalBook(book.slug);
+  return local ? local.chapters.length : book.chapters;
+}
+
+/**
+ * Fetch one chapter. Local self-hosted DR text first; bible-api.com
+ * (cached aggressively — the text never changes) only as fallback.
+ *
+ * Note on verse numbers: local verses are stored in file order and
+ * numbered by position. In four chapters the printed DR numbering is
+ * irregular (Psalm 113 restarts mid-chapter, Psalms 115/147 start at
+ * 10/12, Proverbs 12 has two verses printed as 12:12), so positional
+ * numbers there differ from historical citations. Acceptable for a
+ * reading UI.
+ */
+export async function getChapter(
+  book: BibleBook,
+  chapter: number
+): Promise<ChapterVerse[] | null> {
+  const local = readLocalBook(book.slug);
+  if (local) {
+    const verses = local.chapters[chapter - 1];
+    if (!verses || verses.length === 0) return null;
+    return verses.map((text, i) => ({ verse: i + 1, text }));
+  }
+
+  try {
+    const ref = `${book.name} ${chapter}`;
+    const res = await fetch(
+      `https://bible-api.com/${encodeURIComponent(ref)}?translation=dra`,
+      { cache: "force-cache" }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      verses?: { verse: number; text: string }[];
+    };
+    if (!data.verses?.length) return null;
+    return data.verses.map((v) => ({
+      verse: v.verse,
+      text: v.text.replace(/\s+/g, " ").trim(),
+    }));
+  } catch {
+    return null;
+  }
+}

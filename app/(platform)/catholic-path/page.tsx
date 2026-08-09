@@ -28,6 +28,14 @@ type Module = {
 
 const MODULES: Module[] = [
   {
+    slug: "start-here",
+    title: "Start Here",
+    description:
+      "The front-door orientation: why this app exists, what prayer actually is, why Catholics ask the saints and Mary to pray, how to guard your heart without fear, and how every tool here fits together. Nine short sessions — revisit any of them whenever.",
+    status: "available",
+    href: "/start-here",
+  },
+  {
     slug: "prayers",
     title: "Prayer Library",
     description:
@@ -44,12 +52,44 @@ const MODULES: Module[] = [
     href: "/catholic-path/scripture",
   },
   {
+    slug: "liturgy-of-hours",
+    title: "Liturgy of the Hours",
+    description:
+      "Five hours a day to hand things back to God — psalms, a canticle, a short reading — built from the public-domain Douay-Rheims. A link to the full official text is there too, for anyone who wants it.",
+    status: "available",
+    href: "/catholic-path/liturgy-of-the-hours",
+  },
+  {
+    slug: "bible",
+    title: "The Bible",
+    description:
+      "The whole of Scripture in the Douay-Rheims Catholic translation, book by book and chapter by chapter. When the curated passages aren't enough and you want to sit inside the full text itself.",
+    status: "available",
+    href: "/catholic-path/bible/read",
+  },
+  {
     slug: "rosary",
     title: "Rosary",
     description:
       "Walkthroughs of all four mysteries — Joyful, Sorrowful, Glorious, Luminous — with the prayers, the scripture, and the rhythm. Pray along, or use it as a script.",
     status: "available",
     href: "/catholic-path/rosary",
+  },
+  {
+    slug: "novenas",
+    title: "Novenas",
+    description:
+      "Nine-day prayer journeys to surrender a problem to God, ask for mercy, or pray through a struggle — the Surrender Novena, Divine Mercy, St. Jude, St. Dymphna, and more. Bring one intention and stay with it for nine days.",
+    status: "available",
+    href: "/catholic-path/novenas",
+  },
+  {
+    slug: "together",
+    title: "Walk Together",
+    description:
+      "Pray this month's community novena alongside others across the app, lift up one another's intentions on a shared wall, and join seasonal challenges. Communal, never a competition — you are never praying alone.",
+    status: "available",
+    href: "/catholic-path/together",
   },
   {
     slug: "parishes",
@@ -73,7 +113,7 @@ const MODULES: Module[] = [
     description:
       "Use your encrypted journal to write out what you're carrying to God this week. Same private space as your other entries — just dedicated to intention.",
     status: "available",
-    href: "/journal/new",
+    href: "/catholic-path/intentions",
   },
 ];
 
@@ -85,8 +125,8 @@ const STATUS_LABEL: Record<ModuleStatus, string> = {
 
 const STATUS_BADGE_STYLES: Record<ModuleStatus, string> = {
   available: "bg-btf-gold text-btf-sky-deep",
-  "pending-content": "bg-btf-off-white text-btf-text-light",
-  "pending-production": "bg-btf-off-white text-btf-text-light",
+  "pending-content": "bg-white/[0.08] text-[#9fb6c8]",
+  "pending-production": "bg-white/[0.08] text-[#9fb6c8]",
 };
 
 export default async function CatholicPathLanding() {
@@ -104,13 +144,6 @@ export default async function CatholicPathLanding() {
         />
 
         <div className="relative max-w-3xl mx-auto text-center">
-          <Link
-            href="/"
-            className="text-white/60 hover:text-white text-xs mb-8 inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
-          >
-            <span aria-hidden>&larr;</span> Home
-          </Link>
-
           {/* Cross */}
           <div className="relative w-14 h-14 mx-auto mb-8 mt-2" aria-hidden>
             <div className="absolute left-1/2 top-0 -translate-x-1/2 w-2 h-14 bg-btf-gold rounded-sm" />
@@ -130,12 +163,12 @@ export default async function CatholicPathLanding() {
       </section>
 
       {/* Modules */}
-      <section className="py-14 px-6 bg-gradient-to-b from-white to-btf-gold-pale/40">
+      <section className="py-14 px-6">
         <div className="max-w-4xl mx-auto">
           <p className="text-center text-[11px] tracking-[0.25em] text-btf-gold uppercase font-medium mb-3">
-            Six modules
+            {MODULES.length} modules
           </p>
-          <h2 className="text-center font-serif text-3xl text-btf-sky-deep font-light mb-10">
+          <h2 className="text-center font-serif text-3xl text-[#e9f1f8] font-light mb-10">
             Everything in one place.
           </h2>
 
@@ -144,10 +177,10 @@ export default async function CatholicPathLanding() {
               <li key={m.slug}>
                 <Link
                   href={m.href}
-                  className="group h-full block rounded-2xl bg-white border-2 border-btf-gold/30 hover:border-btf-gold hover:shadow-lg hover:-translate-y-0.5 transition-all p-6 flex flex-col"
+                  className="group h-full block rounded-2xl bg-white/[0.055] border border-white/[0.09] hover:border-btf-gold/40 hover:bg-white/[0.08] hover:-translate-y-0.5 transition-all p-6 flex flex-col"
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="font-serif text-xl text-btf-sky-deep font-light">
+                    <h3 className="font-serif text-xl text-[#e9f1f8] font-light">
                       {m.title}
                     </h3>
                     <span
@@ -156,7 +189,7 @@ export default async function CatholicPathLanding() {
                       {STATUS_LABEL[m.status]}
                     </span>
                   </div>
-                  <p className="text-sm text-btf-text-mid font-light leading-relaxed flex-1">
+                  <p className="text-sm text-white/70 font-light leading-relaxed flex-1">
                     {m.description}
                   </p>
                   <p className="text-[10px] uppercase tracking-[0.25em] text-btf-gold font-semibold mt-4 group-hover:translate-x-1 transition-transform">
@@ -168,8 +201,8 @@ export default async function CatholicPathLanding() {
           </ul>
 
           {/* DRAFT v1 banner */}
-          <div className="rounded-xl bg-btf-gold-pale/60 border border-btf-gold/30 text-btf-text-mid text-xs font-light p-4 mt-10 leading-relaxed">
-            <span className="font-medium text-btf-sky-deep">
+          <div className="rounded-xl bg-white/[0.04] border border-btf-gold/25 text-white/70 text-xs font-light p-4 mt-10 leading-relaxed">
+            <span className="font-medium text-[#e9f1f8]">
               Draft v1 &middot; closed beta:
             </span>{" "}
             faith-layer content is pending Father Murphy&rsquo;s review before public launch. The Catholic Path never replaces a priest or a confessor &mdash; if anything you&rsquo;re carrying belongs in confession, take it there.

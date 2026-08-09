@@ -85,11 +85,11 @@ export default function EntryEditor({ entry }: { entry: JournalEntry }) {
       <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3">
         {editing ? "Editing entry" : typeLabel}
       </p>
-      <p className="text-xs text-btf-text-light font-light mb-1">
+      <p className="text-xs text-white/70 font-light mb-1">
         Written {createdAt}
       </p>
       {wasEdited && !isActivity && (
-        <p className="text-xs text-btf-text-light/80 font-light mb-1">
+        <p className="text-xs text-white/50 font-light mb-1">
           Last edited {updatedAt}
         </p>
       )}
@@ -105,11 +105,11 @@ export default function EntryEditor({ entry }: { entry: JournalEntry }) {
             autoFocus
             rows={14}
             aria-label="Journal entry text"
-            className="w-full rounded-2xl bg-white border-2 border-btf-sky focus:outline-none px-5 py-4 text-base text-btf-text-dark font-light leading-relaxed resize-y shadow-sm transition-colors"
+            className="w-full rounded-2xl bg-white/[0.06] border border-white/15 focus:border-btf-gold/50 focus:outline-none px-5 py-4 text-base text-[#e9f1f8] placeholder:text-[#9fb6c8] font-light leading-relaxed resize-y transition-colors"
           />
         ) : (
-          <div className="rounded-2xl bg-white border-2 border-btf-sky-pale/60 px-5 py-5 shadow-sm">
-            <p className="text-base text-btf-text-dark font-light leading-relaxed whitespace-pre-line">
+          <div className="rounded-2xl bg-white/[0.055] border border-white/[0.09] px-5 py-5">
+            <p className="text-base text-[#e9f1f8] font-light leading-relaxed whitespace-pre-line">
               {entry.text}
             </p>
           </div>
@@ -119,7 +119,7 @@ export default function EntryEditor({ entry }: { entry: JournalEntry }) {
       {error && (
         <div
           role="alert"
-          className="mt-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm p-4"
+          className="mt-4 rounded-xl bg-[rgba(201,80,80,0.10)] border border-[rgba(201,80,80,0.3)] text-[#e8b3b3] text-sm p-4"
         >
           {error}
         </div>
@@ -131,7 +131,7 @@ export default function EntryEditor({ entry }: { entry: JournalEntry }) {
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="flex-1 bg-white border-2 border-btf-text-light/30 text-btf-text-mid font-medium px-8 py-3.5 rounded-full hover:bg-btf-off-white transition-colors"
+              className="flex-1 bg-white/[0.06] border border-white/15 text-[#e9f1f8] font-medium px-8 py-3.5 rounded-full hover:border-btf-gold/40 hover:bg-white/[0.08] transition-colors"
             >
               Delete
             </button>
@@ -142,7 +142,7 @@ export default function EntryEditor({ entry }: { entry: JournalEntry }) {
               type="button"
               onClick={onSave}
               disabled={submitting || text.trim().length === 0}
-              className="flex-1 bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-8 py-3.5 rounded-full shadow-lg disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 transition-transform"
+              className="flex-1 bg-gradient-to-b from-btf-gold-light to-btf-gold text-[#2a2008] font-bold px-8 py-3.5 rounded-full shadow-[0_10px_24px_-10px_rgba(201,168,76,0.8)] disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 transition-transform"
             >
               {submitting ? "Saving…" : "Save changes"}
             </button>
@@ -150,7 +150,7 @@ export default function EntryEditor({ entry }: { entry: JournalEntry }) {
               type="button"
               onClick={onCancelEdit}
               disabled={submitting}
-              className="flex-1 bg-white border-2 border-btf-text-light/30 text-btf-text-mid font-medium px-8 py-3.5 rounded-full hover:bg-btf-off-white transition-colors"
+              className="flex-1 bg-white/[0.06] border border-white/15 text-[#e9f1f8] font-medium px-8 py-3.5 rounded-full hover:border-btf-gold/40 hover:bg-white/[0.08] transition-colors"
             >
               Cancel
             </button>
@@ -160,14 +160,14 @@ export default function EntryEditor({ entry }: { entry: JournalEntry }) {
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="flex-1 bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-8 py-3.5 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform"
+              className="flex-1 bg-gradient-to-b from-btf-gold-light to-btf-gold text-[#2a2008] font-bold px-8 py-3.5 rounded-full shadow-[0_10px_24px_-10px_rgba(201,168,76,0.8)] hover:-translate-y-0.5 transition-transform"
             >
               Edit
             </button>
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="flex-1 bg-white border-2 border-btf-text-light/30 text-btf-text-mid font-medium px-8 py-3.5 rounded-full hover:bg-btf-off-white transition-colors"
+              className="flex-1 bg-white/[0.06] border border-white/15 text-[#e9f1f8] font-medium px-8 py-3.5 rounded-full hover:border-btf-gold/40 hover:bg-white/[0.08] transition-colors"
             >
               Delete
             </button>
@@ -185,16 +185,16 @@ export default function EntryEditor({ entry }: { entry: JournalEntry }) {
           onClick={() => !submitting && setConfirmDelete(false)}
         >
           <div
-            className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl"
+            className="bg-[#0e2235] border border-white/[0.12] rounded-2xl max-w-sm w-full p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h2
               id="delete-confirm-title"
-              className="font-serif text-xl text-btf-sky-deep font-light mb-3"
+              className="font-serif text-xl text-white font-light mb-3"
             >
               Delete this entry?
             </h2>
-            <p className="text-sm text-btf-text-mid font-light leading-relaxed mb-6">
+            <p className="text-sm text-white/70 font-light leading-relaxed mb-6">
               It will be removed from your journal. A record is retained internally for safety and compliance, but no one reviews entries unless a safety trigger fires.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
@@ -210,7 +210,7 @@ export default function EntryEditor({ entry }: { entry: JournalEntry }) {
                 type="button"
                 onClick={() => setConfirmDelete(false)}
                 disabled={submitting}
-                className="flex-1 bg-white border-2 border-btf-text-light/30 text-btf-text-mid font-medium px-6 py-3 rounded-full hover:bg-btf-off-white transition-colors"
+                className="flex-1 bg-white/[0.06] border border-white/15 text-[#e9f1f8] font-medium px-6 py-3 rounded-full hover:border-btf-gold/40 hover:bg-white/[0.08] transition-colors"
               >
                 Keep it
               </button>
@@ -232,33 +232,33 @@ const TYPE_LABEL: Record<string, string> = {
 
 function ToolSessionView({ session }: { session: ToolSessionPayload }) {
   return (
-    <div className="rounded-2xl bg-white border-2 border-btf-gold-pale shadow-sm overflow-hidden">
-      <div className="bg-btf-gold-pale/50 px-5 py-4 border-b border-btf-gold-pale">
-        <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold font-semibold mb-1">
+    <div className="rounded-2xl bg-white/[0.055] border border-white/[0.09] overflow-hidden">
+      <div className="bg-btf-gold/[0.10] px-5 py-4 border-b border-btf-gold/25">
+        <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light font-semibold mb-1">
           Self-help session · read-only
         </p>
-        <p className="font-serif text-xl text-btf-sky-deep font-light">
+        <p className="font-serif text-xl text-white font-light">
           {session.toolName}
         </p>
       </div>
 
-      <ol className="divide-y divide-btf-sky-pale/50">
+      <ol className="divide-y divide-white/[0.08]">
         {session.steps.map((step, i) => (
           <li key={i} className="px-5 py-4">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-btf-text-light font-semibold mb-1">
+            <p className="text-[10px] tracking-[0.2em] uppercase text-white/70 font-semibold mb-1">
               Step {i + 1}
             </p>
-            <p className="text-sm font-medium text-btf-sky-deep mb-1">
+            <p className="text-sm font-medium text-[#e9f1f8] mb-1">
               {step.heading}
             </p>
             {step.prompt && (
-              <p className="text-xs text-btf-text-light font-light leading-relaxed mb-2">
+              <p className="text-xs text-white/70 font-light leading-relaxed mb-2">
                 {step.prompt}
               </p>
             )}
-            <p className="text-sm text-btf-text-dark font-light leading-relaxed whitespace-pre-line">
+            <p className="text-sm text-[#e9f1f8] font-light leading-relaxed whitespace-pre-line">
               {step.userAnswer || (
-                <span className="italic text-btf-text-light">
+                <span className="italic text-white/70">
                   (no note recorded)
                 </span>
               )}
@@ -268,11 +268,11 @@ function ToolSessionView({ session }: { session: ToolSessionPayload }) {
       </ol>
 
       {session.summary && (
-        <div className="bg-btf-sky-pale/30 px-5 py-4 border-t border-btf-sky-pale/60">
-          <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky-deep font-semibold mb-1">
+        <div className="bg-white/[0.04] px-5 py-4 border-t border-white/[0.08]">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-[#e9f1f8] font-semibold mb-1">
             Reflection
           </p>
-          <p className="text-sm text-btf-text-dark font-light leading-relaxed whitespace-pre-line">
+          <p className="text-sm text-[#e9f1f8] font-light leading-relaxed whitespace-pre-line">
             {session.summary}
           </p>
         </div>

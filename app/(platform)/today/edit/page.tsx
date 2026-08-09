@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserId } from "../../../lib/session";
 import { listUserHabits } from "../../../actions/habits";
@@ -37,22 +36,15 @@ export default async function EditHabitsPage() {
   // required habit for every user and can't be toggled off here.
 
   return (
-    <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
+    <main className="px-6 py-10 sm:py-14">
       <div className="max-w-2xl mx-auto">
-        <Link
-          href="/today"
-          className="text-btf-text-light hover:text-btf-sky-deep text-sm mb-6 inline-flex items-center gap-2 transition-colors"
-        >
-          <span aria-hidden>&larr;</span> Today
-        </Link>
-
         <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3">
           Edit habits
         </p>
-        <h1 className="font-serif text-3xl md:text-4xl text-btf-sky-deep font-light leading-tight mb-3">
+        <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-3">
           What are you tracking?
         </h1>
-        <p className="text-btf-text-mid font-light leading-relaxed mb-8">
+        <p className="text-white/70 font-light leading-relaxed mb-8">
           Toggle habits on or off. Each has a short explanation of why it&rsquo;s recommended &mdash; click to expand.
         </p>
 

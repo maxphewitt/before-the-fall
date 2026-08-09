@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOutUser } from "../../actions/userSession";
+import { OliveBranch } from "../../components/OliveBranch";
 
 /**
  * PlatformNav — the persistent navigation for the gated platform shell.
@@ -54,6 +55,20 @@ const youIcon = (
   </svg>
 );
 
+const bibleIcon = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    <path d="M12 6v6M9.5 8.5h5" />
+  </svg>
+);
+
+// Desktop-sidebar-only item for faith users (the mobile dock references
+// ITEMS by index, so the Bible is inserted separately — see sidebarItems).
+// href opens the reader at the saved position (or Genesis 1); match stays
+// on the section root so the book grid and chapter pages light it up too.
+const BIBLE_ITEM: Item = { href: "/catholic-path/bible/read", label: "Bible", match: "/catholic-path/bible", icon: bibleIcon };
+
 const ITEMS: Item[] = [
   { href: "/home", label: "Home", match: "/home", icon: homeIcon },
   { href: "/explore", label: "Explore", match: "/explore", icon: exploreIcon },
@@ -65,21 +80,25 @@ function isActive(pathname: string, match: string): boolean {
   return pathname === match || pathname.startsWith(match + "/");
 }
 
-export default function PlatformNav() {
+export default function PlatformNav({ secular = false }: { secular?: boolean }) {
   const pathname = usePathname() || "";
+  // Faith users get the Bible in the desktop sidebar, right after Explore.
+  const sidebarItems = secular
+    ? ITEMS
+    : [...ITEMS.slice(0, 2), BIBLE_ITEM, ...ITEMS.slice(2)];
 
   return (
     <>
       {/* ─── Desktop sidebar ─── */}
       <aside className="hidden md:flex fixed left-0 top-0 h-screen w-[236px] z-30 flex-col px-4 py-7 border-r border-white/10 bg-[rgba(8,20,34,0.55)] backdrop-blur-md">
         <Link href="/home" className="flex items-center gap-2.5 px-2 pb-6">
-          <GoldCross className="w-4 h-5" />
+          {secular ? <OliveBranch className="w-4 h-5" /> : <GoldCross className="w-4 h-5" />}
           <span className="font-cinzel text-sm tracking-[0.12em] text-[#eaf2f9]">
             BEFORE THE FALL
           </span>
         </Link>
 
-        {ITEMS.map((it) => {
+        {sidebarItems.map((it) => {
           const active = isActive(pathname, it.match);
           return (
             <Link

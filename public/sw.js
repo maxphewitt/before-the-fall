@@ -15,7 +15,7 @@
  * when we ship a new shell.
  */
 
-const CACHE_VERSION = "btf-v2-2026-05-23";
+const CACHE_VERSION = "btf-v3-2026-06-28";
 const SHELL_URLS = [
   "/",
   "/about",
@@ -65,6 +65,10 @@ self.addEventListener("fetch", (event) => {
   const dynamicPrefixes = [
     "/journal",
     "/home",
+    "/today",
+    "/explore",
+    "/you",
+    "/field-journal",
     "/admin",
     "/tools/",
     "/catholic-path/",

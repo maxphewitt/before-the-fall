@@ -12,6 +12,7 @@ import {
   getSeasonBlurb,
 } from "../../../lib/liturgicalCalendar";
 import PrayerSearch from "./PrayerSearch";
+import BackLink from "../../_nav/BackLink";
 import { getCurrentUserId } from "../../../lib/session";
 import OnboardingRequired from "../../../components/OnboardingRequired";
 
@@ -59,12 +60,11 @@ export default async function PrayerLibraryPage() {
         />
 
         <div className="relative max-w-3xl mx-auto text-center">
-          <Link
-            href="/catholic-path"
+          <BackLink
+            fallbackHref="/catholic-path"
+            label="Catholic Path"
             className="text-white/60 hover:text-white text-xs mb-8 inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
-          >
-            <span aria-hidden>&larr;</span> Catholic Path
-          </Link>
+          />
 
           <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 mt-4">
             Prayer Library
@@ -82,6 +82,21 @@ export default async function PrayerLibraryPage() {
         {/* Search */}
         <PrayerSearch />
 
+        {/* Why these prayers are here — general explainer (moved off each
+            individual prayer, 2026-06-28) */}
+        <section className="mt-10 rounded-2xl bg-white/[0.055] border border-white/[0.09] p-5">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-btf-gold font-semibold mb-2">
+            Why these prayers are here
+          </p>
+          <p className="text-sm text-white/85 font-light leading-relaxed">
+            Catholics have prayed these for generations. Each is in the library
+            because it meets a real moment &mdash; grief, fear, temptation,
+            thanksgiving. In guided mode you&rsquo;ll see one line at a time so the
+            words aren&rsquo;t rushed past, and you can carry an intention with you
+            as you pray.
+          </p>
+        </section>
+
         {/* Current liturgical season */}
         {seasonPrayers.length > 0 && (
           <section className="mt-12" aria-labelledby="season-heading">
@@ -90,11 +105,11 @@ export default async function PrayerLibraryPage() {
             </p>
             <h2
               id="season-heading"
-              className="font-serif text-2xl text-btf-sky-deep font-light mb-2"
+              className="font-serif text-2xl text-[#e9f1f8] font-light mb-2"
             >
               {SEASON_LABELS[season]}
             </h2>
-            <p className="text-sm text-btf-text-mid font-light leading-relaxed mb-5">
+            <p className="text-sm text-white/70 font-light leading-relaxed mb-5">
               {getSeasonBlurb(season)}
             </p>
             <ul className="space-y-3">
@@ -102,10 +117,10 @@ export default async function PrayerLibraryPage() {
                 <li key={p.id}>
                   <Link
                     href={`/catholic-path/prayers/${p.id}`}
-                    className="block rounded-2xl bg-white border-2 border-btf-gold/30 hover:border-btf-gold hover:shadow-md p-4 transition-all"
+                    className="block rounded-2xl bg-white/[0.055] border border-white/[0.09] hover:border-btf-gold/40 hover:bg-white/[0.08] p-4 transition-all"
                   >
-                    <p className="font-medium text-btf-sky-deep">{p.title}</p>
-                    <p className="text-xs text-btf-text-mid font-light mt-1 leading-relaxed">
+                    <p className="font-medium text-[#e9f1f8]">{p.title}</p>
+                    <p className="text-xs text-white/70 font-light mt-1 leading-relaxed">
                       {p.when_to_use}
                     </p>
                   </Link>
@@ -122,7 +137,7 @@ export default async function PrayerLibraryPage() {
           </p>
           <h2
             id="categories-heading"
-            className="font-serif text-2xl text-btf-sky-deep font-light mb-6"
+            className="font-serif text-2xl text-[#e9f1f8] font-light mb-6"
           >
             Six categories.
           </h2>
@@ -133,17 +148,17 @@ export default async function PrayerLibraryPage() {
                 <li key={cat}>
                   <Link
                     href={`/catholic-path/prayers/category/${cat}`}
-                    className="group h-full block rounded-2xl bg-white border-2 border-btf-sky-pale/60 hover:border-btf-sky-light hover:shadow-md p-5 transition-all"
+                    className="group h-full block rounded-2xl bg-white/[0.055] border border-white/[0.09] hover:border-btf-gold/40 hover:bg-white/[0.08] p-5 transition-all"
                   >
                     <div className="flex items-baseline justify-between gap-3 mb-1">
-                      <h3 className="font-serif text-lg text-btf-sky-deep font-light">
+                      <h3 className="font-serif text-lg text-[#e9f1f8] font-light">
                         {CATEGORY_LABELS[cat]}
                       </h3>
-                      <span className="text-[10px] tracking-[0.2em] uppercase text-btf-text-light font-semibold">
+                      <span className="text-[10px] tracking-[0.2em] uppercase text-[#9fb6c8] font-semibold">
                         {count} {count === 1 ? "prayer" : "prayers"}
                       </span>
                     </div>
-                    <p className="text-xs text-btf-text-mid font-light leading-relaxed">
+                    <p className="text-xs text-white/70 font-light leading-relaxed">
                       {CATEGORY_BLURBS[cat]}
                     </p>
                   </Link>
@@ -154,8 +169,8 @@ export default async function PrayerLibraryPage() {
         </section>
 
         {/* DRAFT v1 banner */}
-        <div className="rounded-xl bg-btf-gold-pale/60 border border-btf-gold/30 text-btf-text-mid text-xs font-light p-4 mt-12 leading-relaxed">
-          <span className="font-medium text-btf-sky-deep">
+        <div className="rounded-xl bg-white/[0.04] border border-btf-gold/25 text-white/70 text-xs font-light p-4 mt-12 leading-relaxed">
+          <span className="font-medium text-[#e9f1f8]">
             Draft v1 &middot; closed beta:
           </span>{" "}
           all prayer text is public-domain traditional Catholic prayer. Source URLs cited per prayer. Father Murphy is reviewing the library before public launch &mdash; if you spot anything off, message Max.

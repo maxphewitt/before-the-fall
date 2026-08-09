@@ -12,6 +12,7 @@ import {
   getSeasonBlurb,
 } from "../../../lib/liturgicalCalendar";
 import { SEASON_LABELS } from "../../../lib/prayers";
+import BackLink from "../../_nav/BackLink";
 import { getCurrentUserId } from "../../../lib/session";
 import OnboardingRequired from "../../../components/OnboardingRequired";
 import DailyScriptureSections from "./DailyScriptureSections";
@@ -66,12 +67,11 @@ export default async function ScriptureLandingPage() {
           aria-hidden
         />
         <div className="relative max-w-3xl mx-auto text-center">
-          <Link
-            href="/catholic-path"
+          <BackLink
+            fallbackHref="/catholic-path"
+            label="Catholic Path"
             className="text-white/60 hover:text-white text-xs mb-8 inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
-          >
-            <span aria-hidden>&larr;</span> Catholic Path
-          </Link>
+          />
 
           <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 mt-4">
             Daily Scripture
@@ -105,7 +105,7 @@ export default async function ScriptureLandingPage() {
           </p>
           <h2
             id="themes-heading"
-            className="font-serif text-2xl text-btf-sky-deep font-light mb-6"
+            className="font-serif text-2xl text-[#e9f1f8] font-light mb-6"
           >
             What are you carrying?
           </h2>
@@ -117,17 +117,17 @@ export default async function ScriptureLandingPage() {
                 <li key={theme}>
                   <Link
                     href={`/catholic-path/scripture/theme/${theme}`}
-                    className="group h-full block rounded-2xl bg-white border-2 border-btf-sky-pale/60 hover:border-btf-sky-light hover:shadow-md p-5 transition-all"
+                    className="group h-full block rounded-2xl bg-white/[0.055] border border-white/[0.09] hover:border-btf-gold/40 hover:bg-white/[0.08] p-5 transition-all"
                   >
                     <div className="flex items-baseline justify-between gap-3 mb-1">
-                      <h3 className="font-serif text-lg text-btf-sky-deep font-light">
+                      <h3 className="font-serif text-lg text-[#e9f1f8] font-light">
                         {THEME_LABELS[theme]}
                       </h3>
-                      <span className="text-[10px] tracking-[0.2em] uppercase text-btf-text-light font-semibold">
+                      <span className="text-[10px] tracking-[0.2em] uppercase text-[#9fb6c8] font-semibold">
                         {count} {count === 1 ? "passage" : "passages"}
                       </span>
                     </div>
-                    <p className="text-xs text-btf-text-mid font-light leading-relaxed">
+                    <p className="text-xs text-white/70 font-light leading-relaxed">
                       {THEME_BLURBS[theme]}
                     </p>
                   </Link>
@@ -138,8 +138,8 @@ export default async function ScriptureLandingPage() {
         </section>
 
         {/* DRAFT v1 banner */}
-        <div className="rounded-xl bg-btf-gold-pale/60 border border-btf-gold/30 text-btf-text-mid text-xs font-light p-4 mt-10 leading-relaxed">
-          <span className="font-medium text-btf-sky-deep">
+        <div className="rounded-xl bg-white/[0.04] border border-btf-gold/25 text-white/70 text-xs font-light p-4 mt-10 leading-relaxed">
+          <span className="font-medium text-[#e9f1f8]">
             Draft v1 &middot; closed beta:
           </span>{" "}
           all passages are from the Douay-Rheims Bible (Challoner revision, public domain). NABRE and RSV-2CE coming once Task #16 licensing resolves. Father Murphy is reviewing the library before public launch &mdash; if you spot anything off, message Max.

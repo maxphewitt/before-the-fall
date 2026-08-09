@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPrayerById, PRAYERS } from "../../../../../lib/prayers";
 import PrayerWalker from "./PrayerWalker";
+import IntentionShell from "../../../_IntentionShell";
 
 /**
  * /catholic-path/prayers/[id]/pray — guided "Pray this" walker.
@@ -37,11 +38,13 @@ export default async function PrayerWalkerPage({
       : prayer.full_text.split("\n\n").map((s) => s.trim()).filter(Boolean);
 
   return (
-    <PrayerWalker
-      prayerId={prayer.id}
-      title={prayer.title}
-      lines={lines}
-      author={prayer.author}
-    />
+    <IntentionShell beginLabel="Begin Prayer">
+      <PrayerWalker
+        prayerId={prayer.id}
+        title={prayer.title}
+        lines={lines}
+        author={prayer.author}
+      />
+    </IntentionShell>
   );
 }

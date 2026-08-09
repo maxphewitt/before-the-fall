@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rosary GLB — camera walk preview</title>
+<!-- Dev-only preview: open http://localhost:3000/rosary-preview.html -->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(to bottom, #0a1a2a, #0d4f7c, #1a6fa8); font-family: system-ui, sans-serif; }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .hud { position: fixed; left: 0; right: 0; z-index: 10; text-align: center; color: #fff; }
+  .top { top: 16px; letter-spacing: 0.25em; text-transform: uppercase; font-size: 10px; color: rgba(201,168,76,0.9); font-weight: 600; }
+  .label { bottom: 110px; }
+  .label .name { font-size: 20px; color: #e8cc7a; font-weight: 300; font-family: Georgia, serif; }
+  .label .meta { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 600; margin-top: 4px; }
+  .controls { bottom: 28px; display: flex; gap: 10px; justify-content: center; }
+  button { cursor: pointer; border-radius: 999px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); color: #cfe0ee; padding: 12px 22px; font-size: 13px; }
+  button.gold { background: linear-gradient(to bottom right, #c9a84c, #e8cc7a); color: #0d4f7c; font-weight: 600; border: none; box-shadow: 0 8px 24px rgba(201,168,76,0.3); }
+  .credit { bottom: 6px; font-size: 9px; color: rgba(255,255,255,0.35); }
+  .credit a { color: rgba(255,255,255,0.5); }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud top">Rosary model preview — same anchors and camera rig as the app</div>
+<div class="hud label"><div class="name" id="stepName">Overview</div><div class="meta" id="stepMeta">Press Begin</div></div>
+<div class="hud controls">
+  <button id="back">&#8592; Back</button>
+  <button id="begin" class="gold">Begin</button>
+  <button id="next" class="gold">Next &#8594;</button>
+</div>
+<div class="hud credit">3D model: <a href="https://skfb.ly/otUUn">&ldquo;Rosary&rdquo;</a> by Carlos.Maciel, <a href="http://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></div>
+<script type="module">
+import * as THREE from "three";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const RAW = {
+  crucifix: [-0.243,-3.2,0.42], medal: [-0.061,-1.917,0.357],
+  tailOF: [0.17,-1.059,0.365],
+  tailHM: [[1.026,-0.731,0.365],[1.597,-0.931,0.365],[2.146,-1.148,0.365]],
+  tailGlory: [3.255,-0.906,0.365],
+  knots: [[3.718,-0.431,0.36],[0.638,2.129,0.35],[2.625,4.415,0.35],[-3.571,3.756,0.35],[-1.412,0.18,0.35]],
+  closeKnot: [3.258,-0.362,0.36],
+  decades: [
+    [[4.181,0.045,0.343],[4.491,0.513,0.343],[4.493,1.087,0.343],[4.312,1.634,0.343],[3.897,2.025,0.343],[3.383,2.294,0.343],[2.841,2.492,0.343],[2.26,2.566,0.343],[1.697,2.456,0.335],[1.167,2.189,0.321]],
+    [[0.108,2.069,0.343],[0.085,2.552,0.343],[0.523,2.947,0.343],[1.056,3.127,0.343],[1.615,3.332,0.343],[2.171,3.487,0.343],[2.744,3.486,0.343],[3.303,3.632,0.343],[3.592,4.074,0.343],[3.252,4.433,0.343]],
+    [[1.997,4.396,0.343],[1.415,4.473,0.343],[0.851,4.622,0.343],[0.277,4.769,0.343],[-0.297,4.834,0.343],[-0.878,4.81,0.343],[-1.456,4.703,0.343],[-2.019,4.524,0.343],[-2.573,4.361,0.343],[-3.149,4.174,0.343]],
+    [[-3.993,3.338,0.343],[-4.263,2.815,0.343],[-4.443,2.263,0.343],[-4.513,1.676,0.343],[-4.418,1.109,0.343],[-4.11,0.628,0.343],[-3.619,0.317,0.343],[-3.05,0.166,0.343],[-2.477,0.096,0.343],[-1.888,0.096,0.343]],
+    [[-0.936,0.264,0.343],[-0.383,0.465,0.343],[0.136,0.728,0.343],[0.637,1.046,0.343],[1.126,1.357,0.343],[1.669,1.551,0.343],[2.245,1.509,0.343],[2.735,1.199,0.343],[3.074,0.738,0.343],[3.26,0.182,0.343]],
+  ],
+};
+const RAW_BEAD_R = 0.31, HUD_FRACTION = 0.26;
+
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+const scene = new THREE.Scene(); scene.background = null;
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
+const keyL = new THREE.DirectionalLight(new THREE.Color("#fff3d6"), 1.6); keyL.position.set(6,8,10); scene.add(keyL);
+const rim = new THREE.DirectionalLight(new THREE.Color("#3d8fc4"), 0.6); rim.position.set(-8,-4,-6); scene.add(rim);
+scene.add(new THREE.AmbientLight(new THREE.Color("#3a4f66"), 0.9));
+const wrapper = new THREE.Group(); scene.add(wrapper);
+const glowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color("#e8cc7a"), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false });
+const glow = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), glowMat);
+glow.visible = false; scene.add(glow);
+let glowScale = 1;
+const CAMERA_TILT = 0.66;
+const viewDir = new THREE.Vector3(0, Math.sin(CAMERA_TILT), Math.cos(CAMERA_TILT));
+const screenUp = new THREE.Vector3(0, Math.cos(CAMERA_TILT), -Math.sin(CAMERA_TILT));
+
+let ready = false, beadR = 0.3;
+const world = { crucifix: new THREE.Vector3(), medal: new THREE.Vector3(), tailOF: new THREE.Vector3(),
+  tailHM: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()], tailGlory: new THREE.Vector3(),
+  knots: RAW.knots.map(()=>new THREE.Vector3()), closeKnot: new THREE.Vector3(),
+  decades: RAW.decades.map(d=>d.map(()=>new THREE.Vector3())) };
+const size = new THREE.Vector3(), center = new THREE.Vector3();
+
+new GLTFLoader().load("/models/rosary.glb", (gltf) => {
+  const model = gltf.scene; wrapper.add(model);
+  const rawBox = new THREE.Box3().setFromObject(model);
+  const rawSize = rawBox.getSize(new THREE.Vector3());
+  const s = 11 / Math.max(rawSize.y, 0.0001);
+  wrapper.scale.setScalar(s);
+  const rawCenter = rawBox.getCenter(new THREE.Vector3());
+  wrapper.position.set(-rawCenter.x*s, -rawCenter.y*s, -rawCenter.z*s);
+  wrapper.updateMatrixWorld(true);
+  let anchorNode = null;
+  model.traverse((o) => { if (!anchorNode && o.name.includes("WOOD_0") && !o.name.includes("CROSS")) anchorNode = o; });
+  const node = anchorNode ?? model;
+  const toW = (v, out) => node.localToWorld(out.set(v[0], v[1], v[2]));
+  toW(RAW.crucifix, world.crucifix); toW(RAW.medal, world.medal); toW(RAW.tailOF, world.tailOF);
+  RAW.tailHM.forEach((v,i)=>toW(v, world.tailHM[i])); toW(RAW.tailGlory, world.tailGlory);
+  RAW.knots.forEach((v,i)=>toW(v, world.knots[i])); toW(RAW.closeKnot, world.closeKnot);
+  RAW.decades.forEach((d,i)=>d.forEach((v,k)=>toW(v, world.decades[i][k])));
+  const a = node.localToWorld(new THREE.Vector3(0,0,0)), b = node.localToWorld(new THREE.Vector3(RAW_BEAD_R,0,0));
+  beadR = a.distanceTo(b); glow.scale.setScalar(beadR*1.22);
+  model.traverse((o)=>{ if (o.isMesh && o.material && "envMapIntensity" in o.material) o.material.envMapIntensity = 1.2; });
+  const box = new THREE.Box3().setFromObject(wrapper);
+  box.getSize(size); box.getCenter(center);
+  ready = true; overview(); camera.position.copy(goalPos); curLook.copy(goalLook);
+});
+
+let aspect = 1;
+const goalPos = new THREE.Vector3(0,0,20), goalLook = new THREE.Vector3(), curLook = new THREE.Vector3();
+function overview() {
+  glow.visible = false; if (!ready) return;
+  const f = camera.fov*Math.PI/180, halfTan = Math.tan(f/2);
+  const projH = size.y*Math.cos(CAMERA_TILT) + size.z*Math.sin(CAMERA_TILT);
+  const fitH = projH/2/halfTan/(1-HUD_FRACTION);
+  const fitW = (size.x/2/(halfTan*aspect))*1.02;
+  const dist = Math.max(fitH, fitW)*1.12;
+  const yShift = (2*dist*halfTan*HUD_FRACTION)/2;
+  goalPos.copy(center).addScaledVector(viewDir, dist).addScaledVector(screenUp, -yShift);
+  goalLook.copy(center).addScaledVector(screenUp, -yShift);
+}
+function focusOn(pos, distU, glowR) {
+  const u = beadR/0.3, dist = distU*u;
+  goalPos.copy(pos).addScaledVector(viewDir, dist);
+  goalPos.x += dist*0.1;
+  goalLook.copy(pos).addScaledVector(screenUp, -dist*0.1);
+  glow.visible = glowR > 0; glowScale = glowR || 1;
+  if (glow.visible) glow.position.copy(pos);
+}
+
+const steps = [];
+steps.push({ n: "Sign of the Cross", m: "At the crucifix", f: () => focusOn(world.crucifix, 5.2, 0) });
+steps.push({ n: "Apostles' Creed", m: "At the crucifix", f: () => focusOn(world.crucifix, 5.2, 0) });
+steps.push({ n: "Our Father", m: "First bead above the medal", f: () => focusOn(world.tailOF, 2.4, 1.22) });
+for (let i = 0; i < 3; i++) steps.push({ n: "Hail Mary", m: `Opening ${i+1} of 3`, f: () => focusOn(world.tailHM[i], 2.2, 1.22) });
+steps.push({ n: "Glory Be", m: "Last tail bead", f: () => focusOn(world.tailGlory, 2.2, 1.22) });
+for (let d = 0; d < 5; d++) {
+  steps.push({ n: `Mystery ${d+1} + Our Father`, m: `Decade ${d+1} — knot`, f: () => focusOn(world.knots[d], 2.6, 0.8) });
+  for (let b = 0; b < 10; b++) steps.push({ n: "Hail Mary", m: `Decade ${d+1} — bead ${b+1} of 10`, f: () => focusOn(world.decades[d][b], 2.2, 1.22) });
+  steps.push({ n: "Glory Be + Fatima", m: `Decade ${d+1} — knot`, f: () => { const p = d < 4 ? world.knots[d+1] : world.closeKnot; focusOn(p, 2.6, 0.8); } });
+}
+steps.push({ n: "Hail, Holy Queen", m: "The medal", f: () => focusOn(world.medal, 2.6, 0) });
+steps.push({ n: "Closing Prayer", m: "The medal", f: () => focusOn(world.medal, 2.6, 0) });
+
+let idx = -1;
+const nameEl = document.getElementById("stepName"), metaEl = document.getElementById("stepMeta");
+function show() {
+  if (idx < 0) { overview(); nameEl.textContent = "Overview"; metaEl.textContent = "Press Begin"; return; }
+  const s = steps[idx]; s.f(); nameEl.textContent = s.n; metaEl.textContent = `${s.m}  ·  ${idx+1} / ${steps.length}`;
+}
+document.getElementById("begin").onclick = () => { idx = idx < 0 ? 0 : -1; show(); };
+document.getElementById("next").onclick = () => { if (idx < steps.length - 1) { idx++; show(); } };
+document.getElementById("back").onclick = () => { if (idx > 0) { idx--; show(); } };
+addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight" || e.key === " ") document.getElementById("next").click();
+  if (e.key === "ArrowLeft") document.getElementById("back").click();
+});
+function resize() {
+  aspect = innerWidth/innerHeight;
+  camera.aspect = aspect; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight, false);
+  if (idx < 0) overview();
+}
+addEventListener("resize", resize); resize();
+
+const clock = new THREE.Clock();
+(function frame() {
+  requestAnimationFrame(frame);
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  wrapper.rotation.y = Math.sin(t*0.22)*0.04;
+  wrapper.rotation.x = Math.sin(t*0.17)*0.018;
+  const k = 1 - Math.exp(-dt*2.6);
+  camera.position.lerp(goalPos, k); curLook.lerp(goalLook, k); camera.lookAt(curLook);
+  if (glow.visible) {
+    glow.scale.setScalar(beadR*glowScale*(1 + 0.05*Math.sin(t*2.6)));
+    glowMat.opacity = 0.35 + 0.2*(0.5 + 0.5*Math.sin(t*2.6));
+  }
+  renderer.render(scene, camera);
+})();
+</script>
+</body>
+</html>

@@ -20,22 +20,15 @@ export default async function JournalPage() {
   const result = await listEntries();
 
   return (
-    <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
-      <div className="max-w-2xl mx-auto">
-        <Link
-          href="/"
-          className="text-btf-text-light hover:text-btf-sky-deep text-sm mb-6 inline-flex items-center gap-2 transition-colors"
-        >
-          <span aria-hidden>&larr;</span> Home
-        </Link>
-
+    <main className="mx-auto w-full max-w-2xl px-6 py-10 sm:py-14">
+      <div>
         <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3">
           Journal
         </p>
-        <h1 className="font-serif text-3xl md:text-4xl text-btf-sky-deep font-light leading-tight mb-3">
+        <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-3">
           Your entries.
         </h1>
-        <p className="text-btf-text-mid font-light leading-relaxed mb-8">
+        <p className="text-white/70 font-light leading-relaxed mb-8">
           Encrypted at rest. Only you and the safeguards we are legally
           required to maintain can read them.
         </p>
@@ -43,13 +36,13 @@ export default async function JournalPage() {
         <div className="flex flex-wrap gap-3 mb-10">
           <Link
             href="/journal/new"
-            className="inline-block bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-6 py-3 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform"
+            className="inline-flex items-center justify-center rounded-full px-6 py-3 font-bold text-[#2a2008] bg-gradient-to-b from-btf-gold-light to-btf-gold shadow-[0_10px_24px_-10px_rgba(201,168,76,0.8)] transition-transform hover:-translate-y-0.5"
           >
             + New entry
           </Link>
           <Link
             href="/tools"
-            className="inline-block bg-white border-2 border-btf-gold/40 text-btf-sky-deep font-medium px-6 py-3 rounded-full hover:border-btf-gold hover:-translate-y-0.5 transition-all"
+            className="inline-flex items-center justify-center rounded-full px-6 py-3 font-medium text-[#e9f1f8] bg-white/[0.06] border border-white/15 hover:border-btf-gold/40 hover:bg-white/[0.08] transition-all"
           >
             Use a self-help tool →
           </Link>
@@ -58,15 +51,15 @@ export default async function JournalPage() {
         {!result.success && (
           <div
             role="alert"
-            className="rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm p-4"
+            className="rounded-xl bg-[rgba(201,80,80,0.10)] border border-[rgba(201,80,80,0.3)] text-[#e8b3b3] text-sm p-4"
           >
             {result.error}
           </div>
         )}
 
         {result.success && result.data.length === 0 && (
-          <div className="rounded-2xl bg-white border-2 border-btf-sky-pale/60 p-8 text-center">
-            <p className="text-btf-text-mid font-light leading-relaxed">
+          <div className="rounded-2xl bg-white/[0.055] border border-white/[0.09] p-8 text-center">
+            <p className="text-white/70 font-light leading-relaxed">
               Nothing here yet. When you&rsquo;re ready, write down whatever you need to.
               There&rsquo;s no wrong way to do this.
             </p>
@@ -94,7 +87,8 @@ const SECTIONS: SectionDef[] = [
   { key: "reflection", label: "Reflections", blurb: "Longer thinking, after the fact." },
   { key: "activity", label: "Activity journals", blurb: "Self-help tool sessions, grouped by exercise." },
   { key: "note", label: "Notes", blurb: "Quick captures." },
-  { key: "intention", label: "Intentions", blurb: "What you’re carrying to God this week." },
+  // Intentions live in their own tool now (/catholic-path/intentions), kept
+  // separate from the general Journal.
 ];
 
 function GroupedEntries({ entries }: { entries: JournalEntry[] }) {
@@ -115,11 +109,11 @@ function GroupedEntries({ entries }: { entries: JournalEntry[] }) {
             <div className="mb-4 flex items-baseline justify-between">
               <h2
                 id={`section-${section.key}`}
-                className="text-[11px] tracking-[0.25em] uppercase text-btf-sky-deep font-semibold"
+                className="text-[11px] tracking-[0.25em] uppercase text-[#e9f1f8] font-semibold"
               >
                 {section.label}
               </h2>
-              <span className="text-[11px] text-btf-text-light">
+              <span className="text-[11px] text-white/70">
                 {list.length} {list.length === 1 ? "entry" : "entries"}
               </span>
             </div>
@@ -143,12 +137,12 @@ function FlatGroup({ entries }: { entries: JournalEntry[] }) {
         <li key={entry.id}>
           <Link
             href={`/journal/${entry.id}`}
-            className="block rounded-2xl bg-white border-2 border-btf-sky-pale/60 hover:border-btf-sky-light hover:shadow-md p-5 transition-all"
+            className="block rounded-2xl bg-white/[0.055] border border-white/[0.09] hover:border-btf-gold/40 hover:bg-white/[0.08] p-5 transition-all"
           >
-            <p className="text-[10px] tracking-[0.2em] uppercase text-btf-text-light font-semibold mb-2">
+            <p className="text-[10px] tracking-[0.2em] uppercase text-white/70 font-semibold mb-2">
               {formatEntryDate(entry.createdAt)}
             </p>
-            <p className="text-sm text-btf-text-dark font-light leading-relaxed whitespace-pre-line line-clamp-3">
+            <p className="text-sm text-[#e9f1f8] font-light leading-relaxed whitespace-pre-line line-clamp-3">
               {entry.text}
             </p>
           </Link>
@@ -182,9 +176,9 @@ function ActivityGroup({ entries }: { entries: JournalEntry[] }) {
     <div className="space-y-6">
       {Array.from(bySlug.values()).map((group) => (
         <div key={group.name}>
-          <p className="text-sm text-btf-sky-deep font-medium mb-3">
+          <p className="text-sm text-[#e9f1f8] font-medium mb-3">
             {group.name}{" "}
-            <span className="text-btf-text-light font-light">
+            <span className="text-white/70 font-light">
               · {group.entries.length} {group.entries.length === 1 ? "session" : "sessions"}
             </span>
           </p>
@@ -198,13 +192,13 @@ function ActivityGroup({ entries }: { entries: JournalEntry[] }) {
                 <li key={entry.id}>
                   <Link
                     href={`/journal/${entry.id}`}
-                    className="block rounded-2xl bg-white border-2 border-btf-gold-pale hover:border-btf-gold hover:shadow-md p-5 transition-all"
+                    className="block rounded-2xl bg-white/[0.055] border border-white/[0.09] hover:border-btf-gold/40 hover:bg-white/[0.08] p-5 transition-all"
                   >
-                    <p className="text-[10px] tracking-[0.2em] uppercase text-btf-text-light font-semibold mb-2">
+                    <p className="text-[10px] tracking-[0.2em] uppercase text-white/70 font-semibold mb-2">
                       {formatEntryDate(entry.createdAt)} · {stepCount} steps
                     </p>
                     {previewStep && (
-                      <p className="text-sm text-btf-text-dark font-light leading-relaxed line-clamp-2">
+                      <p className="text-sm text-[#e9f1f8] font-light leading-relaxed line-clamp-2">
                         <span className="font-medium">{previewStep.heading}:</span>{" "}
                         {previewStep.userAnswer}
                       </p>

@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
+import BackLink from "../../_nav/BackLink";
 import { getCurrentUserId } from "../../../lib/session";
 import { getEntry } from "../../../actions/journal";
 import EntryEditor from "./EntryEditor";
@@ -27,14 +27,13 @@ export default async function JournalEntryPage({
   }
 
   return (
-    <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
-      <div className="max-w-2xl mx-auto">
-        <Link
-          href="/journal"
-          className="text-btf-text-light hover:text-btf-sky-deep text-sm mb-6 inline-flex items-center gap-2 transition-colors"
-        >
-          <span aria-hidden>&larr;</span> Journal
-        </Link>
+    <main className="mx-auto w-full max-w-2xl px-6 py-10 sm:py-14">
+      <div>
+        <BackLink
+          fallbackHref="/journal"
+          label="Journal"
+          className="text-white/70 hover:text-white text-sm mb-6 inline-flex items-center gap-2 transition-colors"
+        />
 
         <EntryEditor entry={result.data} />
       </div>

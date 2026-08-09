@@ -20,6 +20,12 @@
  * pattern as the Prayer Library: log content issues in
  * `07 - Content/Prayer Library v2 — Reference (Hundreds).md` Content
  * Review Backlog and process in a dedicated post-build pass.
+ *
+ * "Going deeper" (2026-08-03): the collections' "Food for thought"
+ * notes were migrated verbatim into the matching passages' `deeper`
+ * fields, shown after the guided reading. Roughly 30 of the 45
+ * passages still lack a `deeper` paragraph — a future content pass
+ * is welcome.
  */
 
 export type ScriptureTheme =
@@ -62,6 +68,12 @@ export type ScripturePassage = {
   /** A single open-ended question to seed reflection journaling. */
   reflection_prompt: string;
   /**
+   * "Going deeper" — a short study/reflection paragraph shown AFTER
+   * the guided reading (verse walker closing sequence). DRAFT pending
+   * Father Murphy review, same pattern as the rest of the dataset.
+   */
+  deeper?: string;
+  /**
    * Verification status. False until Max + Father Murphy cross-check
    * verbatim against a canonical Douay-Rheims source.
    */
@@ -94,6 +106,8 @@ export const PASSAGES: ScripturePassage[] = [
       "When fear has its weight on you — illness, death of someone you love, the dark valley of any kind. The universal Catholic comfort psalm.",
     reflection_prompt:
       "Which line landed hardest just now? Write whatever rises when you sit with it.",
+    deeper:
+      "This psalm has been prayed in the dark for three thousand years — 'the shadow of death' is night language, and the psalmist walked through it too. The shepherd doesn't wait at the far end of the valley; he walks it with you. You can hand him the watch for tonight.",
   },
 
   {
@@ -114,6 +128,8 @@ export const PASSAGES: ScripturePassage[] = [
       "When you are tired — not just sleepy, but the kind of tired that doesn't go away. Christ's direct invitation, three verses.",
     reflection_prompt:
       "What burden are you carrying right now that you haven't named yet?",
+    deeper:
+      "There is a tiredness that sleep alone doesn't touch — the kind you carry into bed with you. Christ's invitation is aimed exactly there: come, you that labour and are burdened. He doesn't ask you to sort anything out first; the rest is a gift, not a reward.",
   },
 
   {
@@ -167,6 +183,8 @@ export const PASSAGES: ScripturePassage[] = [
       "When the worry-loop is running — bills, future, what-if. Christ's direct counter to anxious thinking, given in the Sermon on the Mount.",
     reflection_prompt:
       "What are you anxious about today that the lilies of the field would find absurd?",
+    deeper:
+      "Christ spoke this to ordinary people worrying about food, money, and tomorrow — the same loops that run in you. He doesn't shame the worry; he points at the birds and the wildflowers and says you matter more than they do, and look how they are kept. You are allowed to live just today.",
   },
 
   {
@@ -186,6 +204,8 @@ export const PASSAGES: ScripturePassage[] = [
       "When fear is the loudest thing in the room. Two verses, repeatable in a single breath.",
     reflection_prompt:
       "When you imagine God taking you by the hand right now — where is He leading?",
+    deeper:
+      "These words were first spoken to people in exile who had lost nearly everything and were afraid of what came next. God's answer to their fear wasn't a plan or an explanation — it was his presence: I am with thee, I take thee by the hand. Fear doesn't disqualify you from that promise; it's exactly who the promise is for.",
   },
 
   {
@@ -205,6 +225,8 @@ export const PASSAGES: ScripturePassage[] = [
       "When you keep taking back the worry you said you handed over. The 'casting' is active — it's something you do, not just feel.",
     reflection_prompt:
       "Name one specific worry you can cast on Him right now. What would 'casting' actually look like for that worry?",
+    deeper:
+      "Peter knew panic from the inside — he's the one who sank in the waves and wept at the cock-crow. When he says cast your care, it's a man who was carried through his own worst nights passing on what held him. God isn't merely tolerating your worries; he has care of you, personally.",
   },
 
   {
@@ -226,6 +248,8 @@ export const PASSAGES: ScripturePassage[] = [
       "When the situation makes no sense — illness, betrayal, loss with no apparent purpose. Paul's letter to the early Roman Christians under persecution: nothing separates you from Him.",
     reflection_prompt:
       "What in your life right now feels like it cannot possibly 'work together unto good'? Sit with that one.",
+    deeper:
+      "Paul wrote this to people burying friends under persecution, so it isn't a tidy answer — it's a defiance. He lists everything that seems final, death first, and says none of it can pry you out of the love of God. Whoever you're grieving was held by that same love, and so are you.",
   },
 
   {
@@ -251,6 +275,8 @@ export const PASSAGES: ScripturePassage[] = [
       "When the world's value system is exhausting you. Christ's full inversion of who counts as blessed — slow read, one line at a time.",
     reflection_prompt:
       "Which beatitude do you most resist? That's usually the one He's pointing at.",
+    deeper:
+      "'Blessed are they that mourn' — Christ puts the grieving among the blessed of his kingdom, not among the failing. Mourning is not weak faith; it's love telling the truth about what was lost. And the comfort he promises has no deadline attached.",
   },
 
   {
@@ -459,6 +485,8 @@ export const PASSAGES: ScripturePassage[] = [
       "When the noise inside is louder than the noise outside. Two verses. Read them. Then sit for sixty seconds without reading anything else.",
     reflection_prompt:
       "After you sat still — what came up?",
+    deeper:
+      "In the psalm, 'be still' isn't spoken into a quiet room — it's spoken into uproar, nations raging, mountains shaking. Stillness in Scripture was never about perfect conditions. It's about who God is in the middle of them, which means you can find it in the middle of your noise too.",
   },
 
   {
@@ -504,6 +532,527 @@ export const PASSAGES: ScripturePassage[] = [
       "When everything feels complicated and you need a north star. Two commandments. The whole Law hangs on them.",
     reflection_prompt:
       "Which of the two are you better at right now — loving God, or loving your neighbor? What does the harder one need from you this week?",
+  },
+
+  {
+    id: "john-14-27",
+    title: "Peace I leave with you",
+    citation: "John 14:27",
+    verses: [
+      { number: "27", text: "Peace I leave with you, my peace I give unto you: not as the world giveth, do I give unto you. Let not your heart be troubled, nor let it be afraid." },
+    ],
+    full_text:
+      "Peace I leave with you, my peace I give unto you: not as the world giveth, do I give unto you. Let not your heart be troubled, nor let it be afraid.",
+    translation: "Douay-Rheims",
+    themes: ["comfort", "trust"],
+    tags: ["peace", "troubled", "afraid", "anxiety", "farewell", "last-supper", "heart"],
+    when_to_use:
+      "When your heart is troubled and the world's version of calm isn't holding. One verse from the Last Supper — Christ's own peace, given, not earned.",
+    reflection_prompt:
+      "What would 'not as the world giveth' peace actually feel like in your body right now?",
+    deeper:
+      "Christ said this on the last night of his life, hours from Gethsemane — hardly a calm evening. The peace he gives isn't the world's kind, which depends on things going well. His holds when nothing is going well, and it's given, not earned.",
+  },
+
+  {
+    id: "psalm-34-brokenhearted",
+    title: "The Lord is nigh to the contrite heart",
+    citation: "Psalm 34 (Vulgate 33):18–19",
+    verses: [
+      { number: "18", text: "The Lord is nigh unto them that are of a contrite heart: and he will save the humble of spirit." },
+      { number: "19", text: "Many are the afflictions of the just; but out of them all will the Lord deliver them." },
+    ],
+    full_text:
+      "The Lord is nigh unto them that are of a contrite heart: and he will save the humble of spirit.\n\nMany are the afflictions of the just; but out of them all will the Lord deliver them.",
+    translation: "Douay-Rheims",
+    themes: ["comfort", "suffering", "healing"],
+    tags: ["brokenhearted", "contrite", "grief", "affliction", "near", "deliver", "psalm", "humble"],
+    when_to_use:
+      "When your heart is actually broken — grief, loss, the crushed feeling. He is not far from that; He is nearest exactly there.",
+    reflection_prompt:
+      "Where does the brokenness sit right now? Tell Him where it is, in plain words.",
+    deeper:
+      "The psalmist doesn't say the Lord is near to those who have moved on — he says near to the broken heart, the crushed spirit. Grief isn't a place God waits for you to leave; it's a place where he draws especially close. You don't have to be finished grieving to be held.",
+  },
+
+  {
+    id: "isaiah-43-called-by-name",
+    title: "I have called thee by thy name",
+    citation: "Isaiah 43:1–2",
+    verses: [
+      { number: "1", text: "And now thus saith the Lord that created thee, O Jacob, and formed thee, O Israel: Fear not, for I have redeemed thee, and called thee by thy name: thou art mine." },
+      { number: "2", text: "When thou shalt pass through the waters, I will be with thee, and the rivers shall not cover thee: when thou shalt walk in the fire, thou shalt not be burnt, and the flames shall not burn in thee:" },
+    ],
+    full_text:
+      "And now thus saith the Lord that created thee, O Jacob, and formed thee, O Israel: Fear not, for I have redeemed thee, and called thee by thy name: thou art mine.\n\nWhen thou shalt pass through the waters, I will be with thee, and the rivers shall not cover thee: when thou shalt walk in the fire, thou shalt not be burnt, and the flames shall not burn in thee:",
+    translation: "Douay-Rheims",
+    themes: ["comfort", "trust"],
+    tags: ["fear", "name", "waters", "fire", "redeemed", "belonging", "isaiah", "identity", "overwhelmed"],
+    when_to_use:
+      "When you feel anonymous in your suffering — one more case, one more statistic. He calls you by name. The waters and the fire are named too, and neither gets the last word.",
+    reflection_prompt:
+      "'Thou art mine.' What in you resists believing that today?",
+  },
+
+  {
+    id: "lamentations-new-every-morning",
+    title: "His mercies are new every morning",
+    citation: "Lamentations 3:22–26",
+    verses: [
+      { number: "22", text: "Heth. The mercies of the Lord that we are not consumed: because his commiserations have not failed." },
+      { number: "23", text: "Heth. They are new every morning, great is thy faithfulness." },
+      { number: "24", text: "Heth. The Lord is my portion, said my soul: therefore will I wait for him." },
+      { number: "25", text: "Teth. The Lord is good to them that hope in him, to the soul that seeketh him." },
+      { number: "26", text: "Teth. It is good to wait with silence for the salvation of God." },
+    ],
+    full_text:
+      "Heth. The mercies of the Lord that we are not consumed: because his commiserations have not failed. Heth. They are new every morning, great is thy faithfulness.\n\nHeth. The Lord is my portion, said my soul: therefore will I wait for him.\n\nTeth. The Lord is good to them that hope in him, to the soul that seeketh him. Teth. It is good to wait with silence for the salvation of God.",
+    translation: "Douay-Rheims",
+    themes: ["mercy", "hope"],
+    tags: ["morning", "mercies", "faithfulness", "new-day", "relapse", "start-over", "waiting", "lamentations", "one-day-at-a-time"],
+    when_to_use:
+      "For the morning after — the day you have to start again. Written from the ruins of Jerusalem: the mercies did not run out overnight. They restock at dawn.",
+    reflection_prompt:
+      "What does 'new every morning' mean for whatever happened yesterday?",
+    deeper:
+      "These lines were written in the ruins of Jerusalem by a man who had watched everything fall — and in the small hours, ruins are what most things look like. He found the mercies had not run out; they restock at dawn. However tonight goes, morning comes with new supply.",
+  },
+
+  {
+    id: "micah-depths-of-the-sea",
+    title: "He will cast all our sins into the sea",
+    citation: "Micah 7:18–19",
+    verses: [
+      { number: "18", text: "Who is a God like to thee, who takest away iniquity, and passest by the sin of the remnant of thy inheritance? he will send his fury in no more, because he delighteth in mercy." },
+      { number: "19", text: "He will turn again, and have mercy on us: he will put away our iniquities: and he will cast all our sins into the bottom of the sea." },
+    ],
+    full_text:
+      "Who is a God like to thee, who takest away iniquity, and passest by the sin of the remnant of thy inheritance? he will send his fury in no more, because he delighteth in mercy.\n\nHe will turn again, and have mercy on us: he will put away our iniquities: and he will cast all our sins into the bottom of the sea.",
+    translation: "Douay-Rheims",
+    themes: ["mercy", "conversion"],
+    tags: ["sins", "sea", "forgiveness", "confession", "past", "iniquity", "micah", "delighteth-in-mercy", "shame"],
+    when_to_use:
+      "When you keep diving back down for sins already confessed and absolved. He threw them in the sea. He delights in mercy — it's not reluctant with Him.",
+    reflection_prompt:
+      "Which sin do you keep retrieving from the bottom of the sea? What would it take to leave it there?",
+  },
+
+  {
+    id: "philippians-4-peace",
+    title: "The peace of God, which surpasseth all understanding",
+    citation: "Philippians 4:6–7",
+    verses: [
+      { number: "6", text: "Be nothing solicitous; but in every thing, by prayer and supplication, with thanksgiving, let your petitions be made known to God." },
+      { number: "7", text: "And the peace of God, which surpasseth all understanding, keep your hearts and minds in Christ Jesus." },
+    ],
+    full_text:
+      "Be nothing solicitous; but in every thing, by prayer and supplication, with thanksgiving, let your petitions be made known to God.\n\nAnd the peace of God, which surpasseth all understanding, keep your hearts and minds in Christ Jesus.",
+    translation: "Douay-Rheims",
+    themes: ["trust", "comfort"],
+    tags: ["anxiety", "worry", "prayer", "petition", "peace", "philippians", "paul", "racing-thoughts", "thanksgiving"],
+    when_to_use:
+      "When anxiety wants to be managed and Paul offers a different move: hand the specific worry to God, with thanks attached. Written from a prison cell.",
+    reflection_prompt:
+      "Turn your loudest worry into one sentence of petition. What is it?",
+    deeper:
+      "Paul wrote this from a prison cell, so the peace he describes was tested somewhere anxiety had every right to win. He doesn't ask you to stop feeling the worry — only to hand the specific thing over, in plain words. The calm isn't something you manufacture; it's something kept for you.",
+  },
+
+  {
+    id: "proverbs-3-trust",
+    title: "Lean not upon thy own prudence",
+    citation: "Proverbs 3:5–6",
+    verses: [
+      { number: "5", text: "Have confidence in the Lord with all thy heart, and lean not upon thy own prudence." },
+      { number: "6", text: "In all thy ways think on him, and he will direct thy steps." },
+    ],
+    full_text:
+      "Have confidence in the Lord with all thy heart, and lean not upon thy own prudence.\n\nIn all thy ways think on him, and he will direct thy steps.",
+    translation: "Douay-Rheims",
+    themes: ["trust", "discernment", "surrender"],
+    tags: ["trust", "confidence", "decisions", "control", "self-reliance", "direction", "proverbs", "steps"],
+    when_to_use:
+      "When you've been white-knuckling it on your own judgment and it isn't working. Recovery language before recovery existed: stop leaning on your own prudence.",
+    reflection_prompt:
+      "Where are you currently leaning hardest on your own prudence? How is that going, honestly?",
+  },
+
+  {
+    id: "jeremiah-29-thoughts-of-peace",
+    title: "Thoughts of peace, and not of affliction",
+    citation: "Jeremiah 29:11–12",
+    verses: [
+      { number: "11", text: "For I know the thoughts that I think towards you, saith the Lord, thoughts of peace, and not of affliction, to give you an end and patience." },
+      { number: "12", text: "And you shall call upon me, and you shall go: and you shall pray to me, and I will hear you." },
+    ],
+    full_text:
+      "For I know the thoughts that I think towards you, saith the Lord, thoughts of peace, and not of affliction, to give you an end and patience.\n\nAnd you shall call upon me, and you shall go: and you shall pray to me, and I will hear you.",
+    translation: "Douay-Rheims",
+    themes: ["hope", "trust"],
+    tags: ["future", "plans", "peace", "exile", "jeremiah", "waiting", "purpose", "despair"],
+    when_to_use:
+      "When you can't see any future worth having. Spoken to a people in exile who would wait seventy years — God's thoughts toward you are peace, even mid-exile.",
+    reflection_prompt:
+      "If God's thoughts toward you are 'thoughts of peace' — what does that contradict in how you talk to yourself?",
+  },
+
+  {
+    id: "grace-is-sufficient",
+    title: "My grace is sufficient for thee",
+    citation: "2 Corinthians 12:8–10",
+    verses: [
+      { number: "8", text: "For which thing thrice I besought the Lord, that it might depart from me." },
+      { number: "9", text: "And he said to me: My grace is sufficient for thee; for power is made perfect in infirmity. Gladly therefore will I glory in my infirmities, that the power of Christ may dwell in me." },
+      { number: "10", text: "For which cause I please myself in my infirmities, in reproaches, in necessities, in persecutions, in distresses, for Christ. For when I am weak, then am I powerful." },
+    ],
+    full_text:
+      "For which thing thrice I besought the Lord, that it might depart from me.\n\nAnd he said to me: My grace is sufficient for thee; for power is made perfect in infirmity. Gladly therefore will I glory in my infirmities, that the power of Christ may dwell in me.\n\nFor which cause I please myself in my infirmities, in reproaches, in necessities, in persecutions, in distresses, for Christ. For when I am weak, then am I powerful.",
+    translation: "Douay-Rheims",
+    themes: ["suffering", "hope"],
+    tags: ["thorn", "weakness", "grace", "infirmity", "chronic", "unanswered-prayer", "paul", "strength", "addiction"],
+    when_to_use:
+      "When you've begged God to take the thing away — the craving, the illness, the weakness — and it's still there. Paul asked three times. The answer he got is the answer you have.",
+    reflection_prompt:
+      "What is your thorn? Can you hear 'my grace is sufficient' over it — and what changes if you do?",
+  },
+
+  {
+    id: "inward-man-renewed",
+    title: "The inward man is renewed day by day",
+    citation: "2 Corinthians 4:16–18",
+    verses: [
+      { number: "16", text: "For which cause we faint not; but though our outward man is corrupted, yet the inward man is renewed day by day." },
+      { number: "17", text: "For that which is at present momentary and light of our tribulation, worketh for us above measure exceedingly an eternal weight of glory." },
+      { number: "18", text: "While we look not at the things which are seen, but at the things which are not seen. For the things which are seen, are temporal; but the things which are not seen, are eternal." },
+    ],
+    full_text:
+      "For which cause we faint not; but though our outward man is corrupted, yet the inward man is renewed day by day.\n\nFor that which is at present momentary and light of our tribulation, worketh for us above measure exceedingly an eternal weight of glory.\n\nWhile we look not at the things which are seen, but at the things which are not seen. For the things which are seen, are temporal; but the things which are not seen, are eternal.",
+    translation: "Douay-Rheims",
+    themes: ["suffering", "hope"],
+    tags: ["renewal", "day-by-day", "tribulation", "eternal", "illness", "aging", "body", "perspective", "glory"],
+    when_to_use:
+      "When the body or the circumstances are failing and it feels like the whole self is going down with them. The outward and the inward are not on the same trajectory.",
+    reflection_prompt:
+      "What in you is being renewed right now, even while something else is wearing out?",
+  },
+
+  {
+    id: "tribulation-worketh-patience",
+    title: "Tribulation worketh patience",
+    citation: "Romans 5:3–5",
+    verses: [
+      { number: "3", text: "And not only so; but we glory also in tribulations, knowing that tribulation worketh patience;" },
+      { number: "4", text: "And patience trial; and trial hope;" },
+      { number: "5", text: "And hope confoundeth not: because the charity of God is poured forth in our hearts, by the Holy Ghost, who is given to us." },
+    ],
+    full_text:
+      "And not only so; but we glory also in tribulations, knowing that tribulation worketh patience; And patience trial; and trial hope;\n\nAnd hope confoundeth not: because the charity of God is poured forth in our hearts, by the Holy Ghost, who is given to us.",
+    translation: "Douay-Rheims",
+    themes: ["suffering", "hope"],
+    tags: ["tribulation", "patience", "endurance", "hope", "chain", "romans", "paul", "process", "recovery"],
+    when_to_use:
+      "When the suffering feels pointless. Paul traces the chain link by link — tribulation, patience, trial, hope — and hope does not disappoint.",
+    reflection_prompt:
+      "Where are you on that chain right now — tribulation, patience, trial, or hope?",
+  },
+
+  {
+    id: "god-of-hope",
+    title: "Now the God of hope fill you",
+    citation: "Romans 15:13",
+    verses: [
+      { number: "13", text: "Now the God of hope fill you with all joy and peace in believing; that you may abound in hope, and in the power of the Holy Ghost." },
+    ],
+    full_text:
+      "Now the God of hope fill you with all joy and peace in believing; that you may abound in hope, and in the power of the Holy Ghost.",
+    translation: "Douay-Rheims",
+    themes: ["hope"],
+    tags: ["hope", "joy", "peace", "blessing", "holy-ghost", "romans", "benediction", "empty"],
+    when_to_use:
+      "When you have no hope of your own to work with. This is a blessing, not an instruction — hope here is something God fills, not something you manufacture.",
+    reflection_prompt:
+      "Read it as a prayer said over you. What would 'abounding in hope' look like in your week?",
+  },
+
+  {
+    id: "psalm-27-expect-the-lord",
+    title: "Expect the Lord, do manfully",
+    citation: "Psalm 27 (Vulgate 26):13–14",
+    verses: [
+      { number: "13", text: "I believe to see the good things of the Lord in the land of the living." },
+      { number: "14", text: "Expect the Lord, do manfully, and let thy heart take courage, and wait thou for the Lord." },
+    ],
+    full_text:
+      "I believe to see the good things of the Lord in the land of the living.\n\nExpect the Lord, do manfully, and let thy heart take courage, and wait thou for the Lord.",
+    translation: "Douay-Rheims",
+    themes: ["hope", "trust"],
+    tags: ["wait", "courage", "land-of-the-living", "expect", "psalm", "perseverance", "this-life"],
+    when_to_use:
+      "When you've quietly decided the good things are for other people, or for heaven only. 'In the land of the living' — this life. Wait for Him here.",
+    reflection_prompt:
+      "What good thing have you stopped expecting to see in this life? Name it, then read verse 14 again.",
+  },
+
+  {
+    id: "james-ask-for-wisdom",
+    title: "If any of you want wisdom",
+    citation: "James 1:5–6",
+    verses: [
+      { number: "5", text: "But if any of you want wisdom, let him ask of God, who giveth to all men abundantly, and upbraideth not; and it shall be given him." },
+      { number: "6", text: "But let him ask in faith, nothing wavering. For he that wavereth is like a wave of the sea, which is moved and carried about by the wind." },
+    ],
+    full_text:
+      "But if any of you want wisdom, let him ask of God, who giveth to all men abundantly, and upbraideth not; and it shall be given him.\n\nBut let him ask in faith, nothing wavering. For he that wavereth is like a wave of the sea, which is moved and carried about by the wind.",
+    translation: "Douay-Rheims",
+    themes: ["discernment"],
+    tags: ["wisdom", "ask", "decision", "confusion", "james", "upbraideth-not", "guidance", "crossroads"],
+    when_to_use:
+      "When you don't know what to do and you're embarrassed to still not know. 'Upbraideth not' — He doesn't scold you for asking. So ask.",
+    reflection_prompt:
+      "What decision are you facing that you haven't actually asked God about yet — directly, in words?",
+  },
+
+  {
+    id: "psalm-25-shew-me-thy-ways",
+    title: "Shew, O Lord, thy ways to me",
+    citation: "Psalm 25 (Vulgate 24):4–5",
+    verses: [
+      { number: "4", text: "Let all them be confounded that act unjust things without cause. Shew, O Lord, thy ways to me, and teach me thy paths." },
+      { number: "5", text: "Direct me in thy truth, and teach me; for thou art God my Saviour; and on thee have I waited all the day long." },
+    ],
+    full_text:
+      "Let all them be confounded that act unjust things without cause. Shew, O Lord, thy ways to me, and teach me thy paths.\n\nDirect me in thy truth, and teach me; for thou art God my Saviour; and on thee have I waited all the day long.",
+    translation: "Douay-Rheims",
+    themes: ["discernment", "trust"],
+    tags: ["ways", "paths", "teach", "direction", "psalm", "guidance", "waiting", "lost"],
+    when_to_use:
+      "The discernment prayer at its simplest: show me, teach me, direct me. Pray it slowly when the way forward is fogged in.",
+    reflection_prompt:
+      "If He showed you His path for the next month only — not the next decade — what do you suspect the first step is?",
+  },
+
+  {
+    id: "elijah-gentle-air",
+    title: "A whistling of a gentle air",
+    citation: "1 Kings 19:11–13",
+    verses: [
+      { number: "11", text: "And he said to him: Go forth, and stand upon the mount before the Lord: and behold the Lord passeth, and a great and strong wind before the Lord over throwing the mountains, and breaking the rocks in pieces: the Lord is not in the wind, and after the wind an earthquake: the Lord is not in the earthquake." },
+      { number: "12", text: "And after the earthquake a fire: the Lord is not in the fire, and after the fire a whistling of a gentle air." },
+      { number: "13", text: "And when Elias heard it, he covered his face with his mantle, and coming forth stood in the entering in of the cave, and behold a voice unto him, saying: What dost thou here, Elias? And he answered:" },
+    ],
+    full_text:
+      "And he said to him: Go forth, and stand upon the mount before the Lord: and behold the Lord passeth, and a great and strong wind before the Lord over throwing the mountains, and breaking the rocks in pieces: the Lord is not in the wind, and after the wind an earthquake: the Lord is not in the earthquake.\n\nAnd after the earthquake a fire: the Lord is not in the fire, and after the fire a whistling of a gentle air.\n\nAnd when Elias heard it, he covered his face with his mantle, and coming forth stood in the entering in of the cave, and behold a voice unto him, saying: What dost thou here, Elias? And he answered:",
+    translation: "Douay-Rheims",
+    themes: ["discernment"],
+    tags: ["elijah", "still-small-voice", "silence", "wind", "earthquake", "fire", "cave", "listening", "burnout"],
+    when_to_use:
+      "When you've been waiting for God in the dramatic — the sign, the breakthrough, the earthquake — and hearing nothing. Elijah found Him in a whisper of air. Get quiet enough to notice.",
+    reflection_prompt:
+      "'What dost thou here?' If God asked you that today, what's your honest answer?",
+    deeper:
+      "Elijah reached that cave worn out and wanting to quit — a prophet, and still that empty. God let the wind, the earthquake, and the fire pass, and came instead as a whisper of air. If your inner world is loud right now, you're in good company, and the whisper still comes.",
+  },
+
+  {
+    id: "take-up-thy-cross",
+    title: "Take up his cross, and follow me",
+    citation: "Matthew 16:24–25",
+    verses: [
+      { number: "24", text: "Then Jesus said to his disciples: If any man will come after me, let him deny himself, and take up his cross, and follow me." },
+      { number: "25", text: "For he that will save his life, shall lose it: and he that shall lose his life for my sake, shall find it." },
+    ],
+    full_text:
+      "Then Jesus said to his disciples: If any man will come after me, let him deny himself, and take up his cross, and follow me.\n\nFor he that will save his life, shall lose it: and he that shall lose his life for my sake, shall find it.",
+    translation: "Douay-Rheims",
+    themes: ["surrender", "conversion"],
+    tags: ["cross", "deny", "follow", "discipleship", "cost", "lose-your-life", "self-denial", "sacrifice"],
+    when_to_use:
+      "When the sobriety, the forgiveness, the vocation — whatever He's asking — costs more than you budgeted. He named the cost up front: a cross, carried daily.",
+    reflection_prompt:
+      "What part of your life are you trying to 'save' that might need losing?",
+  },
+
+  {
+    id: "christ-liveth-in-me",
+    title: "I live, now not I",
+    citation: "Galatians 2:19–20",
+    verses: [
+      { number: "19", text: "For I, through the law, am dead to the law, that I may live to God: with Christ I am nailed to the cross." },
+      { number: "20", text: "And I live, now not I; but Christ liveth in me. And that I live now in the flesh: I live in the faith of the Son of God, who loved me, and delivered himself for me." },
+    ],
+    full_text:
+      "For I, through the law, am dead to the law, that I may live to God: with Christ I am nailed to the cross.\n\nAnd I live, now not I; but Christ liveth in me. And that I live now in the flesh: I live in the faith of the Son of God, who loved me, and delivered himself for me.",
+    translation: "Douay-Rheims",
+    themes: ["surrender", "conversion"],
+    tags: ["galatians", "new-life", "identity", "christ-in-me", "old-self", "paul", "crucified", "who-loved-me"],
+    when_to_use:
+      "When the old identity — the addict, the failure, the person you were — keeps claiming to be the real you. Paul's answer: that man was crucified. Someone else lives here now.",
+    reflection_prompt:
+      "'Who loved me, and delivered himself for me.' Paul says it in the singular — for me. Can you?",
+  },
+
+  {
+    id: "into-thy-hands",
+    title: "Into thy hands I commend my spirit",
+    citation: "Luke 23:44–46",
+    verses: [
+      { number: "44", text: "And it was almost the sixth hour; and there was darkness over all the earth until the ninth hour." },
+      { number: "45", text: "And the sun was darkened, and the veil of the temple was rent in the midst." },
+      { number: "46", text: "And Jesus crying out with a loud voice, said: Father, into thy hands I commend my spirit. And saying this, he gave up the ghost." },
+    ],
+    full_text:
+      "And it was almost the sixth hour; and there was darkness over all the earth until the ninth hour. And the sun was darkened, and the veil of the temple was rent in the midst.\n\nAnd Jesus crying out with a loud voice, said: Father, into thy hands I commend my spirit. And saying this, he gave up the ghost.",
+    translation: "Douay-Rheims",
+    themes: ["surrender", "suffering"],
+    season: "lent",
+    tags: ["cross", "passion", "last-words", "commend", "hands", "darkness", "death", "letting-go", "compline"],
+    when_to_use:
+      "For the moment there is nothing left to do but hand it over. Christ's final prayer from the cross — the Church still prays it every night at Compline.",
+    reflection_prompt:
+      "What would you place in His hands tonight if you prayed this line and meant it?",
+    deeper:
+      "This is the prayer the whole Church says every night at Compline — Christ's own last words, borrowed for bedtime. Sleep is a small nightly practice of the same trust: letting go of what you cannot hold overnight. Whatever is unfinished can sit in his hands until morning.",
+  },
+
+  {
+    id: "psalm-147-broken-heart",
+    title: "He healeth the broken of heart",
+    citation: "Psalm 147 (Vulgate 146):2–4",
+    verses: [
+      { number: "2", text: "The Lord buildeth up Jerusalem: he will gather together the dispersed of Israel." },
+      { number: "3", text: "Who healeth the broken of heart, and bindeth up their bruises." },
+      { number: "4", text: "Who telleth the number of the stars: and calleth them all by their names." },
+    ],
+    full_text:
+      "The Lord buildeth up Jerusalem: he will gather together the dispersed of Israel.\n\nWho healeth the broken of heart, and bindeth up their bruises.\n\nWho telleth the number of the stars: and calleth them all by their names.",
+    translation: "Douay-Rheims",
+    themes: ["healing", "comfort"],
+    tags: ["broken-heart", "bruises", "stars", "healing", "grief", "psalm", "bind-up", "rebuild"],
+    when_to_use:
+      "When the wound is emotional and no one can see it. The same God who numbers the stars binds up bruises — the scale runs both directions.",
+    reflection_prompt:
+      "Which bruise needs binding first? He works one wound at a time.",
+    deeper:
+      "The same God who counts the stars and calls each by name bends down to bind up bruises no one else can see. Your loss isn't too small for that scale, and it isn't too big for it either. Binding takes time — the psalm knows that — and he stays for all of it.",
+  },
+
+  {
+    id: "ezekiel-heart-of-flesh",
+    title: "A new heart, and a new spirit",
+    citation: "Ezekiel 36:26–27",
+    verses: [
+      { number: "26", text: "And I will give you a new heart, and put a new spirit within you: and I will take away the stony heart out of your flesh, and will give you a heart of flesh." },
+      { number: "27", text: "And I will put my spirit in the midst of you: and I will cause you to walk in my commandments, and to keep my judgments, and do them." },
+    ],
+    full_text:
+      "And I will give you a new heart, and put a new spirit within you: and I will take away the stony heart out of your flesh, and will give you a heart of flesh.\n\nAnd I will put my spirit in the midst of you: and I will cause you to walk in my commandments, and to keep my judgments, and do them.",
+    translation: "Douay-Rheims",
+    themes: ["healing", "conversion"],
+    tags: ["new-heart", "stony-heart", "spirit", "ezekiel", "numbness", "change", "transplant", "promise"],
+    when_to_use:
+      "When you've gone numb — when the heart feels like stone and you can't make yourself feel what you should. Notice every verb is His: I will give, I will take away, I will put. The transplant is His work.",
+    reflection_prompt:
+      "Where has your heart gone stony — and when did you first notice?",
+  },
+
+  {
+    id: "cleansing-of-the-leper",
+    title: "I will, be thou made clean",
+    citation: "Matthew 8:1–3",
+    verses: [
+      { number: "1", text: "And when he was come down from the mountain, great multitudes followed him:" },
+      { number: "2", text: "And behold a leper came and adored him, saying: Lord, if thou wilt, thou canst make me clean." },
+      { number: "3", text: "And Jesus stretching forth his hand, touched him, saying: I will, be thou made clean. And forthwith his leprosy was cleansed." },
+    ],
+    full_text:
+      "And when he was come down from the mountain, great multitudes followed him:\n\nAnd behold a leper came and adored him, saying: Lord, if thou wilt, thou canst make me clean.\n\nAnd Jesus stretching forth his hand, touched him, saying: I will, be thou made clean. And forthwith his leprosy was cleansed.",
+    translation: "Douay-Rheims",
+    themes: ["healing", "mercy"],
+    tags: ["leper", "clean", "touch", "untouchable", "shame", "if-thou-wilt", "healing", "outcast"],
+    when_to_use:
+      "When you feel untouchable — contagious with whatever you're carrying. The leper asked 'if thou wilt.' Christ touched him first, then spoke: I will.",
+    reflection_prompt:
+      "What do you believe Christ is unwilling to touch in you? Read verse 3 again.",
+  },
+
+  {
+    id: "joel-rend-your-hearts",
+    title: "Rend your hearts, and not your garments",
+    citation: "Joel 2:12–13",
+    verses: [
+      { number: "12", text: "Now therefore saith the Lord: Be converted to me with all your heart, in fasting, and in weeping, and in mourning." },
+      { number: "13", text: "And rend your hearts, and not your garments, and turn to the Lord your God: for he is gracious and merciful, patient and rich in mercy, and ready to repent of the evil." },
+    ],
+    full_text:
+      "Now therefore saith the Lord: Be converted to me with all your heart, in fasting, and in weeping, and in mourning.\n\nAnd rend your hearts, and not your garments, and turn to the Lord your God: for he is gracious and merciful, patient and rich in mercy, and ready to repent of the evil.",
+    translation: "Douay-Rheims",
+    themes: ["conversion", "mercy"],
+    season: "lent",
+    tags: ["repentance", "return", "ash-wednesday", "lent", "hearts", "fasting", "joel", "turn", "rich-in-mercy"],
+    when_to_use:
+      "The Ash Wednesday reading. When you're tempted to perform repentance — the visible gesture — instead of the interior turn. He wants the heart, torn open.",
+    reflection_prompt:
+      "What's the difference, for you, between rending the garment and rending the heart?",
+  },
+
+  {
+    id: "new-creature",
+    title: "In Christ a new creature",
+    citation: "2 Corinthians 5:17",
+    verses: [
+      { number: "17", text: "If then any be in Christ a new creature, the old things are passed away, behold all things are made new." },
+    ],
+    full_text:
+      "If then any be in Christ a new creature, the old things are passed away, behold all things are made new.",
+    translation: "Douay-Rheims",
+    themes: ["conversion", "hope"],
+    tags: ["new-creature", "new-creation", "old-things", "fresh-start", "baptism", "identity", "paul", "recovery"],
+    when_to_use:
+      "When the past keeps introducing you by your old name. One verse to memorize for those moments: the old things are passed away.",
+    reflection_prompt:
+      "Which 'old thing' still feels present tense? What would it mean to file it under 'passed away'?",
+  },
+
+  {
+    id: "in-all-things-give-thanks",
+    title: "In all things give thanks",
+    citation: "1 Thessalonians 5:16–18",
+    verses: [
+      { number: "16", text: "Always rejoice." },
+      { number: "17", text: "Pray without ceasing." },
+      { number: "18", text: "In all things give thanks; for this is the will of God in Christ Jesus concerning you all." },
+    ],
+    full_text:
+      "Always rejoice.\n\nPray without ceasing.\n\nIn all things give thanks; for this is the will of God in Christ Jesus concerning you all.",
+    translation: "Douay-Rheims",
+    themes: ["thanksgiving"],
+    tags: ["gratitude", "rejoice", "pray-without-ceasing", "thanks", "thessalonians", "will-of-god", "daily-practice"],
+    when_to_use:
+      "The shortest rule of life in the New Testament — nine words in Greek, three commands. 'In all things' does not mean all things are good; it means gratitude is still possible inside them.",
+    reflection_prompt:
+      "Name three things from today — including one from the hard part of the day.",
+  },
+
+  {
+    id: "ten-lepers",
+    title: "Where are the nine?",
+    citation: "Luke 17:15–19",
+    verses: [
+      { number: "15", text: "And one of them, when he saw that he was made clean, went back, with a loud voice glorifying God." },
+      { number: "16", text: "And he fell on his face before his feet, giving thanks: and this was a Samaritan." },
+      { number: "17", text: "And Jesus answering, said, Were not ten made clean? and where are the nine?" },
+      { number: "18", text: "There is no one found to return and give glory to God, but this stranger." },
+      { number: "19", text: "And he said to him: Arise, go thy way; for thy faith hath made thee whole." },
+    ],
+    full_text:
+      "And one of them, when he saw that he was made clean, went back, with a loud voice glorifying God. And he fell on his face before his feet, giving thanks: and this was a Samaritan.\n\nAnd Jesus answering, said, Were not ten made clean? and where are the nine?\n\nThere is no one found to return and give glory to God, but this stranger.\n\nAnd he said to him: Arise, go thy way; for thy faith hath made thee whole.",
+    translation: "Douay-Rheims",
+    themes: ["thanksgiving", "healing"],
+    tags: ["lepers", "gratitude", "return", "samaritan", "nine", "thanks", "healing", "whole"],
+    when_to_use:
+      "When a prayer got answered and you moved straight on to the next request. Ten were healed; one came back. Be the one.",
+    reflection_prompt:
+      "What answered prayer have you never gone back to say thank you for? Go back now.",
   },
 ];
 

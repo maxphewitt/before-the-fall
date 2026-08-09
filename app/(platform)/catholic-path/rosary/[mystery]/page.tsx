@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { getMysteryBySlug, MYSTERIES, generateRosary } from "../../../../lib/rosary";
-import RosaryWalker from "./RosaryWalker";
+import { getMysteryBySlug, MYSTERIES } from "../../../../lib/rosary";
+import RosaryWalker3D from "./RosaryWalker3D";
 import { getCurrentUserId } from "../../../../lib/session";
 import OnboardingRequired from "../../../../components/OnboardingRequired";
 import {
@@ -37,12 +37,15 @@ export default async function RosaryMysteryPage({
   // for monthly content). Day-of-week is timezone-sensitive and handled
   // client-side in the landing page.
   const now = new Date();
-  const intention = {
+  const popeIntention = {
     ...getIntentionForDate(now),
     period: formatIntentionPeriod(now, "en-US"),
   };
 
-  const steps = generateRosary(mystery, intention);
-
-  return <RosaryWalker mysteryName={mystery.name} steps={steps} />;
+  // The walker owns step generation now: the gate's mystery selector can
+  // switch sets client-side (generateRosary is a pure lib function), and
+  // the Pope's intention is pinned at the top rather than being a step.
+  return (
+    <RosaryWalker3D initialMystery={mystery.slug} popeIntention={popeIntention} />
+  );
 }

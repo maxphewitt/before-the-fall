@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import BackLink from "../../_nav/BackLink";
 import { createEntry } from "../../../actions/journal";
 import type { JournalType } from "../../../lib/journalTypes";
 
@@ -31,7 +32,6 @@ const TYPE_OPTIONS: { value: PickableType; label: string; blurb: string }[] = [
   { value: "daily", label: "Daily", blurb: "Day-to-day writing." },
   { value: "reflection", label: "Reflection", blurb: "Longer thinking, after the fact." },
   { value: "note", label: "Note", blurb: "Quick capture." },
-  { value: "intention", label: "Intention", blurb: "What you're carrying to God this week." },
 ];
 
 export default function NewEntryPage() {
@@ -83,28 +83,27 @@ function NewEntryForm() {
   }
 
   return (
-    <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
-      <div className="max-w-2xl mx-auto">
-        <Link
-          href="/journal"
-          className="text-btf-text-light hover:text-btf-sky-deep text-sm mb-6 inline-flex items-center gap-2 transition-colors"
-        >
-          <span aria-hidden>&larr;</span> Journal
-        </Link>
+    <main className="mx-auto w-full max-w-2xl px-6 py-10 sm:py-14">
+      <div>
+        <BackLink
+          fallbackHref="/journal"
+          label="Journal"
+          className="text-white/70 hover:text-white text-sm mb-6 inline-flex items-center gap-2 transition-colors"
+        />
 
         <p className="text-[11px] tracking-[0.25em] text-btf-gold uppercase font-semibold mb-3">
           New entry
         </p>
-        <h1 className="font-serif text-3xl md:text-4xl text-btf-sky-deep font-light leading-tight mb-3">
+        <h1 className="font-serif text-3xl md:text-4xl text-white font-light leading-tight mb-3">
           Whatever you need to say.
         </h1>
-        <p className="text-btf-text-mid font-light leading-relaxed mb-8 text-sm">
+        <p className="text-white/70 font-light leading-relaxed mb-8 text-sm">
           Write as much or as little as you want. Encrypted before it touches the database.
         </p>
 
         <form onSubmit={onSubmit}>
           <fieldset className="mb-6" disabled={submitting}>
-            <legend className="text-[11px] tracking-[0.25em] uppercase text-btf-text-light font-semibold mb-3">
+            <legend className="text-[11px] tracking-[0.25em] uppercase text-white/70 font-semibold mb-3">
               Type
             </legend>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -117,14 +116,14 @@ function NewEntryForm() {
                     onClick={() => setJournalType(opt.value)}
                     aria-pressed={active}
                     className={
-                      "rounded-xl border-2 px-3 py-3 text-left text-sm transition-all " +
+                      "rounded-xl border px-3 py-3 text-left text-sm transition-all " +
                       (active
-                        ? "border-btf-sky bg-btf-sky-pale/40 text-btf-sky-deep shadow-sm"
-                        : "border-btf-sky-pale/60 bg-white text-btf-text-mid hover:border-btf-sky-light")
+                        ? "border-btf-gold/50 bg-btf-gold/[0.14] text-[#e9f1f8]"
+                        : "border-white/[0.09] bg-white/[0.055] text-white/70 hover:border-btf-gold/40 hover:bg-white/[0.08]")
                     }
                   >
                     <span className="block font-medium mb-0.5">{opt.label}</span>
-                    <span className="block text-[11px] font-light text-btf-text-light leading-snug">
+                    <span className="block text-[11px] font-light text-[#9fb6c8] leading-snug">
                       {opt.blurb}
                     </span>
                   </button>
@@ -141,13 +140,13 @@ function NewEntryForm() {
             rows={14}
             aria-label="Journal entry text"
             placeholder="Start here…"
-            className="w-full rounded-2xl bg-white border-2 border-btf-sky-pale/60 focus:border-btf-sky focus:outline-none px-5 py-4 text-base text-btf-text-dark font-light leading-relaxed resize-y shadow-sm transition-colors"
+            className="w-full rounded-2xl bg-white/[0.06] border border-white/15 focus:border-btf-gold/50 focus:outline-none px-5 py-4 text-base text-[#e9f1f8] placeholder:text-[#9fb6c8] font-light leading-relaxed resize-y transition-colors"
           />
 
           {error && (
             <div
               role="alert"
-              className="mt-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm p-4"
+              className="mt-4 rounded-xl bg-[rgba(201,80,80,0.10)] border border-[rgba(201,80,80,0.3)] text-[#e8b3b3] text-sm p-4"
             >
               {error}
             </div>
@@ -157,13 +156,13 @@ function NewEntryForm() {
             <button
               type="submit"
               disabled={submitting || text.trim().length === 0}
-              className="flex-1 bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-8 py-3.5 rounded-full shadow-lg disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 transition-transform"
+              className="flex-1 bg-gradient-to-b from-btf-gold-light to-btf-gold text-[#2a2008] font-bold px-8 py-3.5 rounded-full shadow-[0_10px_24px_-10px_rgba(201,168,76,0.8)] disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 transition-transform"
             >
               {submitting ? "Saving…" : "Save entry"}
             </button>
             <Link
               href="/journal"
-              className="flex-1 flex items-center justify-center bg-white border-2 border-btf-text-light/30 text-btf-text-mid font-medium px-8 py-3.5 rounded-full hover:bg-btf-off-white transition-colors"
+              className="flex-1 flex items-center justify-center bg-white/[0.06] border border-white/15 text-[#e9f1f8] font-medium px-8 py-3.5 rounded-full hover:border-btf-gold/40 hover:bg-white/[0.08] transition-colors"
             >
               Cancel
             </Link>

@@ -2,8 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserId } from "../../lib/session";
 import { getTodaySummary, getJourney } from "../../actions/habits";
-import { getCurrentUserFaithRole } from "../../lib/profile";
+import { getCurrentUserFaithRole, getCurrentUserDisplayName } from "../../lib/profile";
 import { signOutUser } from "../../actions/userSession";
+import NameEditor from "./NameEditor";
 
 /**
  * /you — the personal tab (redesign 2026-06-28).
@@ -23,10 +24,11 @@ export default async function YouPage() {
   const userId = await getCurrentUserId();
   if (!userId) redirect("/return");
 
-  const [summaryRes, journeyRes, faithRole] = await Promise.all([
+  const [summaryRes, journeyRes, faithRole, displayName] = await Promise.all([
     getTodaySummary(),
     getJourney(90),
     getCurrentUserFaithRole(),
+    getCurrentUserDisplayName(),
   ]);
   const summary = summaryRes.success ? summaryRes.data : null;
   const journey = journeyRes.success ? journeyRes.data : [];
@@ -42,7 +44,7 @@ export default async function YouPage() {
           <GoldCross className="w-5 h-6" />
         </div>
         <div>
-          <div className="font-serif text-[26px] font-medium leading-tight">You</div>
+          <NameEditor initialName={displayName} />
           <div className="text-xs text-[#8aa0b0] mt-1 flex items-center gap-1.5">
             <span className="text-[11px] text-btf-gold-light bg-btf-gold/[0.14] border border-btf-gold/35 px-2.5 py-0.5 rounded-full">
               {pathLabel}
@@ -57,6 +59,25 @@ export default async function YouPage() {
         <Tile n={daysWithYou} l="days with you" />
         <Tile n={summary?.longestStreak ?? 0} l="best run" />
       </div>
+
+      {/* Your space — index of personal tools + history */}
+      <section className="mt-7">
+        <div className="flex items-baseline justify-between mb-3 px-0.5">
+          <h2 className="font-serif font-medium text-xl">Your space</h2>
+        </div>
+        <div className="rounded-[18px] bg-white/[0.045] border border-white/[0.09] divide-y divide-white/[0.07]">
+          <LinkRow href="/journal" title="Journal" sub="Your writing and past entries" icon={<JournalIcon />} />
+          <LinkRow href="/field-journal" title="Field Journal" sub="Log an urge, or write the day out" icon={<FieldIcon />} />
+          {faithRole !== "secular" && (
+            <LinkRow href="/catholic-path/intentions" title="Prayer Intentions" sub="What you're carrying to God" icon={<GoldCross className="w-[17px] h-5" />} />
+          )}
+          <LinkRow href="/today/grove" title="Your grove" sub="Your progress and milestones" icon={<GroveIcon />} />
+          <LinkRow href="/today/edit" title="Manage habits" sub="Choose your daily habits" icon={<HabitsIcon />} />
+          {faithRole !== "secular" && (
+            <LinkRow href="/you/feed" title="Customize your feed" sub="Themes your daily readings draw from" icon={<TuneIcon />} />
+          )}
+        </div>
+      </section>
 
       {/* Settings (scaffold) */}
       <section className="mt-7">
@@ -139,6 +160,71 @@ function Row({ icon, title, sub }: { icon: React.ReactNode; title: string; sub: 
         <span className="block text-[11px] text-[#8aa0b0] mt-0.5">{sub}</span>
       </span>
     </div>
+  );
+}
+
+function LinkRow({
+  href,
+  title,
+  sub,
+  icon,
+}: {
+  href: string;
+  title: string;
+  sub: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Link href={href} className="flex items-center gap-3.5 px-4 py-3.5 hover:bg-white/[0.03] transition-colors">
+      <span className="flex-none w-[34px] h-[34px] rounded-[10px] grid place-items-center bg-white/[0.06] border border-white/10">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm">{title}</span>
+        <span className="block text-[11px] text-[#8aa0b0] mt-0.5">{sub}</span>
+      </span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8aa0b0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="flex-none">
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+    </Link>
+  );
+}
+
+function JournalIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#cfe0ee" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </svg>
+  );
+}
+function FieldIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#cfe0ee" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </svg>
+  );
+}
+function GroveIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#cfe0ee" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11l9-8 9 8" /><path d="M12 3v18" /><circle cx="12" cy="14" r="3" />
+    </svg>
+  );
+}
+function HabitsIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#cfe0ee" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 6h10M4 12h16M4 18h7" /><circle cx="18" cy="6" r="2" /><circle cx="14" cy="18" r="2" />
+    </svg>
+  );
+}
+function TuneIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#cfe0ee" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3" /><path d="M2 14h4M10 8h4M18 16h4" />
+    </svg>
   );
 }
 

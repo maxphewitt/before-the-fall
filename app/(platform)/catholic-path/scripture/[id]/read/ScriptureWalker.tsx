@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import BackLink from "../../../../_nav/BackLink";
 import { createEntry } from "../../../../../actions/journal";
 import { recordHabitCompletionForCurrentUser } from "../../../../../actions/habits";
 
@@ -12,9 +13,15 @@ import { recordHabitCompletionForCurrentUser } from "../../../../../actions/habi
  * Flow:
  *   - One verse per screen with verse number badge and large serif type.
  *   - Forward/back nav, progress bar.
- *   - After the last verse: reflection prompt + open text field. Save
- *     writes a journal entry (journal_type='reflection'). Skip exits.
- *   - Closing screen with "Read it again" and "Back to library" options.
+ *   - After the last verse, the closing sequence (every completion,
+ *     from any entry point):
+ *       1. "Going deeper" — the passage's `deeper` study paragraph,
+ *          only when present.
+ *       2. Reflection prompt + open text field. Save writes a journal
+ *          entry (journal_type='reflection'). Skip exits.
+ *       3. Closing screen with a "Continue in the Bible" card (when
+ *          the citation resolved to a reader chapter), plus "Read it
+ *          again" and "Back to library" options.
  */
 export default function ScriptureWalker({
   passageId,
@@ -23,6 +30,8 @@ export default function ScriptureWalker({
   translation,
   verses,
   reflectionPrompt,
+  deeper,
+  bibleLink,
 }: {
   passageId: string;
   title: string;
@@ -30,19 +39,30 @@ export default function ScriptureWalker({
   translation: string;
   verses: { number: string; text: string }[];
   reflectionPrompt: string;
+  /** Optional "Going deeper" paragraph (ScripturePassage.deeper). */
+  deeper?: string | null;
+  /** Precomputed by the server page via bibleLinkForCitation(). */
+  bibleLink?: { href: string; label: string } | null;
 }) {
   const router = useRouter();
   const totalVerses = verses.length;
-  const [stepIdx, setStepIdx] = useState(0); // 0..totalVerses-1 = verses; totalVerses = reflection; totalVerses+1 = closing
+  // 0..totalVerses-1 = verses; then (when `deeper` exists) the Going
+  // deeper step; then reflection; then closing.
+  const [stepIdx, setStepIdx] = useState(0);
   const [reflection, setReflection] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [authBlocked, setAuthBlocked] = useState(false);
 
+  const hasDeeper = typeof deeper === "string" && deeper.trim().length > 0;
+  const reflectionIdx = totalVerses + (hasDeeper ? 1 : 0);
+  const closingIdx = reflectionIdx + 1;
+
   const isVerse = stepIdx < totalVerses;
-  const isReflection = stepIdx === totalVerses;
-  const isClosing = stepIdx === totalVerses + 1;
+  const isDeeper = hasDeeper && stepIdx === totalVerses;
+  const isReflection = stepIdx === reflectionIdx;
+  const isClosing = stepIdx === closingIdx;
 
   // Record habit completion exactly once when the user reaches the
   // closing screen. Reflection save (if any) is handled separately.
@@ -60,7 +80,7 @@ export default function ScriptureWalker({
     if (submitting) return;
     const text = reflection.trim();
     if (text.length === 0) {
-      setStepIdx(totalVerses + 1);
+      setStepIdx(closingIdx);
       return;
     }
     setSubmitting(true);
@@ -73,7 +93,7 @@ export default function ScriptureWalker({
       const res = await createEntry(body, "reflection");
       if (res.success) {
         setSaved(true);
-        setStepIdx(totalVerses + 1);
+        setStepIdx(closingIdx);
       } else {
         if (res.error.toLowerCase().includes("not signed in")) {
           setAuthBlocked(true);
@@ -94,15 +114,14 @@ export default function ScriptureWalker({
     const verse = verses[stepIdx];
     const isLast = stepIdx === totalVerses - 1;
     return (
-      <main className="min-h-screen bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white">
+      <main className="min-h-screen bg-gradient-to-b from-btf-deep-night via-btf-sky-deep to-btf-sky text-white">
         <div className="max-w-xl mx-auto px-6 py-8 sm:py-12 min-h-screen flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <Link
-              href={`/catholic-path/scripture/${passageId}`}
+            <BackLink
+              fallbackHref={`/catholic-path/scripture/${passageId}`}
+              label="Exit"
               className="text-white/60 hover:text-white text-xs inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
-            >
-              <span aria-hidden>&larr;</span> Exit
-            </Link>
+            />
             <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
               {title}
             </p>
@@ -152,7 +171,7 @@ export default function ScriptureWalker({
               onClick={() => setStepIdx(stepIdx + 1)}
               className="flex-[2] bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep font-medium px-8 py-3.5 rounded-full shadow-lg hover:-translate-y-0.5 transition-all"
             >
-              {isLast ? "Reflect →" : "Next →"}
+              {isLast ? (hasDeeper ? "Go deeper →" : "Reflect →") : "Next →"}
             </button>
           </div>
 
@@ -164,18 +183,70 @@ export default function ScriptureWalker({
     );
   }
 
+  /* ─── Going deeper step ─── */
+  if (isDeeper) {
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-btf-deep-night via-btf-sky-deep to-btf-sky text-white">
+        <div className="max-w-xl mx-auto px-6 py-8 sm:py-12 min-h-screen flex flex-col">
+          <div className="flex items-center justify-between mb-8">
+            <BackLink
+              fallbackHref={`/catholic-path/scripture/${passageId}`}
+              label="Exit"
+              className="text-white/60 hover:text-white text-xs inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
+            />
+            <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
+              {title}
+            </p>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center">
+            <div className="max-w-lg w-full">
+              <div className="rounded-2xl bg-white/10 border border-white/20 p-6">
+                <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light font-semibold mb-3">
+                  Going deeper
+                </p>
+                <p className="text-[15px] text-white/90 font-light leading-relaxed">
+                  {deeper}
+                </p>
+              </div>
+              <p className="text-[10px] tracking-[0.25em] uppercase text-white/40 font-semibold text-center mt-5">
+                {citation} &middot; {translation}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-12 flex gap-3">
+            <button
+              type="button"
+              onClick={() => setStepIdx(totalVerses - 1)}
+              className="flex-1 bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/30 font-medium px-6 py-3.5 rounded-full transition-all"
+            >
+              &larr; Back
+            </button>
+            <button
+              type="button"
+              onClick={() => setStepIdx(reflectionIdx)}
+              className="flex-[2] bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep font-medium px-8 py-3.5 rounded-full shadow-lg hover:-translate-y-0.5 transition-all"
+            >
+              Reflect →
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   /* ─── Reflection step ─── */
   if (isReflection) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white">
+      <main className="min-h-screen bg-gradient-to-b from-btf-deep-night via-btf-sky-deep to-btf-sky text-white">
         <div className="max-w-xl mx-auto px-6 py-8 sm:py-12 min-h-screen flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <Link
-              href={`/catholic-path/scripture/${passageId}`}
+            <BackLink
+              fallbackHref={`/catholic-path/scripture/${passageId}`}
+              label="Exit"
               className="text-white/60 hover:text-white text-xs inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
-            >
-              <span aria-hidden>&larr;</span> Exit
-            </Link>
+            />
             <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
               {title}
             </p>
@@ -229,7 +300,7 @@ export default function ScriptureWalker({
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <button
               type="button"
-              onClick={() => setStepIdx(totalVerses + 1)}
+              onClick={() => setStepIdx(closingIdx)}
               disabled={submitting}
               className="flex-1 bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/30 font-medium px-6 py-3.5 rounded-full transition-all"
             >
@@ -256,15 +327,14 @@ export default function ScriptureWalker({
   /* ─── Closing screen ─── */
   if (isClosing) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white">
+      <main className="min-h-screen bg-gradient-to-b from-btf-deep-night via-btf-sky-deep to-btf-sky text-white">
         <div className="max-w-xl mx-auto px-6 py-8 sm:py-12 min-h-screen flex flex-col">
           <div className="flex items-center justify-between mb-12">
-            <Link
-              href="/catholic-path/scripture"
+            <BackLink
+              fallbackHref="/catholic-path/scripture"
+              label="Library"
               className="text-white/60 hover:text-white text-xs inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
-            >
-              <span aria-hidden>&larr;</span> Library
-            </Link>
+            />
             <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
               {title}
             </p>
@@ -288,6 +358,19 @@ export default function ScriptureWalker({
           </div>
 
           <div className="space-y-3 mt-12">
+            {bibleLink && (
+              <Link
+                href={bibleLink.href}
+                className="block w-full rounded-2xl bg-white/10 border border-white/20 hover:border-btf-gold/50 px-5 py-4 transition-colors"
+              >
+                <span className="block text-[10px] tracking-[0.25em] uppercase text-btf-gold-light font-semibold">
+                  Continue in the Bible
+                </span>
+                <span className="block text-white/90 font-medium mt-1">
+                  Keep reading — {bibleLink.label} →
+                </span>
+              </Link>
+            )}
             <button
               type="button"
               onClick={() => {

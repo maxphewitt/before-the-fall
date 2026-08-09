@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import BackLink from "../../../_nav/BackLink";
 import StreakChip, { GoldCrossIcon } from "../../../../components/StreakChip";
 import { getDisplayStreak } from "../../../../actions/streaks";
 import type { DisplayStreak } from "../../../../lib/streakTypes";
@@ -36,12 +37,11 @@ export function ToolHeader({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <Link
-        href={`/tools/${toolSlug}`}
+      <BackLink
+        fallbackHref={`/tools/${toolSlug}`}
+        label="Exit"
         className="text-white/60 hover:text-white text-xs inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
-      >
-        <span aria-hidden>&larr;</span> Exit
-      </Link>
+      />
       <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
         {toolName}
       </p>

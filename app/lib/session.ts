@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { supabaseServer } from "./supabase";
 
@@ -21,6 +22,17 @@ import { supabaseServer } from "./supabase";
  * background on every call so /admin/beta-codes can tell which testers
  * are actually using the platform between recovery-code paste events.
  * See scripts/task-33-user-daily-activity.sql.
+ *
+ * Request memoization (2026-08-09): getCurrentUserId() is wrapped in
+ * React's cache(). A single page render can call it 4-6+ times (the
+ * (platform) layout, the page itself, and any profile.ts lookups it
+ * makes) — without memoization that's 4-6 redundant cookie reads AND
+ * 4-6 redundant touchUserActivity() double-writes fired per request.
+ * cache() collapses all of that into one call. Per-request only, never
+ * persisted — safe (unlike unstable_cache, which is the dangerous one
+ * for per-user data). See 06 - Operations/2026-06-28 Next.js
+ * Performance — Findings & Plan. Do NOT wrap setSessionCookie/signOut —
+ * they mutate the cookie and must run fresh every call.
  */
 
 const COOKIE_NAME = "btf_user_id";
@@ -72,8 +84,12 @@ export async function setSessionCookie(
  * still exists in the users table. Callers that need authoritative auth
  * (e.g. journaling, profile reads) should follow this up with a DB lookup
  * and treat a missing row as "signed out, clear the cookie."
+ *
+ * Wrapped in cache() — memoized per request. No caller relies on seeing a
+ * cookie change mid-request (setSessionCookie's two callers never call
+ * this afterward in the same action), so this is safe.
  */
-export async function getCurrentUserId(): Promise<string | null> {
+export const getCurrentUserId = cache(async (): Promise<string | null> => {
   const cookieStore = await cookies();
   const userId = cookieStore.get(COOKIE_NAME)?.value ?? null;
   if (userId) {
@@ -86,7 +102,7 @@ export async function getCurrentUserId(): Promise<string | null> {
     });
   }
   return userId;
-}
+});
 
 /**
  * Bump activity timestamps for the given user.

@@ -59,32 +59,32 @@ export default function DailyScriptureSections({
     <>
       {/* Today's passage */}
       <section className="mb-12" aria-labelledby="today-heading">
-        <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold font-semibold mb-3">
+        <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light font-semibold mb-3">
           Today
         </p>
         <h2
           id="today-heading"
-          className="font-serif text-2xl text-btf-sky-deep font-light mb-2"
+          className="font-serif text-2xl text-white font-light mb-2"
         >
           {todaysPassage.title}
         </h2>
-        <p className="text-xs text-btf-text-light font-light mb-5">
+        <p className="text-xs text-white/70 font-light mb-5">
           {todaysPassage.citation} &middot; {todaysPassage.translation}
         </p>
 
         <Link
           href={`/catholic-path/scripture/${todaysPassage.id}`}
-          className="block rounded-2xl bg-white border-2 border-btf-gold/30 hover:border-btf-gold hover:shadow-md p-6 transition-all"
+          className="block rounded-2xl bg-white/[0.055] border border-btf-gold/30 hover:border-btf-gold/40 hover:bg-white/[0.08] p-6 transition-all"
         >
           {/* No verse preview — the guided read is the experience.
               Just the why-it-was-picked framing + the begin CTA. */}
-          <p className="text-[10px] tracking-[0.2em] uppercase text-btf-sky font-semibold mb-2">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-btf-gold-light font-semibold mb-2">
             For when
           </p>
-          <p className="font-serif italic text-base text-btf-text-mid font-light leading-relaxed mb-4">
+          <p className="font-serif italic text-base text-[#e9f1f8] font-light leading-relaxed mb-4">
             {todaysPassage.when_to_use}
           </p>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-btf-gold font-semibold">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-btf-gold-light font-semibold">
             Read this slowly &rarr;
           </p>
         </Link>
@@ -93,16 +93,16 @@ export default function DailyScriptureSections({
       {/* Liturgical season */}
       {seasonList.length > 0 && (
         <section className="mb-12" aria-labelledby="season-heading">
-          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold font-semibold mb-3">
+          <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light font-semibold mb-3">
             For this season
           </p>
           <h2
             id="season-heading"
-            className="font-serif text-2xl text-btf-sky-deep font-light mb-2"
+            className="font-serif text-2xl text-white font-light mb-2"
           >
             {seasonLabel}
           </h2>
-          <p className="text-sm text-btf-text-mid font-light leading-relaxed mb-5">
+          <p className="text-sm text-white/85 font-light leading-relaxed mb-5">
             {seasonBlurb}
           </p>
           <ul className="space-y-3">
@@ -110,13 +110,13 @@ export default function DailyScriptureSections({
               <li key={p.id}>
                 <Link
                   href={`/catholic-path/scripture/${p.id}`}
-                  className="block rounded-2xl bg-white border border-btf-sky-pale/60 hover:border-btf-sky-light hover:shadow-md p-4 transition-all"
+                  className="block rounded-2xl bg-white/[0.055] border border-white/[0.09] hover:border-btf-gold/40 hover:bg-white/[0.08] p-4 transition-all"
                 >
-                  <p className="font-medium text-btf-sky-deep">{p.title}</p>
-                  <p className="text-xs text-btf-text-light font-light mt-0.5">
+                  <p className="font-medium text-white">{p.title}</p>
+                  <p className="text-xs text-white/70 font-light mt-0.5">
                     {p.citation}
                   </p>
-                  <p className="text-xs text-btf-text-mid font-light mt-1 leading-relaxed">
+                  <p className="text-xs text-[#e9f1f8] font-light mt-1 leading-relaxed">
                     {p.when_to_use}
                   </p>
                 </Link>
@@ -126,20 +126,23 @@ export default function DailyScriptureSections({
         </section>
       )}
 
-      {/* USCCB Mass readings link — date is the user's local date */}
-      <section className="mt-12 rounded-2xl bg-btf-sky-pale/40 border border-btf-sky-pale p-5 text-center">
-        <p className="text-[10px] tracking-[0.25em] uppercase text-btf-sky-deep font-semibold mb-2">
+      {/* USCCB Mass readings link — date is the user's local date. Kept
+          as an external link to USCCB rather than reproduced/rendered on
+          our own (2026-08-04, Max's call) — it's already free and
+          complete there. Styled as a real button, not a bare hyperlink. */}
+      <section className="mt-12 rounded-2xl bg-white/[0.055] border border-white/[0.09] p-5 text-center">
+        <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light font-semibold mb-3">
           For today&rsquo;s Mass
         </p>
         <a
           href={`https://bible.usccb.org/bible/readings/${usccbDate}.cfm`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-btf-sky-deep underline underline-offset-4 font-medium"
+          className="inline-flex items-center gap-2 rounded-full bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep font-medium text-sm px-6 py-3 shadow-lg hover:-translate-y-0.5 transition-all"
         >
-          Read today&rsquo;s actual Mass readings at usccb.org &rarr;
+          Read Today&rsquo;s Mass Readings <span aria-hidden>&rarr;</span>
         </a>
-        <p className="text-xs text-btf-text-mid font-light mt-2 leading-relaxed">
+        <p className="text-xs text-white/70 font-light mt-3 leading-relaxed">
           The library above is a curated set of passages for moments the platform&rsquo;s users actually face. For the daily lectionary, go directly to the USCCB.
         </p>
       </section>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import BackLink from "../../../../_nav/BackLink";
 import { createEntry } from "../../../../../actions/journal";
 import { recordHabitCompletionForCurrentUser } from "../../../../../actions/habits";
 
@@ -99,15 +100,14 @@ export default function PrayerWalker({
     const line = lines[stepIdx];
     const isLast = stepIdx === totalLines - 1;
     return (
-      <main className="min-h-screen bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white">
+      <main className="min-h-screen bg-gradient-to-b from-btf-deep-night via-btf-sky-deep to-btf-sky text-white">
         <div className="max-w-xl mx-auto px-6 py-8 sm:py-12 min-h-screen flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <Link
-              href={`/catholic-path/prayers/${prayerId}`}
+            <BackLink
+              fallbackHref={`/catholic-path/prayers/${prayerId}`}
+              label="Exit"
               className="text-white/60 hover:text-white text-xs inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
-            >
-              <span aria-hidden>&larr;</span> Exit
-            </Link>
+            />
             <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
               {title}
             </p>
@@ -163,15 +163,14 @@ export default function PrayerWalker({
   /* ─── Intention step ─── */
   if (isIntention) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white">
+      <main className="min-h-screen bg-gradient-to-b from-btf-deep-night via-btf-sky-deep to-btf-sky text-white">
         <div className="max-w-xl mx-auto px-6 py-8 sm:py-12 min-h-screen flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <Link
-              href={`/catholic-path/prayers/${prayerId}`}
+            <BackLink
+              fallbackHref={`/catholic-path/prayers/${prayerId}`}
+              label="Exit"
               className="text-white/60 hover:text-white text-xs inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
-            >
-              <span aria-hidden>&larr;</span> Exit
-            </Link>
+            />
             <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
               {title}
             </p>
@@ -241,15 +240,14 @@ export default function PrayerWalker({
   /* ─── Closing screen ─── */
   if (isClosing) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-btf-sky-deep via-btf-sky-deep to-btf-sky text-white">
+      <main className="min-h-screen bg-gradient-to-b from-btf-deep-night via-btf-sky-deep to-btf-sky text-white">
         <div className="max-w-xl mx-auto px-6 py-8 sm:py-12 min-h-screen flex flex-col">
           <div className="flex items-center justify-between mb-12">
-            <Link
-              href="/catholic-path/prayers"
+            <BackLink
+              fallbackHref="/catholic-path/prayers"
+              label="Library"
               className="text-white/60 hover:text-white text-xs inline-flex items-center gap-2 transition-colors uppercase tracking-[0.25em]"
-            >
-              <span aria-hidden>&larr;</span> Library
-            </Link>
+            />
             <p className="text-[10px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold">
               {title}
             </p>

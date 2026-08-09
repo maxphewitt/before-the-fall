@@ -87,7 +87,7 @@ export default function HabitEditClient({
 
       {groups.map((group) => (
         <section key={group.category}>
-          <p className="text-[10px] tracking-[0.25em] uppercase text-btf-text-light font-semibold mb-3">
+          <p className="text-[10px] tracking-[0.25em] uppercase text-white/70 font-semibold mb-3">
             {group.category}
           </p>
           <ul className="space-y-2">
@@ -100,10 +100,10 @@ export default function HabitEditClient({
                 <li
                   key={slug}
                   className={
-                    "rounded-2xl border-2 transition-all " +
+                    "rounded-2xl border transition-all " +
                     (isActive
-                      ? "bg-btf-sky-pale/40 border-btf-sky-light"
-                      : "bg-white border-btf-sky-pale/60")
+                      ? "bg-btf-gold/[0.14] border-btf-gold/30"
+                      : "bg-white/[0.055] border-white/[0.09]")
                   }
                 >
                   <div className="flex items-start gap-3 p-4">
@@ -116,8 +116,8 @@ export default function HabitEditClient({
                       className={
                         "flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all disabled:opacity-50 " +
                         (isActive
-                          ? "bg-btf-sky-deep border-btf-sky-deep text-white"
-                          : "bg-white border-btf-text-light/40 hover:border-btf-sky-light")
+                          ? "bg-btf-gold border-btf-gold text-[#2a2008]"
+                          : "bg-white/[0.06] border-white/30 hover:border-btf-gold/40")
                       }
                     >
                       {isActive && (
@@ -137,21 +137,21 @@ export default function HabitEditClient({
                       )}
                     </button>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-btf-sky-deep">
+                      <p className="font-medium text-[#e9f1f8]">
                         {def.label}
                       </p>
-                      <p className="text-xs text-btf-text-mid font-light leading-relaxed mt-0.5">
+                      <p className="text-xs text-white/70 font-light leading-relaxed mt-0.5">
                         {def.description}
                       </p>
                       <button
                         type="button"
                         onClick={() => setExpanded(isExpanded ? null : slug)}
-                        className="text-[11px] text-btf-sky-deep underline underline-offset-4 mt-2 hover:text-btf-sky"
+                        className="text-[11px] text-btf-gold-light underline underline-offset-4 mt-2 hover:text-btf-gold"
                       >
                         {isExpanded ? "Hide why" : "Why this is recommended"}
                       </button>
                       {isExpanded && (
-                        <p className="text-xs text-btf-text-mid font-light leading-relaxed mt-3 pt-3 border-t border-btf-sky-pale/60 italic">
+                        <p className="text-xs text-white/70 font-light leading-relaxed mt-3 pt-3 border-t border-white/[0.09] italic">
                           {def.why}
                         </p>
                       )}

@@ -4,8 +4,28 @@ import { getCurrentUserId } from "../../lib/session";
 import { getTodaySummary } from "../../actions/habits";
 import { getDisplayStreak } from "../../actions/streaks";
 import { getJourney } from "../../actions/habits";
-import { getCurrentUserFaithRole } from "../../lib/profile";
-import { HABITS, type HabitSlug } from "../../lib/habits";
+import { getCurrentUserFaithRole, getCurrentUserDisplayName, getCurrentUserPopulations, getCurrentUserFeedTopics } from "../../lib/profile";
+import { listHabitSchedules } from "../../actions/habitSchedules";
+import { listNovenaProgress } from "../../actions/novenas";
+import { getCheckInStatus } from "../../actions/checkIns";
+import { getCheckInInvite } from "../../lib/checkIn";
+import { listStartHereCompletions } from "../../actions/startHere";
+import { startHereSessionCount, startHereTrackForRole } from "../../lib/startHere";
+import { getNovenaById } from "../../lib/novenas";
+import { formatScheduleTime } from "../../lib/habitTypes";
+import { OliveBranch } from "../../components/OliveBranch";
+import { HABITS, mapOnboardingPopulation, type HabitSlug, type PopulationSlug } from "../../lib/habits";
+import type { ScriptureTheme } from "../../lib/scripture";
+import {
+  ALL_THEMES,
+  scriptureThemesFor,
+  prayerTagsFor,
+  daySeed,
+  recommendScripture,
+  recommendPrayer,
+  recommendRosary,
+} from "../../lib/recommend";
+import HeroClient, { type HeroRec } from "./HeroClient";
 
 /**
  * /home — the post-login daily hub (redesign 2026-06-28).
@@ -42,16 +62,107 @@ export default async function HomePage() {
   const userId = await getCurrentUserId();
   if (!userId) redirect("/return");
 
-  const [summaryRes, journeyRes, streak, faithRole] = await Promise.all([
+  const [summaryRes, journeyRes, streak, faithRole, displayName, schedulesRes, populations, feedTopics, novenaProgressRes, checkInRes, startHereRes] = await Promise.all([
     getTodaySummary(),
     getJourney(90),
     getDisplayStreak(),
     getCurrentUserFaithRole(),
+    getCurrentUserDisplayName(),
+    listHabitSchedules(),
+    getCurrentUserPopulations(),
+    getCurrentUserFeedTopics(),
+    listNovenaProgress(),
+    getCheckInStatus(),
+    // Both tracks in one query, filtered by track below once faith_role
+    // is known — keeps this out of a serial round trip (perf plan #6).
+    listStartHereCompletions(),
   ]);
+
+  // Check-in invite — shown only when the user is returning after time
+  // away (tier ≠ none) and hasn't checked in today. Never mentions how
+  // long they were gone (welfare check, not attendance record). Fails
+  // quiet: any status error simply hides the card.
+  const checkInTier =
+    checkInRes.success &&
+    checkInRes.data.tier !== "none" &&
+    !checkInRes.data.alreadyCheckedInToday
+      ? checkInRes.data.tier
+      : null;
+  const checkInInvite = checkInTier ? getCheckInInvite(checkInTier) : null;
+
+  // Start Here — the pinned orientation card. First position until every
+  // session is complete, then it disappears (the module card on the path
+  // landing remains for revisits). Never a gate; fails quiet if the
+  // progress table isn't migrated yet (task-54).
+  const startHereTrack = startHereTrackForRole(faithRole);
+  const startHereTotal = startHereSessionCount(startHereTrack);
+  const startHereDone = startHereRes.success
+    ? startHereRes.data.filter((r) => r.track === startHereTrack).length
+    : null;
+  const showStartHere = startHereDone !== null && startHereDone < startHereTotal;
+
+  // In-progress novenas power the Novena day tracker above Daily habits.
+  const inProgressNovenas = (novenaProgressRes.success ? novenaProgressRes.data : [])
+    .filter((p) => !p.completed)
+    .map((p) => ({ p, novena: getNovenaById(p.novenaId) }))
+    .filter((x): x is { p: typeof x.p; novena: NonNullable<typeof x.novena> } => !!x.novena);
 
   const summary = summaryRes.success ? summaryRes.data : null;
   const journey = journeyRes.success ? journeyRes.data : [];
   const secular = faithRole === "secular";
+  const scheduleMap = new Map(
+    (schedulesRes.success ? schedulesRes.data : []).map((s) => [s.habitSlug, s.scheduledTime])
+  );
+
+  // Personalized daily recommendations from what the user is working on
+  // (their onboarding populations → themes/tags). Specific + deep-linked.
+  const popSlugs = populations
+    .map(mapOnboardingPopulation)
+    .filter((p): p is PopulationSlug => p !== null);
+  const seed = daySeed();
+  const extraThemes = feedTopics.filter(
+    (t): t is ScriptureTheme => (ALL_THEMES as readonly string[]).includes(t)
+  );
+  const scriptureRec = recommendScripture(scriptureThemesFor(popSlugs, extraThemes), seed);
+  const prayerRec = recommendPrayer(prayerTagsFor(popSlugs), seed);
+  const rosaryRec = recommendRosary();
+
+  // Deep-link + specific sub-label for the three Catholic daily habits.
+  const recForHabit: Partial<Record<HabitSlug, { href: string; sub: string }>> = {
+    rosary: { href: rosaryRec.href, sub: `${rosaryRec.adjective} Mysteries` },
+    scripture: scriptureRec ? { href: scriptureRec.href, sub: scriptureRec.title } : undefined,
+    prayer: prayerRec ? { href: prayerRec.href, sub: prayerRec.title } : undefined,
+  };
+
+  // Hero candidates (server resolves content; HeroClient picks by local hour).
+  const morning: HeroRec = {
+    eyebrow: "This morning · Scripture",
+    title: scriptureRec?.title ?? "Begin the day with Scripture",
+    time: "5 min",
+    tag: "Faith path",
+    href: scriptureRec?.href ?? "/catholic-path/scripture",
+  };
+  const afternoon: HeroRec = {
+    eyebrow: "This afternoon · Rosary",
+    title: `Pray the ${rosaryRec.adjective} Mysteries`,
+    time: "20 min",
+    tag: "Faith path",
+    href: rosaryRec.href,
+  };
+  const evening: HeroRec = {
+    eyebrow: "This evening · Prayer",
+    title: prayerRec?.title ?? "Close the day in prayer",
+    time: "5 min",
+    tag: "Faith path",
+    href: prayerRec?.href ?? "/catholic-path/prayers",
+  };
+  const secularRec: HeroRec = {
+    eyebrow: "A steadying moment",
+    title: "Take a slow, steadying breath",
+    time: "4 min",
+    tag: "For you",
+    href: "/tools/box-breathing/start",
+  };
 
   // Which Catholic devotions the user actually carries, with done state.
   const completedSlugs = new Set(
@@ -65,80 +176,153 @@ export default async function HomePage() {
   // Calm cumulative metric + today's journey day.
   const daysWithYou = journey.filter((d) => d.completions > 0).length;
   const journeyDayNumber = journey.length; // 90-day window length
-  const hero = heroFor(new Date().getHours(), secular);
 
   return (
     <main className="mx-auto w-full max-w-[480px] md:max-w-[600px] px-[18px]">
-      {/* Top strip */}
-      <header className="flex items-center justify-between pt-6 pb-3.5 px-0.5">
-        <div>
-          <div className="font-serif text-[26px] font-medium leading-tight">
-            {greeting()}
-          </div>
-          <div className="text-xs uppercase tracking-[0.06em] text-[#8aa0b0] mt-1">
-            {longDate()}
-          </div>
-        </div>
-        {streak && (
-          <Link
-            href="/today/grove"
-            className="flex items-center gap-1.5 text-[13px] text-[#cfe0ee] bg-white/[0.06] border border-white/10 rounded-full px-2.5 py-1.5"
-          >
-            <GoldCross className="w-3 h-4" />
-            <span className="text-btf-gold-light font-bold">{streak.value}</span>
-          </Link>
-        )}
-      </header>
+      {/* Start Here — pinned first for new accounts until the orientation
+          is complete. A doorway, never a gate. */}
+      {showStartHere && (
+        <Link
+          href="/start-here"
+          className="mt-6 flex items-center gap-4 rounded-[20px] p-[18px] border border-btf-gold/40 bg-[radial-gradient(120%_120%_at_20%_0%,rgba(201,168,76,0.28),transparent_55%),linear-gradient(160deg,rgba(26,111,168,0.5),rgba(10,26,42,0.8))] hover:border-btf-gold/60 transition-colors"
+        >
+          <span className="flex-none w-11 h-11 rounded-xl grid place-items-center bg-btf-gold/[0.18] border border-btf-gold/35">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#e8cc7a"
+              strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[10px] tracking-[0.22em] uppercase text-btf-gold-light font-semibold">
+              Start Here
+            </span>
+            <span className="block font-serif text-[18px] leading-tight mt-0.5">
+              {startHereDone === 0
+                ? "Before anything else — a short orientation."
+                : `Continue the orientation — session ${startHereDone + 1} of ${startHereTotal}.`}
+            </span>
+          </span>
+          <span className="flex-none text-btf-gold-light" aria-hidden>
+            &rarr;
+          </span>
+        </Link>
+      )}
 
-      {/* Hero — Today */}
-      <section className="relative rounded-[24px] overflow-hidden mt-1.5 p-[22px] border border-btf-gold/30 shadow-[0_18px_50px_-20px_rgba(0,0,0,0.7)] bg-[radial-gradient(120%_90%_at_80%_0%,rgba(201,168,76,0.28),transparent_55%),linear-gradient(160deg,rgba(26,111,168,0.55),rgba(13,79,124,0.65)_70%,rgba(10,26,42,0.85))]">
-        <div className="flex items-center gap-2 font-cinzel text-[11px] tracking-[0.18em] uppercase text-btf-gold-light">
-          <GoldCross className="w-3 h-[15px]" />
-          {hero.eyebrow}
-        </div>
-        <h1 className="font-serif font-medium text-[30px] leading-[1.12] mt-3 mb-2">
-          {hero.title}
-        </h1>
-        <div className="flex flex-wrap items-center gap-2.5 text-[13px] text-[#d4e3f0] mb-[18px]">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-xs">
-            <ClockIcon /> {hero.time}
+      {/* Check-in invite — top of the column, above the hero. Non-blocking:
+          a warm doorway the user can walk past, never a gate. */}
+      {checkInInvite && (
+        <Link
+          href="/check-in"
+          className="mt-6 flex items-center gap-4 rounded-[20px] p-[18px] border border-btf-gold/30 bg-[radial-gradient(120%_120%_at_80%_0%,rgba(201,168,76,0.22),transparent_55%),linear-gradient(160deg,rgba(26,111,168,0.45),rgba(10,26,42,0.75))] hover:border-btf-gold/50 transition-colors"
+        >
+          <span className="flex-none w-11 h-11 rounded-xl grid place-items-center bg-btf-gold/[0.18] border border-btf-gold/35">
+            <CheckInIcon />
           </span>
-          <span
-            className={
-              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs " +
-              (secular
-                ? "bg-white/10 border border-white/15"
-                : "bg-btf-gold/15 border border-btf-gold/40 text-btf-gold-light")
-            }
-          >
-            {hero.tag}
+          <span className="min-w-0 flex-1">
+            <span className="block font-serif text-[18px] leading-tight">
+              {checkInInvite.title}
+            </span>
+            <span className="block text-[12px] text-[#cddcea] mt-1 leading-snug">
+              {checkInInvite.body}
+            </span>
           </span>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <Link
-            href={hero.href}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-[14px] py-3.5 px-[18px] font-bold text-[15px] text-[#2a2008] bg-gradient-to-b from-btf-gold-light to-btf-gold shadow-[0_10px_24px_-10px_rgba(201,168,76,0.8)] transition-transform hover:-translate-y-0.5"
-          >
-            Begin
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="#2a2008"><path d="M8 5v14l11-7z" /></svg>
-          </Link>
-          <Link href="/explore" className="text-[13px] text-[#cfe0ee] underline underline-offset-[3px] px-1.5 py-2">
-            Choose another
-          </Link>
-        </div>
-      </section>
+          <span className="flex-none inline-flex items-center gap-1.5 rounded-full bg-gradient-to-b from-btf-gold-light to-btf-gold text-[#2a2008] font-semibold text-[13px] px-4 py-2">
+            Take a minute
+          </span>
+        </Link>
+      )}
+
+      {/* Time-aware greeting + hero (client picks by the user's local hour) */}
+      <HeroClient
+        name={displayName}
+        secular={secular}
+        morning={morning}
+        afternoon={afternoon}
+        evening={evening}
+        secularRec={secularRec}
+        streakValue={streak ? streak.value : null}
+      />
+
+      {/* Novena day tracker — in-progress novenas, above Daily habits */}
+      {inProgressNovenas.length > 0 && (
+        <Section title={inProgressNovenas.length === 1 ? "Your novena" : "Your novenas"} actionLabel="All novenas" actionHref="/catholic-path/novenas">
+          <div className="space-y-3">
+            {inProgressNovenas.map(({ p, novena }) => {
+              const dayN = Math.min(p.currentDay, 9);
+              const label = novena.title.replace(/^Novena to (the )?/, "");
+              const time = formatScheduleTime(p.reminderTime);
+              return (
+                <Link
+                  key={novena.id}
+                  href={`/catholic-path/novenas/${novena.id}/${dayN}`}
+                  className="block rounded-[20px] p-[18px] border border-btf-gold/25 bg-gradient-to-br from-btf-sky-deep/60 to-btf-deep-night/70 hover:border-btf-gold/45 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <div className="font-serif text-[19px] leading-tight">{label}</div>
+                      <div className="text-[12px] text-[#9fb6c8] mt-0.5">
+                        Day {dayN} of 9{time ? ` · ${time}` : ""}
+                      </div>
+                    </div>
+                    <span className="flex-none inline-flex items-center gap-1.5 rounded-full bg-gradient-to-b from-btf-gold-light to-btf-gold text-[#2a2008] font-semibold text-[13px] px-4 py-2">
+                      Continue
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#2a2008"><path d="M8 5v14l11-7z" /></svg>
+                    </span>
+                  </div>
+                  {/* 9-day tracker */}
+                  <div className="flex items-center gap-1.5">
+                    {Array.from({ length: 9 }).map((_, i) => {
+                      const dayIndex = i + 1;
+                      const done = dayIndex <= p.completedDays;
+                      const isCurrent = dayIndex === dayN && !done;
+                      return (
+                        <span
+                          key={i}
+                          className={
+                            "h-2 flex-1 rounded-full " +
+                            (done
+                              ? "bg-gradient-to-r from-btf-gold to-btf-gold-light"
+                              : isCurrent
+                                ? "bg-white/25 ring-1 ring-btf-gold-light/60"
+                                : "bg-white/10")
+                          }
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="text-[11px] text-[#9fb6c8] mt-2">
+                    {p.completedDays} of 9 days prayed — a missed day never resets it.
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </Section>
+      )}
 
       {/* Daily habits */}
-      <Section title="Daily habits" actionLabel="Set times" actionHref="/today/edit">
+      <Section title="Daily habits" actionLabel="Set times" actionHref="/today/schedule">
         <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none]">
           {dailyHabitSlugs.map((slug) => {
             const def = HABITS[slug];
             const done = completedSlugs.has(slug);
+            const time = formatScheduleTime(scheduleMap.get(slug) ?? null);
+            const rec = recForHabit[slug];
             return (
               <Link
                 key={slug}
-                href={def.beginHref}
-                className="flex-none w-[152px] p-[15px] rounded-[18px] bg-white/[0.055] border border-white/[0.09] flex flex-col gap-2.5"
+                href={rec?.href ?? def.beginHref}
+                className="flex-none w-[168px] p-[15px] rounded-[18px] bg-white/[0.055] border border-white/[0.09] flex flex-col gap-2"
               >
                 <span
                   className={
@@ -151,8 +335,17 @@ export default async function HomePage() {
                   <DevotionIcon slug={slug} />
                 </span>
                 <span className="text-sm font-medium leading-tight">{def.label}</span>
-                <span className="text-[11px] text-[#8aa0b0]">Set a time</span>
-                <span className={"text-[11px] flex items-center gap-1.5 " + (done ? "text-btf-gold-light" : "text-[#9fb6c8]")}>
+                {rec && (
+                  <span className="text-[12px] text-[#cfe0ee] leading-snug line-clamp-2">{rec.sub}</span>
+                )}
+                {time ? (
+                  <span className="text-[11px] text-btf-gold-light inline-flex items-center gap-1">
+                    <ClockIcon /> {time}
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-[#8aa0b0]">Set a time</span>
+                )}
+                <span className={"text-[11px] flex items-center gap-1.5 mt-auto " + (done ? "text-btf-gold-light" : "text-[#9fb6c8]")}>
                   {done ? <><CheckMini /> Done today</> : <><PlusMini /> In your day</>}
                 </span>
               </Link>
@@ -168,7 +361,9 @@ export default async function HomePage() {
         </div>
         {dailyHabitSlugs.length === 0 && (
           <p className="text-xs text-[#9fb6c8] px-0.5 -mt-1">
-            No daily habits yet. Add a prayer or devotion and pick a time to do it.
+            {secular
+              ? "No daily habits yet. Add a steadying practice — a breath, a reflection — and pick a time to do it."
+              : "No daily habits yet. Add a prayer or devotion and pick a time to do it."}
           </p>
         )}
       </Section>
@@ -228,9 +423,36 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Field Journal */}
+      <Link
+        href="/field-journal"
+        className="mt-7 flex items-center gap-4 rounded-[20px] p-5 bg-white/[0.055] border border-white/[0.09] hover:border-btf-gold/40 hover:bg-white/[0.08] transition-all"
+      >
+        <span className="flex-none w-11 h-11 rounded-xl grid place-items-center bg-btf-gold/[0.14] border border-btf-gold/30">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#e8cc7a" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            <path d="M9 7h7M9 11h5" />
+          </svg>
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-serif text-[18px] leading-tight">Field Journal</span>
+          <span className="block text-[12px] text-[#9fb6c8] mt-0.5">
+            Log an urge, or write the day out.
+          </span>
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9fb6c8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="flex-none">
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      </Link>
+
       {/* Close the day */}
       <section className="mt-7 mb-2 rounded-[20px] p-5 text-center border border-dashed border-btf-gold/30 bg-[radial-gradient(120%_120%_at_50%_0%,rgba(201,168,76,0.14),transparent_60%)]">
-        <GoldCross className="w-[22px] h-[27px] mx-auto" />
+        {secular ? (
+          <OliveBranch className="w-[22px] h-[27px] mx-auto" />
+        ) : (
+          <GoldCross className="w-[22px] h-[27px] mx-auto" />
+        )}
         <h3 className="font-serif text-[21px] font-medium mt-2.5 mb-1.5">
           Close the day in your own words
         </h3>
@@ -243,6 +465,11 @@ export default async function HomePage() {
         >
           Open journal
         </Link>
+        <div className="mt-3">
+          <Link href="/journal" className="text-[13px] text-btf-gold-light underline underline-offset-4">
+            View past entries
+          </Link>
+        </div>
       </section>
     </main>
   );
@@ -276,68 +503,6 @@ function Section({
   );
 }
 
-type Hero = {
-  eyebrow: string;
-  title: string;
-  time: string;
-  tag: string;
-  href: string;
-};
-
-function heroFor(hour: number, secular: boolean): Hero {
-  if (secular) {
-    const evening = hour >= 17 || hour < 5;
-    return {
-      eyebrow: evening ? "This evening" : "Right now",
-      title: evening ? "Wind down with a slow breath" : "Take a steadying moment",
-      time: "4 min",
-      tag: "For you",
-      href: "/tools/box-breathing/start",
-    };
-  }
-  if (hour >= 5 && hour < 12) {
-    return {
-      eyebrow: "This morning",
-      title: "Begin the day with Scripture",
-      time: "8 min",
-      tag: "Faith path",
-      href: "/catholic-path/scripture",
-    };
-  }
-  if (hour >= 12 && hour < 17) {
-    return {
-      eyebrow: "Midday",
-      title: "Pray today's mystery of the Rosary",
-      time: "18 min",
-      tag: "Faith path",
-      href: "/catholic-path/rosary",
-    };
-  }
-  return {
-    eyebrow: hour >= 21 || hour < 5 ? "Night prayer" : "This evening",
-    title: "Close the day in prayer",
-    time: "6 min",
-    tag: "Faith path",
-    href: "/catholic-path/prayers",
-  };
-}
-
-function greeting(): string {
-  const h = new Date().getHours();
-  if (h < 5) return "Peace tonight.";
-  if (h < 12) return "Good morning.";
-  if (h < 17) return "Good afternoon.";
-  if (h < 21) return "Good evening.";
-  return "Peace tonight.";
-}
-
-function longDate(): string {
-  return new Date().toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 /* ── inline icons (SVG only; no emoji/dingbats) ── */
 
@@ -373,6 +538,14 @@ function PlusCircle() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e8cc7a" strokeWidth={1.8} strokeLinecap="round">
       <circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" />
+    </svg>
+  );
+}
+function CheckInIcon() {
+  return (
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#e8cc7a" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 21s-7-4.3-9.3-8.2C1 10 2.8 6.6 6.2 6.6c2 0 3.4 1.1 5.8 3.4 2.4-2.3 3.8-3.4 5.8-3.4 3.4 0 5.2 3.4 3.5 6.2C19 16.7 12 21 12 21z" />
+      <path d="m8.5 12.5 2.2 2.2 4.8-4.8" />
     </svg>
   );
 }

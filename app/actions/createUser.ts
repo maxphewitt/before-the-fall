@@ -18,6 +18,8 @@ export type ProfileData = {
   support_level: string;
   duration: string;
   discovery: string;
+  /** Optional chosen nickname — NOT identity. Freely editable later. */
+  display_name?: string;
 };
 
 export type CreateUserResult =
@@ -93,6 +95,7 @@ export async function createUser(
         support_level: profile.support_level,
         duration: profile.duration,
         discovery: profile.discovery,
+        display_name: profile.display_name?.trim().slice(0, 40) || null,
       });
 
     if (profileError) {

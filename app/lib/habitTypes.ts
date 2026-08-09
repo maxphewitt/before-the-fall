@@ -44,6 +44,29 @@ export function startOfDayISO(d: Date): string {
 }
 
 /**
+ * A user's scheduled time-of-day for a habit (task-41). scheduledTime is a
+ * local wall-clock "HH:MM" (or null if the habit is in their day but has no
+ * time yet). Purely a when-to-do-it layer — does not affect streak/journey.
+ */
+export type HabitSchedule = {
+  habitSlug: HabitSlug;
+  scheduledTime: string | null;
+  active: boolean;
+};
+
+/** Format a "HH:MM" (or "HH:MM:SS") 24h string as a friendly "8:00 AM". */
+export function formatScheduleTime(hhmm: string | null): string | null {
+  if (!hhmm) return null;
+  const [hStr, mStr] = hhmm.split(":");
+  const h = Number(hStr);
+  const m = Number(mStr);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  const period = h < 12 ? "AM" : "PM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+/**
  * Pure streak math. Given a set of YYYY-MM-DD strings representing
  * days with at least one habit completion, compute:
  *   - currentStreak: consecutive days ending TODAY (0 if today not done)

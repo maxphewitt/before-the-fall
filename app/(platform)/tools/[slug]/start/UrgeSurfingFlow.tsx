@@ -1050,7 +1050,7 @@ function JournalScreen({
       </button>
       <div className="mt-4">
         <Link
-          href="/today/waves"
+          href="/today/grove"
           className="block bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/30 rounded-2xl px-5 py-4 transition-all text-center"
         >
           <p className="font-medium text-white">See the waves you&rsquo;ve ridden &rarr;</p>

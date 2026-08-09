@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getPassageById, PASSAGES } from "../../../../../lib/scripture";
+import { bibleLinkForCitation } from "../../../../../lib/bibleLink";
 import ScriptureWalker from "./ScriptureWalker";
 
 /**
@@ -28,6 +29,11 @@ export default async function ScriptureReadPage({
   const passage = getPassageById(id);
   if (!passage) notFound();
 
+  // "Continue in the Bible" target for the walker's closing screen.
+  // Parsed server-side (bible.ts touches the filesystem); null hides
+  // the card.
+  const link = bibleLinkForCitation(passage.citation);
+
   return (
     <ScriptureWalker
       passageId={passage.id}
@@ -36,6 +42,15 @@ export default async function ScriptureReadPage({
       translation={passage.translation}
       verses={passage.verses}
       reflectionPrompt={passage.reflection_prompt}
+      deeper={passage.deeper ?? null}
+      bibleLink={
+        link
+          ? {
+              href: `/catholic-path/bible/${link.slug}/${link.chapter}`,
+              label: link.label,
+            }
+          : null
+      }
     />
   );
 }
