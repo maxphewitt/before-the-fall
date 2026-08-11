@@ -44,12 +44,14 @@ export default function WhoWeAre() {
             Who we are
           </h2>
           <p className="text-btf-text-mid font-light leading-relaxed">
-            Before the Fall is a faith-rooted prevention platform built to reach
-            people before harm is done &mdash; not after. Almost every system in
-            this country activates after a crime, a relapse, or a tragedy. We
-            exist for the moment before that. We believe every person is
-            redeemable, and that the most powerful intervention happens before
-            an irreversible line is crossed.
+            Before the Fall is a faith-rooted wellness platform for people
+            carrying struggles they never chose &mdash; unwanted urges, anxiety,
+            depression, anger that keeps winning, the weight of what someone
+            else did to them. Almost every resource in this country activates
+            after a fall: after the relapse, the broken relationship, the
+            crisis. We exist for the moment before that, when a person still has
+            the chance to choose a different day. We believe in reaching people
+            early, while hope is cheapest and change is most possible.
           </p>
         </section>
 
@@ -76,10 +78,10 @@ export default function WhoWeAre() {
             We do not ask for your name, email, or phone number. Returning users
             access their saved progress through a recovery code only they hold.
             We are not, however, zero-knowledge anonymous. We keep just enough
-            records &mdash; hashed IP, timestamps, user agent &mdash; to honor
-            lawful subpoenas, dispatch a 988 response if your content suggests
-            imminent self-harm, and report content covered by the National
-            Center for Missing &amp; Exploited Children.
+            records &mdash; hashed IP, timestamps, user agent &mdash; to send
+            real help in a crisis (a 988 response if your content suggests you
+            are in immediate danger), to honor lawful legal process, and to meet
+            our child-safety reporting obligations.
           </p>
           <p className="text-btf-text-mid font-light leading-relaxed">
             We do not sell, trade, or share your data with advertisers, ever. The
@@ -93,39 +95,42 @@ export default function WhoWeAre() {
             Our compliance
           </h2>
           <p className="text-btf-text-mid font-light leading-relaxed mb-4">
-            Before the Fall serves people standing in the moment before harm
-            across six kinds of struggle: pornography or sexual compulsion,
-            substance use, self-harm or suicidal ideation, relationship abuse on
-            either side of it, depression or anxiety, and the wide range of
-            distress that doesn&rsquo;t fit a clean category. The platform&rsquo;s
-            response is calibrated to what&rsquo;s disclosed.
+            Before the Fall walks with people through the ordinary, human
+            struggles that quietly take over a life: unwanted or
+            self-destructive urges and compulsions, substance use, anxiety and
+            depression, anger that strains the people closest to them, the long
+            road of healing after abuse, and the wide range of distress that
+            doesn&rsquo;t fit a clean category. Different struggles need
+            different care, so the platform&rsquo;s support is calibrated to
+            what each person shares.
           </p>
           <p className="text-btf-text-mid font-light leading-relaxed mb-4">
-            When a disclosure suggests imminent self-harm or suicide, the
-            platform routes the user to the 988 Suicide &amp; Crisis Lifeline
-            and, where indicated, dispatches trained crisis support. When a
-            disclosure involves a specific threat to another person, the matter
-            is escalated to local law enforcement. When disclosures involve
-            sexual content involving minors or risk of harm to a child, a
-            CyberTipline report is filed with the National Center for Missing
-            &amp; Exploited Children, and the relevant authorities are contacted
-            under our duty to report suspected child abuse (Texas Family Code
-            &sect;261.101).
+            Part of caring for people well is being ready for the hardest
+            moments. If someone tells us they are close to hurting themselves,
+            we connect them with the 988 Suicide &amp; Crisis Lifeline and,
+            where indicated, trained crisis support &mdash; because a platform
+            that only watches is not a platform that cares. If a disclosure
+            makes us fear for someone else&rsquo;s immediate safety, we bring in
+            the appropriate authorities, as any counselor, teacher, or pastor
+            would.
           </p>
           <p className="text-btf-text-mid font-light leading-relaxed mb-4">
-            When a disclosure involves domestic violence &mdash; whether the user
-            is in danger or causing harm &mdash; the National Domestic Violence
-            Hotline is engaged, along with local protective services where a
-            child is involved. Substance crisis is routed to SAMHSA&rsquo;s
-            National Helpline. Depression and anxiety disclosures are met first
-            with the platform&rsquo;s clinical Tier 1 tools, with the 988 pathway
-            available the moment a disclosure crosses into self-harm.
+            The same is true for the people around our users. Where a child&rsquo;s
+            safety is at risk, we honor our legal duty to report (Texas Family
+            Code &sect;261.101) and the CyberTipline of the National Center for
+            Missing &amp; Exploited Children. When someone tells us home
+            doesn&rsquo;t feel safe, we connect them with the National Domestic
+            Violence Hotline; substance crises are routed to SAMHSA&rsquo;s
+            National Helpline; and anxiety or depression is met first with the
+            platform&rsquo;s clinical tools, with the 988 pathway one tap away
+            if it ever deepens.
           </p>
           <p className="text-btf-text-mid font-light leading-relaxed">
-            These responses are documented in our Mandatory Reporting Escalation
-            Protocol, reviewed by counsel and updated as Texas law evolves. We
-            take child safety with absolute seriousness, and our compliance
-            posture reflects that.
+            All of this is documented in a written escalation protocol, reviewed
+            by counsel and kept current as the law evolves. It exists for the
+            same reason the rest of the platform does: so that the people who
+            trust us &mdash; and the people around them &mdash; are safer
+            because we were there.
           </p>
         </section>
       </div>
