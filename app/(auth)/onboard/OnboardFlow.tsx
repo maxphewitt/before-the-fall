@@ -11,66 +11,72 @@ import { lookupLovedOneIntake } from "../../actions/lovedOne";
 
 type Option<T extends string = string> = { value: T; label: string; description?: string };
 
-const Q1_FRAMING: Option[] = [
-  { value: "intrusive_thoughts", label: "Intrusive thoughts I can't shake" },
-  { value: "pattern", label: "A pattern I keep falling back into" },
-  { value: "loved_one", label: "Someone I love is in trouble" },
-  { value: "starting", label: "I just need somewhere safe to start" },
-];
+/* Repositioned 2026-09-21 (vault: 07 - Content / 2026-09-21 The Great
+   Repositioning — Spec v1). The front door now welcomes the skeptical,
+   the curious, and the returning — not only the struggling. Question
+   order: faith first. The populations question survives (it still
+   drives habit defaults, safety scanning, and collections — stored
+   values UNCHANGED) but is optional, softened, and skippable via
+   "Mostly I'm here to explore" (stores ["other"]). support_level is no
+   longer asked; it defaults to self_guided. Old accounts' answers were
+   remapped by scripts/task-56-repositioning.sql. */
 
-const Q2_POPULATIONS: Option[] = [
-  { value: "porn", label: "Pornography or sexual compulsion" },
-  { value: "substance", label: "Substance use" },
-  { value: "self_harm", label: "Self-harm or thoughts of suicide" },
-  { value: "relationship_abuse", label: "Abuse in a relationship — giving or receiving" },
-  { value: "depression_anxiety", label: "Depression or anxiety" },
-  { value: "other", label: "Something else, or I'd rather not say right now" },
-];
-
-const Q3_EMOTIONAL: Option[] = [
-  { value: "heavy", label: "Heavy. Ashamed. Mostly alone." },
-  { value: "afraid", label: "Afraid of what I might do next" },
-  { value: "tired", label: "Tired of trying and not getting anywhere" },
-  { value: "ready", label: "Ready for something to change" },
-];
-
-const Q4_FAITH: Option[] = [
+const Q1_FAITH: Option[] = [
   {
-    value: "growing_closer",
-    label: "I want to grow closer to God",
-    description: "Whether my faith is distant or active right now",
+    value: "secular",
+    label: "Skeptical — but something made me open this",
+    description: "Start with the practical tools and wisdom library; the faith side waits until you want it",
   },
   {
     value: "open",
-    label: "I'm open to where He might meet me here",
-    description: "I'm curious or seeking",
+    label: "On the fence — curious, asking questions",
+    description: "Explore prayer, Scripture, and what Catholics actually believe, with nothing assumed",
   },
   {
-    value: "secular",
-    label: "Not for me — I just need real-world tools and accountability",
+    value: "growing_closer",
+    label: "New to it, coming back, or ready to go deeper",
+    description: "Whether it's been twenty years or twenty minutes since you last prayed",
   },
 ];
 
-const Q5_SUPPORT: Option[] = [
-  { value: "self_guided", label: "Tools I can use on my own, in private", description: "Tier 1 — available now" },
-  { value: "community", label: "A community of people walking the same road", description: "Tier 2 — coming soon" },
-  { value: "professional", label: "A real licensed professional to talk to", description: "Tier 3 — coming soon" },
-  { value: "urgent", label: "I need help right now — show me crisis resources" },
+const Q2_DREW: Option[] = [
+  { value: "understand_beliefs", label: "I want to understand what Catholics actually believe" },
+  { value: "learn_pray", label: "I want to learn to pray" },
+  { value: "something_missing", label: "Something is missing and I'm trying to name it" },
+  { value: "carrying_something", label: "I'm carrying something I want to lay down" },
+  { value: "invited", label: "Someone invited me to look" },
 ];
 
-const Q6_DURATION: Option[] = [
-  { value: "recent", label: "Recently — it just escalated" },
+const Q3_POPULATIONS: Option[] = [
+  { value: "porn", label: "A habit or compulsion I can't shake loose" },
+  { value: "substance", label: "Drinking or substance use" },
+  { value: "self_harm", label: "Dark or hopeless thoughts" },
+  { value: "relationship_abuse", label: "Hurt happening at home" },
+  { value: "depression_anxiety", label: "Anxiety, or a low that won't lift" },
+  { value: "other", label: "Something else, or I'd rather not say right now" },
+];
+
+const Q4_HOPE: Option[] = [
+  { value: "understand_faith", label: "Understanding the faith well enough to decide for myself" },
+  { value: "prayer_life", label: "A real prayer life" },
+  { value: "peace_with_past", label: "Peace with something in my past" },
+  { value: "back_to_sacraments", label: "Getting back to the sacraments" },
+  { value: "dont_know", label: "I honestly don't know yet — that's why I'm here" },
+];
+
+const Q5_DURATION: Option[] = [
+  { value: "recent", label: "This is new — something just happened" },
   { value: "months", label: "A few months" },
   { value: "year_or_two", label: "A year or two" },
   { value: "many_years", label: "Many years" },
-  { value: "forever", label: "As long as I can remember" },
+  { value: "forever", label: "Most of my life" },
 ];
 
-const Q7_DISCOVERY: Option[] = [
-  { value: "searching", label: "I was searching for help and found Before the Fall" },
+const Q6_DISCOVERY: Option[] = [
+  { value: "searching", label: "I was searching and found Before the Fall" },
   { value: "referral", label: "Someone I trust pointed me here" },
-  { value: "trigger_event", label: "Something just happened that scared me" },
-  { value: "thinking_about_it", label: "I've been thinking about reaching out for a while" },
+  { value: "trigger_event", label: "Something just happened that made me look" },
+  { value: "thinking_about_it", label: "I've been circling this for a while" },
   { value: "unsure", label: "I'm not sure — I just needed to do something" },
 ];
 
@@ -78,18 +84,16 @@ const Q7_DISCOVERY: Option[] = [
 // Step ordering
 // ============================================
 // 0  welcome
-// 1  Q1 framing
-// 2  loved-one banner (conditional)
-// 3  Q2 populations
-// 4  Q3 emotional state
-// 5  Q4 faith
-// 6  Q5 support
-// 7  Q6 duration
-// 8  Q7 discovery
-// 9  privacy disclosure
-// 10 submit & code reveal
+// 1  Q1 faith (loved-one link routes out from here)
+// 2  Q2 what drew you
+// 3  Q3 carrying something (optional — explore skip)
+// 4  Q4 what a good outcome looks like
+// 5  Q5 how long you've been circling this
+// 6  Q6 discovery
+// 7  privacy disclosure
+// 8  submit & code reveal
 
-const TOTAL_QUESTIONS = 7; // for the progress bar
+const TOTAL_QUESTIONS = 6; // for the progress bar
 
 // ============================================
 // Page component
@@ -113,7 +117,10 @@ function OnboardFlow() {
     populations: [],
     emotional_state: "",
     faith_role: "",
-    support_level: "",
+    // The support-level question was retired in the 2026-09-21
+    // repositioning; everyone starts self-guided and discovers the
+    // rest inside.
+    support_level: "self_guided",
     duration: "",
     discovery: "",
     display_name: "",
@@ -174,21 +181,6 @@ function OnboardFlow() {
     setStep((s) => s + 1);
   }
 
-  function setFraming(value: string) {
-    // "Someone I love is in trouble" → route to the dedicated CSO flow
-    // instead of continuing here. The CSO is not the user.
-    if (value === "loved_one") {
-      router.push("/loved-one");
-      return;
-    }
-    setProfile((p) => ({
-      ...p,
-      framing: value,
-      here_for: "self",
-    }));
-    setStep(3);
-  }
-
   function togglePopulation(value: string) {
     setProfile((p) => {
       const has = p.populations.includes(value);
@@ -211,7 +203,7 @@ function OnboardFlow() {
       });
       if (res.success) {
         setRecoveryCode(res.recoveryCode);
-        setStep(10);
+        setStep(8);
       } else {
         setError(res.error);
       }
@@ -223,33 +215,14 @@ function OnboardFlow() {
     }
   }
 
-  // Progress: 0 on welcome, 1/7 after Q1, ..., 7/7 after Q7, full on privacy/reveal
-  const questionStep =
-    step === 0
-      ? 0
-      : step === 1
-      ? 0
-      : step === 2
-      ? 1
-      : step === 3
-      ? 2
-      : step === 4
-      ? 3
-      : step === 5
-      ? 4
-      : step === 6
-      ? 5
-      : step === 7
-      ? 6
-      : step === 8
-      ? 7
-      : 7;
+  // Progress: 0 on welcome, 1/6 after Q1, ..., 6/6 on privacy/reveal.
+  const questionStep = step === 0 ? 0 : Math.min(step - 1, TOTAL_QUESTIONS);
 
   return (
     <main className="min-h-screen bg-btf-off-white px-6 py-10 sm:py-14">
       <div className="max-w-2xl mx-auto">
         {/* Referral pre-fill banner — only shown when a valid ?code= was applied. */}
-        {referralApplied && step > 0 && step < 10 && (
+        {referralApplied && step > 0 && step < 7 && (
           <div
             role="status"
             className="rounded-2xl bg-btf-gold-pale/60 border border-btf-gold/40 px-5 py-4 mb-6"
@@ -264,7 +237,7 @@ function OnboardFlow() {
         )}
 
         {/* Progress bar (hidden on welcome and final reveal) */}
-        {step > 0 && step < 10 && (
+        {step > 0 && step < 7 && (
           <div className="h-1 bg-btf-sky-pale rounded-full mb-10 overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-btf-sky to-btf-gold rounded-full transition-all duration-500"
@@ -277,30 +250,53 @@ function OnboardFlow() {
 
         {step === 1 && (
           <Question
-            label="A few questions, then we begin"
-            question="What brings you here today?"
-            sub="Whatever you pick, we'll meet you there. There are no wrong answers."
+            label="Step 1 of 6"
+            question="Where are you with faith right now?"
+            sub="There's no wrong answer, and nothing here signs you up for anything."
           >
             <Options
-              options={Q1_FRAMING}
-              selected={profile.framing}
-              onSelect={setFraming}
+              options={Q1_FAITH}
+              selected={profile.faith_role}
+              onSelect={(v) => {
+                setProfile((p) => ({ ...p, faith_role: v, here_for: "self" }));
+                advance();
+              }}
             />
+            <button
+              type="button"
+              onClick={() => router.push("/loved-one")}
+              className="mt-6 mx-auto block text-sm text-btf-sky underline underline-offset-4 font-light hover:text-btf-sky-deep"
+            >
+              Here for someone you love? There&rsquo;s a path for that.
+            </button>
           </Question>
         )}
 
         {step === 2 && (
-          <LovedOneBanner onContinue={() => setStep(3)} />
+          <Question
+            label="Step 2 of 6"
+            question="What drew you here?"
+            sub="Pick the one closest to the truth today."
+          >
+            <Options
+              options={Q2_DREW}
+              selected={profile.framing}
+              onSelect={(v) => {
+                setProfile((p) => ({ ...p, framing: v }));
+                advance();
+              }}
+            />
+          </Question>
         )}
 
         {step === 3 && (
           <Question
-            label="Step 2 of 7"
-            question="What are you dealing with right now?"
-            sub="Pick anything that fits. You can choose more than one. We won't share this with anyone."
+            label="Step 3 of 6"
+            question="Are you carrying something you'd like help with?"
+            sub="Optional. If anything fits, choosing it helps us put the right things in front of you. We never share this."
           >
             <Options
-              options={Q2_POPULATIONS}
+              options={Q3_POPULATIONS}
               selected={profile.populations}
               onSelect={togglePopulation}
               multi
@@ -311,16 +307,26 @@ function OnboardFlow() {
             >
               Continue
             </ContinueButton>
+            <button
+              type="button"
+              onClick={() => {
+                setProfile((p) => ({ ...p, populations: ["other"] }));
+                advance();
+              }}
+              className="mt-4 mx-auto block text-sm text-btf-sky underline underline-offset-4 font-light hover:text-btf-sky-deep"
+            >
+              Mostly I&rsquo;m here to explore &mdash; skip this
+            </button>
           </Question>
         )}
 
         {step === 4 && (
           <Question
-            label="Step 3 of 7"
-            question="How are you carrying this right now?"
+            label="Step 4 of 6"
+            question="What would a good outcome look like for you?"
           >
             <Options
-              options={Q3_EMOTIONAL}
+              options={Q4_HOPE}
               selected={profile.emotional_state}
               onSelect={(v) => {
                 setProfile((p) => ({ ...p, emotional_state: v }));
@@ -332,45 +338,11 @@ function OnboardFlow() {
 
         {step === 5 && (
           <Question
-            label="Step 4 of 7"
-            question="Where does faith sit in your life right now?"
-            sub="The Catholic faith content on this platform is optional. The rest works for anyone."
+            label="Step 5 of 6"
+            question="How long have you been circling this?"
           >
             <Options
-              options={Q4_FAITH}
-              selected={profile.faith_role}
-              onSelect={(v) => {
-                setProfile((p) => ({ ...p, faith_role: v }));
-                advance();
-              }}
-            />
-          </Question>
-        )}
-
-        {step === 6 && (
-          <Question
-            label="Step 5 of 7"
-            question="What kind of help feels right at this moment?"
-            sub="You can change this later. Some tiers aren't live yet but will be soon."
-          >
-            <Options
-              options={Q5_SUPPORT}
-              selected={profile.support_level}
-              onSelect={(v) => {
-                setProfile((p) => ({ ...p, support_level: v }));
-                advance();
-              }}
-            />
-          </Question>
-        )}
-
-        {step === 7 && (
-          <Question
-            label="Step 6 of 7"
-            question="How long has this been part of your story?"
-          >
-            <Options
-              options={Q6_DURATION}
+              options={Q5_DURATION}
               selected={profile.duration}
               onSelect={(v) => {
                 setProfile((p) => ({ ...p, duration: v }));
@@ -380,14 +352,14 @@ function OnboardFlow() {
           </Question>
         )}
 
-        {step === 8 && (
+        {step === 6 && (
           <Question
-            label="Step 7 of 7"
-            question="What made you reach out today?"
+            label="Step 6 of 6"
+            question="What brought you to us today?"
             sub="This helps us know how people find us — and how to reach others like you."
           >
             <Options
-              options={Q7_DISCOVERY}
+              options={Q6_DISCOVERY}
               selected={profile.discovery}
               onSelect={(v) => {
                 setProfile((p) => ({ ...p, discovery: v }));
@@ -397,7 +369,7 @@ function OnboardFlow() {
           </Question>
         )}
 
-        {step === 9 && (
+        {step === 7 && (
           <PrivacyDisclosure
             onContinue={submit}
             submitting={submitting}
@@ -411,7 +383,7 @@ function OnboardFlow() {
           />
         )}
 
-        {step === 10 && recoveryCode && (
+        {step === 8 && recoveryCode && (
           <CodeReveal
             code={recoveryCode}
             onDone={() => router.push("/home")}
@@ -439,10 +411,10 @@ function Welcome({ onNext }: { onNext: () => void }) {
         Welcome
       </p>
       <h1 className="font-serif text-3xl md:text-4xl text-btf-sky-deep font-light leading-tight mb-4">
-        You&rsquo;re here. That matters.
+        You&rsquo;re here. That&rsquo;s enough to start.
       </h1>
       <p className="font-serif italic text-base text-btf-text-mid font-light leading-relaxed mb-8">
-        Whatever brought you to this page, you&rsquo;re welcome here. Take it at your own pace.
+        Skeptical, curious, coming home, or just looking &mdash; you&rsquo;re welcome exactly as you are. Take it at your own pace.
       </p>
 
       {/* Gold divider — visual breath between intro and the substance. */}
@@ -469,19 +441,18 @@ function Welcome({ onNext }: { onNext: () => void }) {
       {/* What we'll ask — sets the expectation so the seven questions don't feel like a wall. */}
       <div className="rounded-2xl bg-white border border-btf-sky-pale/70 p-5 sm:p-6 mb-8 shadow-sm">
         <p className="text-[10px] tracking-[0.25em] uppercase text-btf-sky font-semibold mb-3">
-          Seven questions. About two minutes.
+          Six questions. About two minutes.
         </p>
         <p className="text-sm text-btf-text-mid font-light leading-relaxed mb-4">
-          They&rsquo;re only asked once. They tell us how to meet you well &mdash; which tools to surface, whether to offer the Catholic path, how urgent your moment is. Your answers shape the platform around you.
+          They&rsquo;re only asked once, and there are no wrong answers. They tell us how to meet you well &mdash; where to start you, what to put in front of you, and what to leave until you ask.
         </p>
         <ul className="space-y-1.5 text-sm text-btf-text-dark font-light">
-          <QuestionPreview n={1} text="What brings you here today." />
-          <QuestionPreview n={2} text="What you&rsquo;re dealing with." />
-          <QuestionPreview n={3} text="How you&rsquo;re carrying it right now." />
-          <QuestionPreview n={4} text="Where faith sits for you." />
-          <QuestionPreview n={5} text="What kind of help feels right." />
-          <QuestionPreview n={6} text="How long this has been part of your story." />
-          <QuestionPreview n={7} text="What made you reach out today." />
+          <QuestionPreview n={1} text="Where you are with faith right now." />
+          <QuestionPreview n={2} text="What drew you here." />
+          <QuestionPreview n={3} text="Whether you&rsquo;re carrying something. (Optional.)" />
+          <QuestionPreview n={4} text="What a good outcome would look like." />
+          <QuestionPreview n={5} text="How long you&rsquo;ve been circling this." />
+          <QuestionPreview n={6} text="How you found us." />
         </ul>
       </div>
 
@@ -619,48 +590,6 @@ function ContinueButton({
     >
       {children}
     </button>
-  );
-}
-
-function LovedOneBanner({ onContinue }: { onContinue: () => void }) {
-  return (
-    <div>
-      <div className="rounded-2xl bg-btf-sky-deep text-white p-6 sm:p-8 mb-8">
-        <p className="text-[11px] tracking-[0.25em] text-btf-gold-light uppercase font-semibold mb-3">
-          A note before we continue
-        </p>
-        <h2 className="font-serif text-xl sm:text-2xl font-light leading-tight mb-3">
-          If they&rsquo;re in immediate danger right now, reach a real person first.
-        </h2>
-        <p className="text-sm text-white/85 font-light leading-relaxed mb-5">
-          The crisis resources below are free, confidential, and answer 24 hours a day. After you&rsquo;ve reached them &mdash; or if the situation isn&rsquo;t immediate &mdash; come back here and we&rsquo;ll help you find a path for them.
-        </p>
-        <div className="space-y-2 text-sm font-light">
-          <p>
-            <span className="text-white/60">Suicide &amp; Crisis Lifeline</span>{" "}
-            <span className="text-btf-gold-light">988</span> &middot; call or text
-          </p>
-          <p>
-            <span className="text-white/60">Domestic Violence Hotline</span>{" "}
-            <span className="text-btf-gold-light">1-800-799-7233</span>
-          </p>
-          <p>
-            <span className="text-white/60">Childhelp</span>{" "}
-            <span className="text-btf-gold-light">1-800-422-4453</span>
-          </p>
-          <p>
-            <span className="text-white/60">NCMEC CyberTipline</span>{" "}
-            <span className="text-btf-gold-light">1-800-843-5678</span>
-          </p>
-        </div>
-      </div>
-      <button
-        onClick={onContinue}
-        className="w-full max-w-md mx-auto bg-gradient-to-br from-btf-sky to-btf-sky-deep text-white font-medium px-8 py-3.5 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform block"
-      >
-        Continue for them
-      </button>
-    </div>
   );
 }
 

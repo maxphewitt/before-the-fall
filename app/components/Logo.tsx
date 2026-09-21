@@ -3,7 +3,7 @@
  *
  * Four variants:
  *   - primary    : stacked cross + wordmark (+ optional rule + tagline)
- *   - horizontal : cross + divider + wordmark + "Prevention Platform" sub
+ *   - horizontal : cross + divider + wordmark + "Come and See" sub
  *   - monogram   : B·T·F (Cinzel, with gold dot separators)
  *   - icon-mark  : circle with cross (favicon-style)
  *
@@ -195,7 +195,7 @@ function Horizontal({
             className={`${subColor(tone)} font-sans font-light uppercase mt-1`}
             style={{ fontSize: "7.5px", letterSpacing: "0.2em" }}
           >
-            Prevention Platform
+            Come and See
           </div>
         )}
       </div>

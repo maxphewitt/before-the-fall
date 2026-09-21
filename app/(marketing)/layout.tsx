@@ -137,7 +137,7 @@ export default async function MarketingLayout({
                 Reaching the lost before they become unreachable.
               </p>
               <p className="text-xs text-white/55 leading-relaxed mt-3">
-                A Texas-based nonprofit initiative for the moment before harm.
+                A Texas-based nonprofit initiative for anyone finding the way back.
               </p>
             </div>
 

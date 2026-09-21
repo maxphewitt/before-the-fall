@@ -36,6 +36,14 @@ const MODULES: Module[] = [
     href: "/start-here",
   },
   {
+    slug: "seasons",
+    title: "Fasting & Seasons",
+    description:
+      "Walk Lent, St. Michael's Lent, Advent, or a season of your own — name what you're offering, mark each day with one honest tap, and watch the days build. A stumble is marked in red and the season keeps going; nothing here ever resets your journey.",
+    status: "available",
+    href: "/seasons",
+  },
+  {
     slug: "prayers",
     title: "Prayer Library",
     description:

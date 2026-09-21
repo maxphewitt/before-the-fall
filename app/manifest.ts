@@ -22,7 +22,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Before the Fall",
     short_name: "Before the Fall",
     description:
-      "A faith-rooted, anonymous prevention platform for people standing in the moment before harm.",
+      "Come and see. A free, anonymous Catholic platform for the skeptical, the curious, and everyone finding the way back.",
     start_url: "/",
     scope: "/",
     display: "standalone",

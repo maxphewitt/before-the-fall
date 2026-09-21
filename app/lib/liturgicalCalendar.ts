@@ -21,7 +21,7 @@ import type { LiturgicalSeason } from "./prayers";
 
 type YearKey = number;
 
-type MovableFeasts = {
+export type MovableFeasts = {
   /** YYYY-MM-DD strings, all in local-Vatican-equivalent date logic. */
   ashWednesday: string;
   easter: string;
@@ -69,6 +69,15 @@ const TABLE: Record<YearKey, MovableFeasts> = {
     firstSundayOfAdvent: "2030-12-01",
   },
 };
+
+/**
+ * Movable feasts for a given calendar year, or null outside the 2026–2030
+ * table. Exported for the Fasting Seasons tracker (lib/fastingSeasons.ts),
+ * which derives Lent and Advent windows from it. Same Computus TODO applies.
+ */
+export function getMovableFeasts(year: number): MovableFeasts | null {
+  return TABLE[year] ?? null;
+}
 
 function dateOnly(d: Date): string {
   const y = d.getFullYear();

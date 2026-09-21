@@ -31,7 +31,7 @@ const cinzel = Cinzel({
 export const metadata: Metadata = {
   title: "Before the Fall",
   description:
-    "Built for the moment before the fall. A faith-rooted, anonymous prevention platform for people standing in the moment before harm.",
+    "Come and see. A free, anonymous Catholic platform for the skeptical, the curious, and everyone finding the way back.",
   metadataBase: new URL("https://beforethefall.app"),
   applicationName: "Before the Fall",
   appleWebApp: {
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Before the Fall",
-    description: "Built for the moment before the fall.",
+    description: "Come and see.",
     url: "https://beforethefall.app",
     siteName: "Before the Fall",
     type: "website",
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Before the Fall",
-    description: "Built for the moment before the fall.",
+    description: "Come and see.",
   },
   robots: {
     index: false,

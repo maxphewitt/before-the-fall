@@ -39,6 +39,12 @@
  *     Max writes the founder's note himself; the render layer hides the
  *     placeholder until then (see /start-here/[n]/page.tsx).
  *
+ * REPOSITIONED 2026-09-21 (vault: 07 - Content / 2026-09-21 The Great
+ * Repositioning — Spec v1): Sessions 1-2 re-aimed at the new audience —
+ * the skeptical, the on-the-fence, and the returning — per Max. The
+ * secular track is now framed as the skeptic's on-ramp, not a parallel
+ * product.
+ *
  * All content DRAFT pending Fr. Murphy (Catholic) + clinician review.
  */
 
@@ -81,10 +87,10 @@ export const CATHOLIC_START_HERE: CatholicStartHereSession[] = [
     scriptures: [],
     teaching: [
       FOUNDER_NOTE_PLACEHOLDER,
-      "Here is what this app is: a place to build a new life one practiced day at a time. The Church's whole toolbox is open here, prayer, Scripture, the Rosary, honest journaling, practical skills, and a community of people walking the same road. Nothing in it is decoration; every piece exists because it helps somebody keep going.",
-      "And here is what this app is not, said out loud in session one: it is not a replacement for therapy, medication, your doctor, confession, or the Eucharist. If a professional is part of your care, keep them. If the sacraments are not yet part of your life, this app will keep pointing you toward them, because it cannot substitute for them either.",
-      "Now the positive claim. Faith is not therapy, but it works on the front end of the problem in a way nothing else does: every practice here aims at weakening the impulse to sin before it becomes an act. That matters for your mind and not only your soul, because sin carries consequences, the broken trust, the hidden account, the morning-after shame, and those consequences are fuel for the very anxiety and depression you are fighting.",
-      "Weaken the impulse and you can cut off the supply line: fewer falls, fewer consequences, less self-sabotage feeding the spiral. The Church has always taught that sin wounds the one who commits it, and that repeated sin engenders vice (CCC 1865). Grace works on the cause while therapy works on the wound, and you want both.",
+      "Here is what this app is: a place to come and see. Whether you arrived skeptical, curious, or carrying twenty years of distance, everything here is open to you from the first minute, prayer, Scripture, the Rosary, honest journaling, practical skills, and a community walking the same road. Nothing in it is decoration, and none of it assumes you have already made up your mind.",
+      "And here is what this app is not, said out loud in session one: it is not a commitment, and it is not a replacement for the real thing. It cannot substitute for a parish, a priest, confession, or the Eucharist, and if a doctor or counselor is part of your life, keep them; this works alongside real help of every kind, never instead of it.",
+      "Now the honest claim about why faith is worth exploring even if you came for practical reasons. Sin, the old word for the things we do that we wish we did not, carries consequences: the broken trust, the hidden account, the morning-after shame. Those consequences quietly feed the very restlessness and heaviness many of us carry, and every practice here aims at weakening that pull before it wins.",
+      "The Church has taught this for two thousand years: sin wounds the one who commits it, and repeated sin hardens into habit (CCC 1865). Grace works on the cause. That is true whether you walked in believing it or not, and you are free to test it here at whatever pace you choose.",
       "One promise before anything else: there is no shame here. Missed days are not debts, and nobody is keeping a ledger against you. Coming back is the whole practice, and you can come back as many times as it takes.",
     ],
     aspiration: "Lord Jesus, I am here; begin with me today.",
@@ -112,7 +118,7 @@ export const CATHOLIC_START_HERE: CatholicStartHereSession[] = [
       },
     ],
     teaching: [
-      "Session 1 made a claim: grace works on the cause while therapy works on the wound. This session is the proof, and it starts with a principle Saint Thomas Aquinas built on throughout his theology: grace does not tear down nature, it builds on it and brings it to completion (Summa Theologiae I, q. 1, a. 8). Faith and mental-health care are not rivals fighting over you; they are two helps aimed at the same person.",
+      "Session 1 made a claim: grace works on the cause. This session is the proof, and it starts with a principle Saint Thomas Aquinas built on throughout his theology: grace does not tear down nature, it builds on it and brings it to completion (Summa Theologiae I, q. 1, a. 8). Faith and mental-health care are not rivals fighting over you; they are two helps aimed at the same person.",
       "A priest who has spent his life at the intersection of psychology and the spiritual life puts it plainly: \"While one must have mental health in order to advance spiritually, nevertheless, psychology cannot be substituted for pastoral theology.\" (Fr. Chad Ripperger, Pastoral Theology and the Philosophy of Man.) Mental health and spiritual health are distinct, and each supports the other. Neither one can do the other's job.",
       "That framework is the mechanism behind Session 1's supply-line teaching. The tradition describes sin's wounds precisely: a darkened intellect, a weakened will, appetites pulling out of order. The life of grace, the sacraments, steady prayer, the devotions in this app, works to re-order the very faculties the impulse runs on, which is why a serious spiritual life can change what happens before the urge ever wins.",
       "And for the anxious heart specifically, the Church's oldest remedy is trust in Providence. Aquinas treats hope as a real virtue, a settled leaning on God for what we cannot secure ourselves (Summa Theologiae II-II, q. 17). Philippians 4:6-7 is that virtue in practice: bring the need to God, and the peace that follows is His guard posted over your mind.",
@@ -332,9 +338,9 @@ export const SECULAR_START_HERE: SecularStartHereSession[] = [
     readings: [],
     teaching: [
       FOUNDER_NOTE_PLACEHOLDER,
-      "Here is what this app is: a place to build a new life one practiced day at a time, with a toolbox of evidence-based skills, a library of the most durable practical wisdom human beings have written down, and a community walking the same road. And here is what it is not, said out loud on day one: it is not a replacement for therapy, medication, or a doctor. If you are working with a professional, keep working with them. If you are not and you need one, we will help you find one before this module is over.",
+      "Here is what this app is: a place to look around without committing to anything. You answered that you're skeptical, so you're starting on the practical side, a toolbox of evidence-based skills and a library of the most durable practical wisdom human beings have written down, and that side is complete on its own. The faith side of the platform sits one tap away whenever curiosity gets the better of you, and it will never be pushed on you. One more thing, said plainly on day one: none of this replaces a doctor or counselor, if you are working with a professional, keep working with them.",
       "Now the claim that everything else here is built on. Every practice in this app aims at one target: weakening the impulse before it becomes an act. Not managing the fallout afterward — getting upstream of the act itself, where the fight is actually winnable.",
-      "Why does that matter for your mind and not just your behavior? Because acting on the impulse creates consequences — the broken trust, the hidden thing, the morning-after shame — and those consequences are fuel for the very anxiety and depression you are fighting. Weaken the impulse and you cut the supply line: fewer falls, fewer consequences, less self-sabotage feeding the spiral.",
+      "Why does that matter for your mind and not just your behavior? Because acting on the impulse creates consequences — the broken trust, the hidden thing, the morning-after shame — and those consequences quietly feed the restlessness and heaviness so many of us carry. Weaken the impulse and you cut the supply line: fewer slips, fewer consequences, less self-sabotage feeding the spiral.",
       "This is also why practice and therapy are partners, not rivals. Practice works on the cause; therapy works on the wound. You want both, and nothing in this app will ever suggest otherwise.",
       "One promise before you go: there is no shame here. Missed days are not debts, and nobody is keeping a ledger of your failures. Coming back is the whole practice — every single time.",
     ],

@@ -9,9 +9,9 @@ import type { Article } from "../lib/articles";
  *
  * Curated editorial slides cycle on the dark sky canvas with the
  * drifting "light that seeks" motif:
- *   1. Welcome  — "You are not a monster…" + Learn more
- *   2. Tiers    — the four tiers we offer, at a glance
- *   3. Catholic Path — the optional faith pathway
+ *   1. Welcome  — "Come and see" (John 1:39) + Learn more
+ *   2. Inside   — the faith library at a glance
+ *   3. How it works — skeptic / curious / coming-home on-ramps
  *   4–5. News + Blog — the newest articles (getLatestArticles) when
  *        they exist, otherwise two "coming soon" intro slides.
  *
@@ -60,7 +60,7 @@ export default function HomeCarousel({ articles }: { articles: Article[] }) {
       kind: "editorial",
       eyebrow: "From the blog",
       title: "Reflections for the road.",
-      body: "Short, honest writing for anyone standing in the moment before the fall — and for the people who love them. Check back as the first pieces go up.",
+      body: "Short, honest writing for anyone finding the way back — the skeptical, the curious, and the people who love them. Check back as the first pieces go up.",
       cta: { label: "Who we are", href: "/who-we-are" },
     });
   }
@@ -182,23 +182,21 @@ function WelcomeSlide() {
       </div>
 
       <p className="font-serif italic text-base md:text-lg text-btf-gold-light/95 leading-relaxed mb-3 px-4 btf-fade-up btf-d-1">
-        &ldquo;For the Son of Man has come to seek and to save what was lost.&rdquo;
+        &ldquo;Come and see.&rdquo;
       </p>
       <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold/80 mb-9 btf-fade-up btf-d-1">
-        Luke 19:10
+        John 1:39
       </p>
 
       <h1 className="font-serif text-4xl md:text-6xl font-light leading-[1.15] mb-7 btf-fade-up btf-d-2">
-        You are not a monster.
+        Curious? Skeptical?
         <br />
-        <span className="italic text-btf-gold-light">
-          You don&rsquo;t have to become one.
-        </span>
+        <span className="italic text-btf-gold-light">Halfway home?</span>
       </h1>
 
       <p className="font-serif italic text-lg md:text-xl text-white/85 font-light mb-10 btf-fade-up btf-d-3">
-        Built for the moment before the fall &mdash; and you&rsquo;re welcome
-        here, exactly as you are.
+        A free, anonymous place to explore the faith at your own pace &mdash;
+        no sign-up sheet, no commitment, no one watching over your shoulder.
       </p>
 
       <div className="btf-fade-up btf-d-4">
@@ -217,111 +215,48 @@ function WelcomeSlide() {
   );
 }
 
-type MiniIcon = "self" | "community" | "clinician" | "crisis";
-
-function MiniGlyph({ name }: { name: MiniIcon }) {
-  const c = {
-    width: 24,
-    height: 24,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.6,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true,
-  };
-  if (name === "self")
-    return (
-      <svg {...c}>
-        <path d="M12 20s-6.5-4.2-9-8C1.2 9 3 5.5 6.3 5.5c2 0 3.4 1.3 5.7 3.3 2.3-2 3.7-3.3 5.7-3.3C21 5.5 22.8 9 21 12c-2.5 3.8-9 8-9 8z" />
-      </svg>
-    );
-  if (name === "community")
-    return (
-      <svg {...c}>
-        <circle cx="9" cy="8" r="3" />
-        <path d="M15.5 11a3 3 0 1 0-2.5-4.6" />
-        <path d="M3.5 20v-1.5A4.5 4.5 0 0 1 8 14h2a4.5 4.5 0 0 1 4.5 4.5V20" />
-      </svg>
-    );
-  if (name === "clinician")
-    return (
-      <svg {...c}>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 8v8M8 12h8" />
-      </svg>
-    );
-  return (
-    <svg {...c}>
-      <circle cx="12" cy="12" r="9" />
-      <circle cx="12" cy="12" r="3.5" />
-      <path d="M12 2.5v6M12 15.5v6M2.5 12h6M15.5 12h6" />
-    </svg>
-  );
-}
-
-const MINI_TIERS: {
-  n: number;
-  icon: MiniIcon;
-  title: string;
-  line: string;
-  now?: boolean;
-}[] = [
-  { n: 1, icon: "self", title: "Self-help", line: "Urge control, grounding, journaling — now.", now: true },
-  { n: 2, icon: "community", title: "Peer community", line: "Anonymous, moderated support." },
-  { n: 3, icon: "clinician", title: "Clinician referrals", line: "Vetted, faith-aware therapists." },
-  { n: 4, icon: "crisis", title: "Crisis routing", line: "988, NCMEC, DV Hotline." },
-];
-
+/** "What's inside" — the faith library is the headline now; the old
+ *  four-tier clinical pitch is retired from public marketing
+ *  (repositioning, 2026-09-21). */
 function TiersSlide() {
   return (
-    <div className="relative text-center">
+    <div className="relative text-center max-w-2xl mx-auto">
       <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 btf-fade-up">
-        How we help
+        What&rsquo;s inside
       </p>
-      <h2 className="font-serif text-3xl md:text-5xl font-light leading-tight mb-3 btf-fade-up btf-d-1">
-        Four tiers. One door.
+      <h2 className="font-serif text-3xl md:text-5xl font-light leading-tight mb-4 btf-fade-up btf-d-1">
+        Everything you need to begin.
       </h2>
-      <p className="font-serif italic text-base md:text-lg text-white/80 font-light mb-9 btf-fade-up btf-d-1">
-        One free, pseudonymous account opens the door to all of it.
+      <p className="text-white/85 font-light leading-relaxed mb-8 btf-fade-up btf-d-2">
+        Daily Scripture and the full Bible. The Rosary, prayers, and novenas,
+        guided step by step. Honest journaling that stays yours. Learning
+        modules that assume no background at all. And quiet, practical tools
+        for the hard days.
       </p>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-9 text-left">
-        {MINI_TIERS.map((t, i) => (
-          <div
-            key={t.n}
-            className={
-              "btf-fade-up rounded-2xl border p-4 backdrop-blur-sm " +
-              (t.now ? "bg-btf-gold/10 border-btf-gold/40" : "bg-white/5 border-white/12") +
-              " btf-d-" +
-              (i + 1)
-            }
+      <div className="flex flex-wrap justify-center gap-2 mb-9 btf-fade-up btf-d-3">
+        {[
+          "Daily Scripture",
+          "Guided Rosary",
+          "Prayer library",
+          "Learning modules",
+          "Private journal",
+          "A community praying with you",
+        ].map((chip) => (
+          <span
+            key={chip}
+            className="text-xs font-light text-white/85 bg-white/8 border border-white/15 rounded-full px-3.5 py-1.5"
           >
-            <div
-              className={
-                "w-9 h-9 rounded-lg flex items-center justify-center mb-3 " +
-                (t.now ? "bg-btf-gold text-btf-sky-deep" : "bg-white/10 text-btf-gold-light")
-              }
-            >
-              <MiniGlyph name={t.icon} />
-            </div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-btf-gold-light/80 font-semibold">
-              Tier {t.n}
-              {t.now && " · now"}
-            </p>
-            <p className="font-serif text-lg leading-tight mt-0.5 mb-1">{t.title}</p>
-            <p className="text-xs text-white/70 font-light leading-relaxed">{t.line}</p>
-          </div>
+            {chip}
+          </span>
         ))}
       </div>
 
-      <div className="btf-fade-up btf-d-5">
+      <div className="btf-fade-up btf-d-4">
         <Link
           href="/onboard"
           className="inline-flex items-center justify-center bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep font-medium px-9 py-3.5 rounded-full shadow-lg shadow-btf-gold/30 transition-all hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
         >
-          Create your account
+          Create your free account
         </Link>
         <Link
           href="/what-we-offer"
@@ -344,15 +279,17 @@ function CatholicSlide() {
         </div>
       </div>
       <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold-light/90 font-semibold mb-3 btf-fade-up btf-d-1">
-        The faith-based pathway
+        How it works
       </p>
       <h2 className="font-serif text-3xl md:text-5xl font-light leading-tight mb-4 btf-fade-up btf-d-1">
-        Catholic Path
+        At your pace. On your terms.
       </h2>
       <p className="text-white/85 font-light leading-relaxed mb-7 btf-fade-up btf-d-2">
-        An optional parallel walk in scripture and Catholic teaching alongside
-        whichever tier you&rsquo;re in. Opt in any time &mdash; the rest of the
-        platform works for anyone.
+        Skeptical? Start with the practical tools and the wisdom library, and
+        go no further until you want to. Curious? Walk through prayer,
+        Scripture, and the Mass with guides that assume nothing. Coming home
+        after years away? Pick up right where you are. You choose the depth
+        &mdash; the door is the same.
       </p>
       <div className="flex flex-wrap justify-center gap-2 mb-9 btf-fade-up btf-d-3">
         {[
@@ -375,7 +312,7 @@ function CatholicSlide() {
           href="/onboard"
           className="inline-flex items-center justify-center bg-btf-gold hover:bg-btf-gold-light text-btf-sky-deep font-medium px-9 py-3.5 rounded-full shadow-lg shadow-btf-gold/30 transition-all hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
         >
-          Open an account to begin
+          Open a free account to begin
         </Link>
       </div>
     </div>

@@ -6,8 +6,17 @@ import type { Metadata } from "next";
  * this renders only the page body. The old /about path 301-redirects
  * here (see next.config.ts).
  *
- * FounderNote remains parked (app/components/FounderNote.tsx) per the
- * 2026-05-26 sprint decision; re-add when ready.
+ * REPOSITIONED 2026-09-21 (see vault: 07 - Content / 2026-09-21 The
+ * Great Repositioning — Spec v1): Before the Fall is presented as a
+ * free, anonymous on-ramp to the faith for the skeptical, the
+ * on-the-fence, and the returning — not a mental-health platform.
+ * The safety commitments in "How we keep people safe" are kept
+ * because they attach to the FEATURES (journals, scanning, anonymous
+ * accounts), not the marketing. HAP MUST RE-REVIEW this page before
+ * public launch — it is now two rounds of changes past his sign-off.
+ *
+ * FounderNote remains parked (app/components/FounderNote.tsx);
+ * re-add when ready.
  */
 export const metadata: Metadata = {
   title: "Who We Are — Before the Fall",
@@ -33,7 +42,7 @@ export default function WhoWeAre() {
             Before the Fall
           </h1>
           <p className="font-serif italic text-lg text-white/85 mt-3 font-light">
-            Reaching the lost before they become unreachable.
+            For the skeptical, the seeking, and everyone finding the way back.
           </p>
         </div>
       </header>
@@ -43,15 +52,28 @@ export default function WhoWeAre() {
           <h2 className="font-serif text-2xl text-btf-sky-deep mb-3 font-light">
             Who we are
           </h2>
+          <p className="text-btf-text-mid font-light leading-relaxed mb-3">
+            Before the Fall is a free, anonymous Catholic platform for people
+            who are skeptical of faith, on the fence about it, new to it, or
+            finding their way back after years away. It was built by one
+            person after God changed his life &mdash; built so that the next
+            person searching at three in the morning finds a door that&rsquo;s
+            already open. There is no cost, there are no ads, and there is no
+            profit motive: this platform exists to lead people to Christ, and
+            for no other reason.
+          </p>
+          <p className="text-btf-text-mid font-light leading-relaxed mb-3">
+            &ldquo;For the Son of Man has come to seek and to save what was
+            lost.&rdquo; &mdash; Luke 19:10. That is the whole mission
+            statement. Everything here &mdash; the Scripture, the guided
+            prayer, the learning modules, the quiet practical tools &mdash;
+            exists to make one more meeting between that seeking God and one
+            more person possible.
+          </p>
           <p className="text-btf-text-mid font-light leading-relaxed">
-            Before the Fall is a faith-rooted wellness platform for people
-            carrying struggles they never chose &mdash; unwanted urges, anxiety,
-            depression, anger that keeps winning, the weight of what someone
-            else did to them. Almost every resource in this country activates
-            after a fall: after the relapse, the broken relationship, the
-            crisis. We exist for the moment before that, when a person still has
-            the chance to choose a different day. We believe in reaching people
-            early, while hope is cheapest and change is most possible.
+            The name remembers Eden &mdash; and everyone since who has stood
+            at the edge of a fall. This exists for the moment before, and for
+            every road back after.
           </p>
         </section>
 
@@ -59,14 +81,22 @@ export default function WhoWeAre() {
           <h2 className="font-serif text-2xl text-btf-sky-deep mb-3 font-light">
             Why we&rsquo;re different
           </h2>
+          <p className="text-btf-text-mid font-light leading-relaxed mb-3">
+            Walking into a parish office is a bigger first step than most
+            skeptics will take. Even sitting in a back pew can feel like a
+            commitment. Programs like OCIA are beautiful &mdash; and they ask
+            for a yes that many people aren&rsquo;t ready to give on day one.
+            Before the Fall is the anonymous step before that step: a place
+            to read, pray badly, ask the honest questions, and change your
+            mind as many times as you need to, with nobody taking attendance.
+          </p>
           <p className="text-btf-text-mid font-light leading-relaxed">
-            Most prevention resources are invisible to the people who need them.
-            Their phone numbers don&rsquo;t come up when someone Googles their
-            fear at three in the morning. Their websites don&rsquo;t reach the
-            search algorithms that decide what a struggling person finds. Before
-            the Fall was built by someone who lived this gap &mdash; who searched
-            for months and found nothing. The platform exists because that
-            search shouldn&rsquo;t have been so hard.
+            Apps like Hallow serve the faithful magnificently. This one is
+            aimed one step earlier &mdash; at the person who isn&rsquo;t sure
+            they belong there yet. It was built by someone who lived that
+            gap, who searched for a door like this and couldn&rsquo;t find
+            one. The platform exists because that search shouldn&rsquo;t have
+            been so hard.
           </p>
         </section>
 
@@ -75,62 +105,52 @@ export default function WhoWeAre() {
             Your privacy
           </h2>
           <p className="text-btf-text-mid font-light leading-relaxed mb-3">
-            We do not ask for your name, email, or phone number. Returning users
-            access their saved progress through a recovery code only they hold.
-            We are not, however, zero-knowledge anonymous. We keep just enough
-            records &mdash; hashed IP, timestamps, user agent &mdash; to send
-            real help in a crisis (a 988 response if your content suggests you
-            are in immediate danger), to honor lawful legal process, and to meet
-            our child-safety reporting obligations.
+            We do not ask for your name, email, or phone number. Returning
+            users access their saved progress through a recovery code only
+            they hold. We are not, however, zero-knowledge anonymous. We keep
+            just enough records &mdash; hashed IP, timestamps, user agent
+            &mdash; to send real help in a crisis (a 988 response if your
+            content suggests you are in immediate danger), to honor lawful
+            legal process, and to meet our child-safety reporting
+            obligations.
           </p>
           <p className="text-btf-text-mid font-light leading-relaxed">
-            We do not sell, trade, or share your data with advertisers, ever. The
-            complete privacy policy is published, attorney-reviewed, and linked
-            at the bottom of every page once we publicly launch.
+            This platform is free, carries no ads, and will never profit from
+            you. We do not sell, trade, or share your data with anyone, ever.
+            The complete privacy policy is published, attorney-reviewed, and
+            linked at the bottom of every page once we publicly launch.
           </p>
         </section>
 
         <section className="bg-white rounded-2xl p-6 sm:p-8 border border-btf-sky-pale">
           <h2 className="font-serif text-2xl text-btf-sky-deep mb-3 font-light">
-            Our compliance
+            How we keep people safe
           </h2>
           <p className="text-btf-text-mid font-light leading-relaxed mb-4">
-            Before the Fall walks with people through the ordinary, human
-            struggles that quietly take over a life: unwanted or
-            self-destructive urges and compulsions, substance use, anxiety and
-            depression, anger that strains the people closest to them, the long
-            road of healing after abuse, and the wide range of distress that
-            doesn&rsquo;t fit a clean category. Different struggles need
-            different care, so the platform&rsquo;s support is calibrated to
-            what each person shares.
+            This is a platform where people write honestly about their lives
+            &mdash; and some of what people carry is heavy. Part of caring
+            for people well is being ready for the hardest moments, the way
+            any parish, school, or counselor is ready for them.
           </p>
           <p className="text-btf-text-mid font-light leading-relaxed mb-4">
-            Part of caring for people well is being ready for the hardest
-            moments. If someone tells us they are close to hurting themselves,
-            we connect them with the 988 Suicide &amp; Crisis Lifeline and,
-            where indicated, trained crisis support &mdash; because a platform
-            that only watches is not a platform that cares. If a disclosure
-            makes us fear for someone else&rsquo;s immediate safety, we bring in
-            the appropriate authorities, as any counselor, teacher, or pastor
-            would.
-          </p>
-          <p className="text-btf-text-mid font-light leading-relaxed mb-4">
-            The same is true for the people around our users. Where a child&rsquo;s
-            safety is at risk, we honor our legal duty to report (Texas Family
-            Code &sect;261.101) and the CyberTipline of the National Center for
+            If someone tells us they are close to hurting themselves, we
+            connect them with the 988 Suicide &amp; Crisis Lifeline and,
+            where indicated, trained crisis support. If a disclosure makes us
+            fear for someone else&rsquo;s immediate safety, we bring in the
+            appropriate authorities. Where a child&rsquo;s safety is at risk,
+            we honor our legal duty to report (Texas Family Code
+            &sect;261.101) and the CyberTipline of the National Center for
             Missing &amp; Exploited Children. When someone tells us home
-            doesn&rsquo;t feel safe, we connect them with the National Domestic
-            Violence Hotline; substance crises are routed to SAMHSA&rsquo;s
-            National Helpline; and anxiety or depression is met first with the
-            platform&rsquo;s clinical tools, with the 988 pathway one tap away
-            if it ever deepens.
+            doesn&rsquo;t feel safe, we connect them with the National
+            Domestic Violence Hotline; substance crises are routed to
+            SAMHSA&rsquo;s National Helpline.
           </p>
           <p className="text-btf-text-mid font-light leading-relaxed">
-            All of this is documented in a written escalation protocol, reviewed
-            by counsel and kept current as the law evolves. It exists for the
-            same reason the rest of the platform does: so that the people who
-            trust us &mdash; and the people around them &mdash; are safer
-            because we were there.
+            All of this is documented in a written escalation protocol,
+            reviewed by counsel and kept current as the law evolves. It
+            exists for the same reason the rest of the platform does: so that
+            the people who trust us &mdash; and the people around them
+            &mdash; are safer because we were there.
           </p>
         </section>
       </div>

@@ -93,7 +93,7 @@ export default function OpengraphImage() {
             letterSpacing: "0.01em",
           }}
         >
-          &ldquo;For the Son of Man has come to seek and to save what was lost.&rdquo;
+          &ldquo;Come and see.&rdquo;
         </p>
         <p
           style={{
@@ -104,7 +104,7 @@ export default function OpengraphImage() {
             margin: "0 0 50px 0",
           }}
         >
-          Luke 19:10
+          John 1:39
         </p>
 
         {/* Headline */}
@@ -119,7 +119,7 @@ export default function OpengraphImage() {
             maxWidth: "900px",
           }}
         >
-          You are not a monster.
+          Curious? Skeptical? Halfway home?
         </h1>
         <h2
           style={{
@@ -132,7 +132,7 @@ export default function OpengraphImage() {
             margin: "0 0 50px 0",
           }}
         >
-          You don&rsquo;t have to become one.
+          Come and see.
         </h2>
 
         {/* Wordmark */}

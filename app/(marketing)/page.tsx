@@ -5,7 +5,7 @@ import HomeCarousel from "./HomeCarousel";
  * Public marketing home (landing) — the default route `/`.
  *
  * Deliberately minimal: a single welcoming hero carousel. Slide one is
- * "You are not a monster…" with one "Learn more" button into
+ * "Come and see" (John 1:39) with one "Learn more" button into
  * /what-we-offer; the remaining slides cycle the newest BTF blogs,
  * articles, and news (getLatestArticles(); empty for now). The
  * loved-one and account-creation entry points live in the header, not

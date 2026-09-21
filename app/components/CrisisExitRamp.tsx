@@ -150,6 +150,29 @@ export default function CrisisExitRamp() {
               ))}
             </ul>
 
+            {/* Talk to a priest — not a hotline, deliberately set apart
+                below them (Max, 2026-09-21). Routes into the Parish
+                Finder so a hard night can end with a real pastor's
+                phone number. NOTE: /catholic-path/parishes is
+                account-gated; logged-out visitors will be asked to
+                create the free anonymous account first. */}
+            <div className="px-4 sm:px-6 pb-2">
+              <a
+                href="/catholic-path/parishes"
+                className="block rounded-xl border border-btf-gold/40 bg-btf-gold-pale/30 hover:bg-btf-gold-pale/50 hover:border-btf-gold px-4 py-4 transition-colors"
+              >
+                <p className="text-[10px] tracking-[0.2em] uppercase text-btf-text-light font-semibold mb-1">
+                  Talk to a priest
+                </p>
+                <p className="font-serif text-lg text-btf-sky-deep mb-1.5">
+                  Find a parish near you &rarr;
+                </p>
+                <p className="text-xs text-btf-text-mid font-light leading-relaxed">
+                  Not an emergency line &mdash; but if what you need tonight is a pastor, our Parish Finder will give you the nearest church and a phone number to call.
+                </p>
+              </a>
+            </div>
+
             {/* Weapon distance footer note */}
             <div className="px-6 sm:px-8 pb-8 pt-2">
               <div className="border-t border-btf-text-light/15 pt-5">

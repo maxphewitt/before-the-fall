@@ -195,6 +195,21 @@ export default async function ExplorePage() {
         </Link>
       )}
 
+      {/* Challenges & seasons — the discipline tracker (secular entry) */}
+      {secular && (
+        <Link
+          href="/seasons"
+          className="block mt-8 rounded-[20px] overflow-hidden p-5 border border-white/[0.09] bg-white/[0.055] hover:border-btf-gold/40 transition-colors"
+        >
+          <p className="text-[10px] tracking-[0.22em] uppercase text-btf-gold-light font-semibold mb-1.5">
+            Challenges
+          </p>
+          <p className="font-serif text-[17px] leading-snug text-white/95">
+            Hold one hard line — 75 days, 30 days, or a season you design. One honest tap a day; nothing ever resets.
+          </p>
+        </Link>
+      )}
+
       {/* Today's wisdom — daily rotating public-domain reading (secular) */}
       {secular && (
         <Link

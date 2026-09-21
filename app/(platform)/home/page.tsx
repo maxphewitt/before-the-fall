@@ -11,6 +11,9 @@ import { getCheckInStatus } from "../../actions/checkIns";
 import { getCheckInInvite } from "../../lib/checkIn";
 import { listStartHereCompletions } from "../../actions/startHere";
 import { startHereSessionCount, startHereTrackForRole } from "../../lib/startHere";
+import { listFastingSeasons } from "../../actions/fastingSeasons";
+import { upcomingLiturgicalSeasons, todayISOFrom } from "../../lib/fastingSeasons";
+import SeasonCard from "../seasons/SeasonCard";
 import { getNovenaById } from "../../lib/novenas";
 import { formatScheduleTime } from "../../lib/habitTypes";
 import { OliveBranch } from "../../components/OliveBranch";
@@ -62,7 +65,7 @@ export default async function HomePage() {
   const userId = await getCurrentUserId();
   if (!userId) redirect("/return");
 
-  const [summaryRes, journeyRes, streak, faithRole, displayName, schedulesRes, populations, feedTopics, novenaProgressRes, checkInRes, startHereRes] = await Promise.all([
+  const [summaryRes, journeyRes, streak, faithRole, displayName, schedulesRes, populations, feedTopics, novenaProgressRes, checkInRes, startHereRes, fastingRes] = await Promise.all([
     getTodaySummary(),
     getJourney(90),
     getDisplayStreak(),
@@ -76,6 +79,7 @@ export default async function HomePage() {
     // Both tracks in one query, filtered by track below once faith_role
     // is known — keeps this out of a serial round trip (perf plan #6).
     listStartHereCompletions(),
+    listFastingSeasons(),
   ]);
 
   // Check-in invite — shown only when the user is returning after time
@@ -100,6 +104,18 @@ export default async function HomePage() {
     ? startHereRes.data.filter((r) => r.track === startHereTrack).length
     : null;
   const showStartHere = startHereDone !== null && startHereDone < startHereTotal;
+
+  // Fasting seasons — active day-X-of-Y cards, plus the discernment
+  // invite when a liturgical fast begins within 14 days and the user
+  // hasn't set one up for it (in-app "notification", per Max 2026-08-11).
+  const todayISO = todayISOFrom(new Date());
+  const fastingSeasons = fastingRes.success ? fastingRes.data : [];
+  const upcomingFasts =
+    faithRole === "secular"
+      ? []
+      : upcomingLiturgicalSeasons(todayISO, 14).filter(
+          (u) => !fastingSeasons.some((s) => s.kind === u.kind && s.endDate >= u.start)
+        );
 
   // In-progress novenas power the Novena day tracker above Daily habits.
   const inProgressNovenas = (novenaProgressRes.success ? novenaProgressRes.data : [])
@@ -241,6 +257,40 @@ export default async function HomePage() {
           </span>
         </Link>
       )}
+
+      {/* Fasting seasons — day X of Y, front of Home (Max, 2026-08-11).
+          Active seasons first, then the discernment invite when a
+          liturgical fast starts within two weeks. */}
+      {fastingSeasons.length > 0 && (
+        <div className="mt-6 space-y-3">
+          {fastingSeasons.map((s) => (
+            <SeasonCard key={s.id} season={s} todayISO={todayISO} compact />
+          ))}
+        </div>
+      )}
+      {upcomingFasts.map((u) => (
+        <Link
+          key={u.kind}
+          href={`/seasons/new?kind=${u.kind}`}
+          className="mt-6 block rounded-[20px] p-[18px] border border-btf-gold/30 bg-[radial-gradient(120%_120%_at_80%_0%,rgba(201,168,76,0.2),transparent_55%),linear-gradient(160deg,rgba(26,111,168,0.42),rgba(10,26,42,0.72))] hover:border-btf-gold/50 transition-colors"
+        >
+          <span className="block text-[10px] tracking-[0.22em] uppercase text-btf-gold-light font-semibold">
+            {u.daysUntil > 1
+              ? `${u.label} begins in ${u.daysUntil} days`
+              : u.daysUntil === 1
+                ? `${u.label} begins tomorrow`
+                : u.daysUntil === 0
+                  ? `${u.label} begins today`
+                  : `${u.label} is underway`}
+          </span>
+          <span className="block font-serif text-[18px] leading-tight mt-1">
+            What will you offer? Take these days to discern it.
+          </span>
+          <span className="block text-[12px] text-btf-gold-light mt-1.5">
+            Set your fast &rarr;
+          </span>
+        </Link>
+      ))}
 
       {/* Time-aware greeting + hero (client picks by the user's local hour) */}
       <HeroClient
