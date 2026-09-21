@@ -181,18 +181,16 @@ function WelcomeSlide() {
         </div>
       </div>
 
-      <p className="font-serif italic text-base md:text-lg text-btf-gold-light/95 leading-relaxed mb-3 px-4 btf-fade-up btf-d-1">
-        &ldquo;Come and see.&rdquo;
-      </p>
-      <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold/80 mb-9 btf-fade-up btf-d-1">
-        John 1:39
+      <p className="font-serif italic text-base md:text-lg text-white/85 leading-relaxed mb-9 px-4 btf-fade-up btf-d-1">
+        Curious? Skeptical? Halfway home?
       </p>
 
-      <h1 className="font-serif text-4xl md:text-6xl font-light leading-[1.15] mb-7 btf-fade-up btf-d-2">
-        Curious? Skeptical?
-        <br />
-        <span className="italic text-btf-gold-light">Halfway home?</span>
+      <h1 className="font-serif italic text-5xl md:text-7xl font-light leading-[1.15] text-btf-gold-light mb-4 btf-fade-up btf-d-2">
+        &ldquo;Come and see.&rdquo;
       </h1>
+      <p className="text-[11px] tracking-[0.25em] uppercase text-btf-gold/80 mb-9 btf-fade-up btf-d-2">
+        John 1:39
+      </p>
 
       <p className="font-serif italic text-lg md:text-xl text-white/85 font-light mb-10 btf-fade-up btf-d-3">
         A free, anonymous place to explore the faith at your own pace &mdash;

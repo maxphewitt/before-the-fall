@@ -82,57 +82,46 @@ export default function OpengraphImage() {
           />
         </div>
 
-        {/* Eyebrow scripture */}
+        {/* Eyebrow — the questions, small; Scripture is the headline */}
         <p
           style={{
             fontSize: 26,
             fontStyle: "italic",
-            color: "rgba(224, 181, 108, 0.95)",
-            margin: "0 0 8px 0",
+            color: "rgba(255, 255, 255, 0.88)",
+            margin: "0 0 44px 0",
             textAlign: "center",
             letterSpacing: "0.01em",
           }}
         >
-          &ldquo;Come and see.&rdquo;
+          Curious? Skeptical? Halfway home?
         </p>
-        <p
+
+        {/* Headline — His word */}
+        <h1
           style={{
-            fontSize: 14,
+            fontSize: 76,
+            color: "#e0b56c",
+            fontStyle: "italic",
+            fontWeight: 300,
+            lineHeight: 1.1,
+            textAlign: "center",
+            margin: "0 0 18px 0",
+            maxWidth: "1000px",
+          }}
+        >
+          &ldquo;Come and see.&rdquo;
+        </h1>
+        <h2
+          style={{
+            fontSize: 15,
             color: "rgba(212, 164, 74, 0.85)",
             textTransform: "uppercase",
             letterSpacing: "0.3em",
+            fontWeight: 400,
             margin: "0 0 50px 0",
           }}
         >
           John 1:39
-        </p>
-
-        {/* Headline */}
-        <h1
-          style={{
-            fontSize: 64,
-            color: "white",
-            fontWeight: 300,
-            lineHeight: 1.1,
-            textAlign: "center",
-            margin: "0 0 24px 0",
-            maxWidth: "900px",
-          }}
-        >
-          Curious? Skeptical? Halfway home?
-        </h1>
-        <h2
-          style={{
-            fontSize: 56,
-            color: "#e0b56c",
-            fontStyle: "italic",
-            fontWeight: 300,
-            lineHeight: 1.15,
-            textAlign: "center",
-            margin: "0 0 50px 0",
-          }}
-        >
-          Come and see.
         </h2>
 
         {/* Wordmark */}
